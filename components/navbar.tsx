@@ -2,8 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { logout } from "@/lib/actions/auth";
-import { IconArrowRight, LogoMark } from "@/components/icons";
-import { KONTAK } from "@/lib/kontak";
+import { LogoMark } from "@/components/icons";
 import { Button, ButtonLink } from "@/components/ui";
 import { NavLink } from "./nav-link";
 import { NavbarMobile } from "./navbar-mobile";
@@ -11,27 +10,7 @@ import { ProfileMenu } from "./profile-menu";
 import { ROLE_LABEL, navLinks, profileItems } from "./nav-links";
 
 
-/** Tombol hitam "Hubungi kami" (mockup 6). */
-function HubungiButton({ className }: { className?: string }) {
-  return (
-    <a
-      href={KONTAK.waHref}
-      target="_blank"
-      rel="noreferrer"
-      className={
-        "group/c inline-flex h-11 items-center gap-2 rounded-pill bg-foreground py-1 pl-1.5 pr-5 text-sm font-semibold text-background transition duration-200 hover:bg-foreground/85 active:scale-95 " +
-        (className ?? "")
-      }
-    >
-      <span className="flex size-8 items-center justify-center rounded-pill border border-background/40 transition duration-200 group-hover/c:rotate-45">
-        <IconArrowRight size={14} className="-rotate-45" />
-      </span>
-      Hubungi kami
-    </a>
-  );
-}
-
-/** Kiri: menu. Kanan: akun + Hubungi kami. Logo di tengah (diatur di Navbar). */
+/** Tautan menu + aksi auth (desktop). Tamu: Masuk/Daftar. Login: dropdown profil. */
 async function DesktopNav() {
   const user = await getCurrentUser();
   const links = navLinks(user?.role);
@@ -54,9 +33,13 @@ async function DesktopNav() {
             logoutAction={logout}
           />
         ) : (
-          <NavLink href="/login">Masuk</NavLink>
+          <>
+            <ButtonLink href="/login" variant="outline">
+              Masuk
+            </ButtonLink>
+            <ButtonLink href="/daftar">Daftar</ButtonLink>
+          </>
         )}
-        <HubungiButton />
       </div>
     </>
   );
@@ -102,8 +85,8 @@ export function Navbar() {
   const publik = navLinks(null);
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 md:px-6">
-      <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 rounded-xl border border-border bg-surface/90 px-4 backdrop-blur md:h-[72px] md:px-6">
-        <Link href="/" className="group order-first flex shrink-0 items-center gap-2 rounded-pill text-lg font-bold md:pointer-events-auto md:absolute md:left-1/2 md:order-none md:-translate-x-1/2">
+      <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 rounded-xl border border-border bg-surface/90 px-4 backdrop-blur md:h-16 md:px-6">
+        <Link href="/" className="group flex shrink-0 items-center gap-2 rounded-pill text-lg font-bold">
           <span className="transition duration-300 group-hover:rotate-[20deg] group-hover:scale-110">
             <LogoMark size={32} />
           </span>
@@ -125,7 +108,7 @@ export function Navbar() {
                   </Link>
                 ))}
               </nav>
-              <div className="hidden md:block"><HubungiButton /></div>
+              <div aria-hidden="true" className="hidden h-11 w-40 rounded-pill bg-surface-2 md:block" />
             </>
           }
         >

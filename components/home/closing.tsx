@@ -25,11 +25,7 @@ export async function Closing() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 pt-16 md:px-6 md:pt-24">
-      <div className="relative isolate grid gap-8 overflow-hidden rounded-xl bg-primary-soft p-5 md:p-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-14">
-        {/* Bentuk dekoratif lembut */}
-        <span aria-hidden="true" className="anim-float absolute -left-16 -top-16 -z-10 size-64 rounded-pill bg-primary/20" />
-        <span aria-hidden="true" className="anim-float absolute -bottom-24 left-1/3 -z-10 size-72 rounded-pill bg-surface/70 [animation-delay:-3s]" />
-        <span aria-hidden="true" className="anim-float absolute -right-10 -top-10 -z-10 size-40 rounded-pill bg-primary/15 [animation-delay:-5s]" />
+      <div className="grid gap-8 rounded-xl border border-border bg-surface p-5 md:p-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-14">
 
         <div className="flex flex-col items-start gap-6">
           <h2 className="title-display text-[34px] md:text-[52px]">
@@ -37,7 +33,7 @@ export async function Closing() {
             <br />
             <span className="text-primary">tinggal pesan.</span>
           </h2>
-          <p className="max-w-md text-[15px] text-on-primary-soft">
+          <p className="max-w-md text-[15px] text-muted">
             Atur pilihan Anda di samping dan lihat harganya langsung. Siap jadwal dalam beberapa klik.
           </p>
           <ul className="flex flex-col gap-3">

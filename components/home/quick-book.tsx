@@ -91,7 +91,7 @@ export function QuickBook({ paket }: { paket: QuickPaket[] }) {
   const aktif = kandidat[Math.min(idx, kandidat.length - 1)];
 
   return (
-    <div className="flex flex-col gap-5 rounded-xl bg-surface p-5 shadow-overlay md:p-7">
+    <div className="flex flex-col gap-5 rounded-xl border border-border bg-background p-5 md:p-7">
       <Seg
         label="Jenis properti"
         value={jenis}
@@ -111,33 +111,35 @@ export function QuickBook({ paket }: { paket: QuickPaket[] }) {
         }}
       />
 
-      {kandidat.length > 1 && (
-        <div>
-          <label htmlFor="qb-kamar" className="mb-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted">
-            Jumlah kamar
-            <span className="text-base font-bold normal-case tracking-normal text-foreground tabular-nums">{aktif.kamar} kamar</span>
-          </label>
-          <input
-            id="qb-kamar"
-            type="range"
-            min={0}
-            max={kandidat.length - 1}
-            step={1}
-            value={Math.min(idx, kandidat.length - 1)}
-            onChange={(e) => setIdx(Number(e.target.value))}
-            className="h-11 w-full cursor-pointer accent-primary"
-          />
-          <div className="flex justify-between text-xs text-muted tabular-nums" aria-hidden="true">
-            {kandidat.map((k) => (
-              <span key={k.id}>{k.kamar}</span>
-            ))}
-          </div>
+      {/* Selalu dirender dengan tinggi tetap agar tata letak tidak bergeser saat pilihan berganti. */}
+      <div className="min-h-[104px]">
+        <label htmlFor="qb-kamar" className="mb-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted">
+          Jumlah kamar
+          <span className="text-base font-bold normal-case tracking-normal text-foreground tabular-nums">
+            {aktif ? `${aktif.kamar} kamar` : "-"}
+          </span>
+        </label>
+        <input
+          id="qb-kamar"
+          type="range"
+          min={0}
+          max={Math.max(kandidat.length - 1, 1)}
+          step={1}
+          disabled={kandidat.length < 2}
+          value={Math.min(idx, Math.max(kandidat.length - 1, 0))}
+          onChange={(e) => setIdx(Number(e.target.value))}
+          className="h-11 w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+        />
+        <div className="flex h-5 justify-between text-xs text-muted tabular-nums" aria-hidden="true">
+          {kandidat.map((k) => (
+            <span key={k.id}>{k.kamar}</span>
+          ))}
         </div>
-      )}
+      </div>
 
       {aktif ? (
-        <div className="rounded-lg bg-primary-soft p-4 md:p-5">
-          <p key={aktif.id} className="anim-rise text-sm font-semibold text-on-primary-soft">
+        <div className="flex min-h-[176px] flex-col rounded-lg bg-primary-soft p-4 md:p-5">
+          <p key={aktif.id} className="anim-rise line-clamp-1 min-h-5 text-sm font-semibold text-on-primary-soft">
             {aktif.nama}
           </p>
           <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
@@ -148,12 +150,12 @@ export function QuickBook({ paket }: { paket: QuickPaket[] }) {
               <IconClock size={14} /> {aktif.durasi}
             </span>
           </div>
-          <ButtonLink href={`/pesan?paket=${aktif.id}`} size="lg" arrow className="mt-4 w-full">
+          <ButtonLink href={`/pesan?paket=${aktif.id}`} size="lg" arrow className="mt-auto w-full">
             Pesan paket ini
           </ButtonLink>
         </div>
       ) : (
-        <p className="rounded-lg bg-surface-2 p-4 text-center text-sm text-muted">Belum ada paket untuk pilihan ini.</p>
+        <p className="flex min-h-[176px] items-center justify-center rounded-lg bg-surface-2 p-4 text-center text-sm text-muted">Belum ada paket untuk pilihan ini.</p>
       )}
     </div>
   );
