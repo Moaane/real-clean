@@ -4,11 +4,13 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getPaketAktif, JENIS_PROPERTI, durasiLabel } from "@/lib/katalog";
-import { getSlotTersedia, nowWib, parseDate } from "@/lib/availability";
+import { addDays, cariTanggalTerdekat, getSlotRange, nowWib, parseDate } from "@/lib/availability";
 import { rp, tanggalId } from "@/lib/booking-status";
+import { durasiMulai, hargaMulai, hitungPaket, kamarAwal, rentangKamar } from "@/lib/harga";
 import { cn } from "@/lib/cn";
 import { PesanForm } from "@/components/pesan/pesan-form";
-import { EmptyState, Skeleton, Stepper } from "@/components/ui";
+import { KamarStepper } from "@/components/pesan/kamar-stepper";
+import { Alert, EmptyState, Skeleton, Stepper } from "@/components/ui";
 import { ChipLink } from "@/components/ui/chip-link";
 import { IconCheck, IconClock, IconSparkle } from "@/components/icons";
 
@@ -16,6 +18,7 @@ export const metadata: Metadata = { title: "Pesan layanan" };
 
 type Params = Promise<{
   paket?: string;
+  kamar?: string;
   tanggal?: string;
   jam_mulai?: string;
   jenis?: string;
@@ -24,12 +27,6 @@ type Params = Promise<{
 }>;
 
 const HARI_RANGE = 14;
-
-function addDays(date: string, n: number) {
-  const d = new Date(`${date}T00:00:00.000Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
 
 const q = (o: Record<string, string | undefined>) => {
   const s = new URLSearchParams(Object.entries(o).filter(([, v]) => v) as [string, string][]).toString();
@@ -45,23 +42,28 @@ async function Langkah({ searchParams }: { searchParams: Params }) {
   const today = nowWib().date;
   const tanggal = sp.tanggal && parseDate(sp.tanggal) && sp.tanggal >= today ? sp.tanggal : undefined;
 
-  // Ketersediaan 14 hari ke depan (hanya perlu saat sudah memilih paket).
-  const days = paket
-    ? await Promise.all(
-        Array.from({ length: HARI_RANGE }, async (_, i) => {
-          const date = addDays(today, i);
-          const r = await getSlotTersedia(date);
-          return { date, slots: r.ok ? r.slots : [] };
-        }),
-      )
-    : [];
+  // Jumlah kamar dipilih pelanggan (default min_kamar). Total dan durasi di sini hanya
+  // tampilan; server menghitung ulang dan memvalidasi saat booking dibuat.
+  const kamar = paket ? kamarAwal(paket, sp.kamar) : 0;
+  const hasil = paket ? hitungPaket(paket, kamar) : null;
+  const kamarStr = paket ? String(kamar) : undefined;
+
+  // Ketersediaan 14 hari ke depan (hanya perlu saat sudah memilih paket). Slot yang tidak muat
+  // (penuh atau lebih pendek dari durasi) tetap ada dengan `alasan`; `muat` menentukan bisa dipilih.
+  const days =
+    paket && hasil
+      ? [...(await getSlotRange(today, HARI_RANGE, hasil.durasi))].map(([date, slots]) => ({ date, slots }))
+      : [];
   const hari = days.find((d) => d.date === tanggal);
-  const jam = hari?.slots.find((s) => s.jam_mulai === sp.jam_mulai);
+  const jam = hari?.slots.find((s) => s.jam_mulai === sp.jam_mulai && s.muat);
+  // Tanggal terpilih tidak punya slot yang muat: tawarkan tanggal terdekat sesudahnya untuk jumlah kamar ini.
+  const terdekat =
+    hasil && hari && !hari.slots.some((s) => s.muat) ? await cariTanggalTerdekat(addDays(hari.date, 1), hasil.durasi) : null;
 
   const step = !paket ? 1 : !hari || !jam ? 2 : 3;
   const steps = [
     { label: "Layanan", href: "/pesan" },
-    { label: "Jadwal", href: q({ paket: sp.paket }) },
+    { label: "Jadwal", href: q({ paket: sp.paket, kamar: kamarStr }) },
     { label: "Detail" },
     { label: "Bayar" },
   ];
@@ -104,10 +106,13 @@ async function Langkah({ searchParams }: { searchParams: Params }) {
                           <span className="block font-semibold">{p.nama_layanan}</span>
                           <span className="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
                             <IconClock size={16} />
-                            {durasiLabel(p.durasi_menit)} · {JENIS_PROPERTI[p.jenis_properti].label}
+                            {JENIS_PROPERTI[p.jenis_properti].label} · {rentangKamar(p)} · mulai {durasiLabel(durasiMulai(p))}
                           </span>
                         </span>
-                        <span className="shrink-0 font-bold tabular-nums">{rp(p.harga)}</span>
+                        <span className="shrink-0 text-right font-bold tabular-nums">
+                          <span className="block text-xs font-medium text-muted">mulai</span>
+                          {rp(hargaMulai(p))}
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -116,17 +121,36 @@ async function Langkah({ searchParams }: { searchParams: Params }) {
           </section>
         )}
 
-        {paket && step === 2 && (
+        {paket && hasil && step === 2 && (
           <section aria-labelledby="h-jadwal" className="flex flex-col gap-6">
             <div>
               <h1 id="h-jadwal" className="text-[28px] font-bold leading-tight tracking-tight">
                 Pilih <span className="text-primary">jadwal</span>
               </h1>
               <p className="mt-1 text-sm text-muted">
-                {paket.nama_layanan} · {rp(paket.harga)} ·{" "}
+                {paket.nama_layanan} ·{" "}
                 <Link href="/pesan" className="font-semibold text-primary-ink underline-offset-2 hover:underline">
                   Ganti paket
                 </Link>
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 md:p-5">
+              <h2 className="text-sm font-semibold">Jumlah kamar</h2>
+              <KamarStepper
+                min={paket.min_kamar}
+                max={paket.max_kamar}
+                value={kamar}
+                base={Object.fromEntries(
+                  Object.entries({ paket: sp.paket, tanggal, alamat: sp.alamat, catatan: sp.catatan }).filter(([, v]) => v),
+                ) as Record<string, string>}
+              />
+              <p className="text-sm text-muted">
+                {rp(paket.harga_dasar)} biaya dasar + {kamar} × {rp(paket.harga_per_kamar)} per kamar
+              </p>
+              <p className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border pt-3">
+                <span className="text-sm text-muted">Estimasi durasi {durasiLabel(hasil.durasi)}</span>
+                <span className="text-xl font-bold tabular-nums">{rp(hasil.total)}</span>
               </p>
             </div>
 
@@ -134,7 +158,7 @@ async function Langkah({ searchParams }: { searchParams: Params }) {
               <h2 className="mb-3 text-sm font-semibold">Tanggal</h2>
               <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden">
                 {days.map((d) => {
-                  const full = d.slots.length === 0;
+                  const full = !d.slots.some((s) => s.muat);
                   const date = new Date(`${d.date}T00:00:00.000Z`);
                   const active = d.date === tanggal;
                   const inner = (
@@ -160,7 +184,7 @@ async function Langkah({ searchParams }: { searchParams: Params }) {
                         </span>
                       ) : (
                         <Link
-                          href={q({ paket: sp.paket, tanggal: d.date })}
+                          href={q({ paket: sp.paket, kamar: kamarStr, tanggal: d.date })}
                           scroll={false}
                           aria-current={active ? "date" : undefined}
                           className={cn(
@@ -185,31 +209,68 @@ async function Langkah({ searchParams }: { searchParams: Params }) {
               {!hari ? (
                 <p className="text-sm text-muted">Pilih tanggal terlebih dahulu untuk melihat jam yang tersedia.</p>
               ) : (
-                <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                  {hari.slots.map((s) => (
-                    <li key={`${s.jam_mulai}-${s.jam_selesai}`}>
-                      <Link
-                        href={q({
-                          paket: sp.paket,
-                          tanggal: hari.date,
-                          jam_mulai: s.jam_mulai,
-                          alamat: sp.alamat,
-                          catatan: sp.catatan,
-                        })}
-                        className="flex min-h-14 flex-col items-center justify-center rounded-pill border border-border-strong bg-surface px-3 text-[15px] font-semibold transition duration-150 hover:bg-surface-2"
-                      >
-                        {s.jam_mulai}–{s.jam_selesai}
-                        <span className="text-xs font-normal text-muted">sisa {s.sisa}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  {!hari.slots.some((s) => s.muat) && (
+                    <Alert tone="warn" title="Tidak ada jam yang muat di tanggal ini" className="mb-3">
+                      Tidak ada slot yang cukup panjang dan masih tersedia untuk {kamar} kamar (estimasi {durasiLabel(hasil.durasi)}).{" "}
+                      {terdekat ? (
+                        <>
+                          Tanggal terdekat yang tersedia:{" "}
+                          <Link
+                            href={q({ paket: sp.paket, kamar: kamarStr, tanggal: terdekat, alamat: sp.alamat, catatan: sp.catatan })}
+                            scroll={false}
+                            className="font-semibold underline underline-offset-2"
+                          >
+                            {tanggalId(new Date(`${terdekat}T00:00:00.000Z`))}
+                          </Link>
+                          .
+                        </>
+                      ) : (
+                        "Belum ada tanggal yang tersedia dalam 60 hari ke depan. Kurangi jumlah kamar atau hubungi admin."
+                      )}
+                    </Alert>
+                  )}
+                  {hari.slots.length === 0 ? (
+                    <p className="text-sm text-muted">Tidak ada jam operasional pada tanggal ini.</p>
+                  ) : (
+                    <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                      {hari.slots.map((s) => (
+                        <li key={`${s.jam_mulai}-${s.jam_selesai}`}>
+                          {s.muat ? (
+                            <Link
+                              href={q({
+                                paket: sp.paket,
+                                kamar: kamarStr,
+                                tanggal: hari.date,
+                                jam_mulai: s.jam_mulai,
+                                alamat: sp.alamat,
+                                catatan: sp.catatan,
+                              })}
+                              className="flex min-h-14 flex-col items-center justify-center rounded-pill border border-border-strong bg-surface px-3 text-[15px] font-semibold transition duration-150 hover:bg-surface-2"
+                            >
+                              {s.jam_mulai}–{s.jam_selesai}
+                              <span className="text-xs font-normal text-muted">sisa {s.sisa}</span>
+                            </Link>
+                          ) : (
+                            <span
+                              aria-disabled="true"
+                              className="flex min-h-14 cursor-not-allowed flex-col items-center justify-center rounded-pill border border-border bg-surface-2 px-3 text-center text-[15px] font-semibold text-muted"
+                            >
+                              {s.jam_mulai}–{s.jam_selesai}
+                              <span className="text-xs font-normal">{s.alasan}</span>
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
               )}
             </div>
           </section>
         )}
 
-        {paket && hari && jam && step === 3 && (
+        {paket && hasil && hari && jam && step === 3 && (
           <section aria-labelledby="h-detail" className="flex flex-col gap-6">
             <div>
               <h1 id="h-detail" className="text-[28px] font-bold leading-tight tracking-tight">
@@ -217,9 +278,9 @@ async function Langkah({ searchParams }: { searchParams: Params }) {
               </h1>
               <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted">
                 <IconCheck size={16} className="text-ok" />
-                {paket.nama_layanan}, {tanggalId(new Date(`${hari.date}T00:00:00.000Z`))}, {jam.jam_mulai}
+                {paket.nama_layanan}, {kamar} kamar, {tanggalId(new Date(`${hari.date}T00:00:00.000Z`))}, {jam.jam_mulai}
                 <Link
-                  href={q({ paket: sp.paket, tanggal: hari.date })}
+                  href={q({ paket: sp.paket, kamar: kamarStr, tanggal: hari.date })}
                   className="font-semibold text-primary-ink underline-offset-2 hover:underline"
                 >
                   Ubah jadwal
@@ -229,11 +290,14 @@ async function Langkah({ searchParams }: { searchParams: Params }) {
             <PesanForm
               paketId={paket.id_layanan}
               paketNama={paket.nama_layanan}
+              kamar={kamar}
+              rincian={`${rp(paket.harga_dasar)} dasar + ${kamar} × ${rp(paket.harga_per_kamar)}`}
+              durasiLabel={durasiLabel(hasil.durasi)}
               tanggal={hari.date}
               jamMulai={jam.jam_mulai}
               tanggalLabel={tanggalId(new Date(`${hari.date}T00:00:00.000Z`))}
               jamLabel={`${jam.jam_mulai}–${jam.jam_selesai} WIB`}
-              totalLabel={rp(paket.harga)}
+              totalLabel={rp(hasil.total)}
               defaultAlamat={sp.alamat}
               defaultCatatan={sp.catatan}
               loggedIn={!!user}

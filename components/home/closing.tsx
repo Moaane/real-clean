@@ -1,6 +1,5 @@
 import { connection } from "next/server";
-import { durasiLabel, getPaketAktif, TINGKAT_DETAIL } from "@/lib/katalog";
-import { rp } from "@/lib/booking-status";
+import { getPaketAktif, TINGKAT_DETAIL } from "@/lib/katalog";
 import { ButtonLink } from "@/components/ui";
 import { IconCheck } from "@/components/icons";
 import { QuickBook, type QuickPaket } from "./quick-book";
@@ -15,12 +14,14 @@ export async function Closing() {
     id: p.id_layanan,
     nama: p.nama_layanan,
     jenis: p.jenis_properti,
-    kamar: p.jumlah_kamar,
     tingkatKey: p.tingkat_detail,
     tingkat: TINGKAT_DETAIL[p.tingkat_detail],
-    durasi: durasiLabel(p.durasi_menit),
-    harga: p.harga,
-    hargaLabel: rp(p.harga),
+    hargaDasar: p.harga_dasar,
+    hargaPerKamar: p.harga_per_kamar,
+    durasiDasar: p.durasi_dasar_menit,
+    durasiPerKamar: p.durasi_per_kamar_menit,
+    minKamar: p.min_kamar,
+    maxKamar: p.max_kamar,
   }));
 
   return (

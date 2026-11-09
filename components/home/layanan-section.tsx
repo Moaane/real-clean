@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { getPaketAktif } from "@/lib/katalog";
 import { rp } from "@/lib/booking-status";
+import { hargaMulai } from "@/lib/harga";
 import { ButtonLink, EmptyState, SectionHeading } from "@/components/ui";
 import { IconSparkle } from "@/components/icons";
 import { fotoAda } from "@/components/ui/photo";
@@ -14,7 +15,7 @@ export async function LayananSection() {
     id: p.id_layanan,
     nama: p.nama_layanan,
     jenis: p.jenis_properti,
-    hargaLabel: rp(p.harga),
+    hargaLabel: rp(hargaMulai(p)),
     adaFoto: fotoAda(`paket-${p.jenis_properti}`),
   }));
 

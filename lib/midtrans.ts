@@ -32,10 +32,13 @@ export function clientKey() {
   return key
 }
 
+export type SnapItem = { id: string; name: string; price: number; quantity: number }
+
 export type SnapInput = {
   orderId: string
   grossAmount: number // rupiah, always computed on the server
-  itemName: string
+  /** Sum of price × quantity MUST equal grossAmount exactly. */
+  items: SnapItem[]
   customer: { nama: string; email: string; hp?: string | null }
   expiryMinutes: number
   finishUrl: string
@@ -51,6 +54,10 @@ function startTime(d: Date) {
 }
 
 export async function createSnapToken(input: SnapInput): Promise<string> {
+  const sum = input.items.reduce((n, i) => n + i.price * i.quantity, 0)
+  if (sum !== input.grossAmount) {
+    throw new Error(`item_details (${sum}) tidak sama dengan gross_amount (${input.grossAmount})`)
+  }
   console.log(serverKey())
   const snap = new midtransClient.Snap({
     isProduction: false,
@@ -62,14 +69,7 @@ export async function createSnapToken(input: SnapInput): Promise<string> {
         order_id: input.orderId,
         gross_amount: input.grossAmount,
       },
-      item_details: [
-        {
-          id: "layanan",
-          name: input.itemName.slice(0, 50),
-          price: input.grossAmount,
-          quantity: 1,
-        },
-      ],
+      item_details: input.items.map((i) => ({ ...i, name: i.name.slice(0, 50) })),
       customer_details: {
         first_name: input.customer.nama,
         email: input.customer.email,

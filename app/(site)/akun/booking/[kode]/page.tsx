@@ -108,7 +108,8 @@ async function Detail({ params }: { params: Promise<{ kode: string }> }) {
             <h2 className="mb-4 text-lg font-semibold">Ringkasan</h2>
             <dl className="divide-y divide-border">
               <Baris label="Paket">{b.layanan.nama_layanan}</Baris>
-              <Baris label="Durasi">{durasiLabel(b.layanan.durasi_menit)}</Baris>
+              <Baris label="Jumlah kamar">{b.jumlah_kamar} kamar</Baris>
+              <Baris label="Estimasi durasi">{durasiLabel(b.durasi_menit)}</Baris>
               <Baris label="Jadwal">
                 {tanggalId(b.slot.tanggal)}, {b.slot.jam_mulai}–{b.slot.jam_selesai} WIB
               </Baris>

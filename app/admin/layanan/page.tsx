@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { deleteLayanan } from "@/lib/actions/master";
 import { durasiLabel, JENIS_PROPERTI, TINGKAT_DETAIL } from "@/lib/katalog";
 import { rp } from "@/lib/booking-status";
+import { rentangKamar } from "@/lib/harga";
 import { Alert, EmptyState } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { buttonClass } from "@/components/ui/button";
@@ -16,7 +17,7 @@ export const metadata: Metadata = { title: "Layanan" };
 async function Daftar({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   await dynamic();
   const { error } = await searchParams;
-  const rows = await prisma.layanan.findMany({ orderBy: [{ jenis_properti: "asc" }, { jumlah_kamar: "asc" }, { harga: "asc" }] });
+  const rows = await prisma.layanan.findMany({ orderBy: [{ jenis_properti: "asc" }, { tingkat_detail: "asc" }] });
   return (
     <>
       {error === "dipakai" && (
@@ -34,6 +35,7 @@ async function Daftar({ searchParams }: { searchParams: Promise<{ error?: string
                 <th className={th}>Paket</th>
                 <th className={th}>Jenis</th>
                 <th className={th}>Tingkat</th>
+                <th className={th}>Kamar</th>
                 <th className={th}>Durasi</th>
                 <th className={th}>Harga</th>
                 <th className={th}>Status</th>
@@ -44,10 +46,15 @@ async function Daftar({ searchParams }: { searchParams: Promise<{ error?: string
               {rows.map((l) => (
                 <tr key={l.id_layanan} className="transition duration-150 hover:bg-surface-2/60">
                   <td className="py-3 pr-4 font-semibold">{l.nama_layanan}</td>
-                  <td className="py-3 pr-4">{JENIS_PROPERTI[l.jenis_properti].label} · {l.jumlah_kamar} kamar</td>
+                  <td className="py-3 pr-4">{JENIS_PROPERTI[l.jenis_properti].label}</td>
                   <td className="py-3 pr-4">{TINGKAT_DETAIL[l.tingkat_detail]}</td>
-                  <td className="py-3 pr-4">{durasiLabel(l.durasi_menit)}</td>
-                  <td className="py-3 pr-4 font-semibold tabular-nums">{rp(l.harga)}</td>
+                  <td className="py-3 pr-4 tabular-nums">{rentangKamar(l)}</td>
+                  <td className="py-3 pr-4 tabular-nums">
+                    {durasiLabel(l.durasi_dasar_menit) || "0 menit"} + {durasiLabel(l.durasi_per_kamar_menit) || "0 menit"}/kamar
+                  </td>
+                  <td className="py-3 pr-4 font-semibold tabular-nums">
+                    {rp(l.harga_dasar)} + {rp(l.harga_per_kamar)}/kamar
+                  </td>
                   <td className="py-3 pr-4"><ActiveDot aktif={l.status_aktif} /></td>
                   <td className="py-3">
                     <div className="flex justify-end gap-2">

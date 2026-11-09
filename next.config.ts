@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
   },
-  allowedDevOrigins: ["departure-wine-penalties-was.trycloudflare.com"],
+  allowedDevOrigins: ["https://virtual-buses-seasons-slim.trycloudflare.com"],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

@@ -7,17 +7,12 @@ import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { requireRole } from "@/lib/auth";
 import { formValues, type FormState } from "@/lib/form-state";
+import { durasiLabel, panjangSlotMenit } from "@/lib/harga";
 import { prisma } from "@/lib/prisma";
 
 // Every action re-checks the role: server actions are reachable by direct POST.
 
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
-const rupiah = (label: string) =>
-  z.coerce
-    .number({ error: `${label} harus berupa angka` })
-    .int(`${label} harus bilangan bulat`)
-    .min(1, `${label} harus lebih dari 0`)
-    .max(1_000_000_000, `${label} terlalu besar`);
 const checkbox = (formData: FormData, name: string) => formData.get(name) === "on";
 
 function fail(error: z.ZodError, formData: FormData): FormState {
@@ -42,22 +37,74 @@ function parseId(id: number) {
 
 /* ---------------------------------- Layanan --------------------------------- */
 
-const layananSchema = z.object({
-  nama_layanan: z.string().trim().min(2, "Nama minimal 2 karakter").max(100),
-  deskripsi: z.string().trim().max(2000).optional(),
-  jenis_properti: z.enum(["rumah", "kos"], { error: "Jenis properti tidak valid" }),
-  jumlah_kamar: z.coerce
-    .number({ error: "Jumlah kamar harus berupa angka" })
-    .int("Jumlah kamar harus bilangan bulat")
-    .min(1, "Jumlah kamar minimal 1")
-    .max(100, "Jumlah kamar maksimal 100"),
-  tingkat_detail: z.enum(["reguler", "detail", "deep"], { error: "Tingkat detail tidak valid" }),
-  harga: rupiah("Harga"),
-  durasi_menit: z.coerce
-    .number({ error: "Durasi harus berupa angka" })
-    .int("Durasi harus bilangan bulat")
-    .min(15, "Durasi minimal 15 menit")
-    .max(1440, "Durasi maksimal 1440 menit"),
+const nonNegatif = (label: string, max: number) =>
+  z.coerce
+    .number({ error: `${label} harus berupa angka` })
+    .int(`${label} harus bilangan bulat`)
+    .min(0, `${label} tidak boleh negatif`)
+    .max(max, `${label} terlalu besar`);
+
+const jumlahKamar = (label: string) =>
+  z.coerce
+    .number({ error: `${label} harus berupa angka` })
+    .int(`${label} harus bilangan bulat`)
+    .min(1, `${label} minimal 1`)
+    .max(200, `${label} maksimal 200`);
+
+// Harga per kamar (SPEC 1): total = harga_dasar + harga_per_kamar × jumlah_kamar.
+const layananSchema = z
+  .object({
+    nama_layanan: z.string().trim().min(2, "Nama minimal 2 karakter").max(100),
+    deskripsi: z.string().trim().max(2000).optional(),
+    jenis_properti: z.enum(["rumah", "kos"], { error: "Jenis properti tidak valid" }),
+    tingkat_detail: z.enum(["reguler", "detail", "deep"], { error: "Tingkat detail tidak valid" }),
+    harga_dasar: nonNegatif("Harga dasar", 100_000_000),
+    harga_per_kamar: nonNegatif("Harga per kamar", 10_000_000),
+    durasi_dasar_menit: nonNegatif("Durasi dasar", 1440),
+    durasi_per_kamar_menit: nonNegatif("Durasi per kamar", 1440),
+    min_kamar: jumlahKamar("Kamar minimal"),
+    max_kamar: jumlahKamar("Kamar maksimal"),
+  })
+  .refine((v) => v.max_kamar >= v.min_kamar, {
+    path: ["max_kamar"],
+    message: "Kamar maksimal tidak boleh kurang dari kamar minimal",
+  })
+  .refine((v) => v.harga_dasar + v.harga_per_kamar * v.min_kamar > 0, {
+    path: ["harga_dasar"],
+    message: "Total harga untuk kamar minimal harus lebih dari 0",
+  })
+  .refine((v) => v.durasi_dasar_menit + v.durasi_per_kamar_menit * v.min_kamar >= 15, {
+    path: ["durasi_dasar_menit"],
+    message: "Durasi untuk kamar minimal paling sedikit 15 menit",
+  });
+
+/**
+ * A package whose duration at max_kamar is longer than every active operating
+ * slot could never be booked at that size, so it is rejected here (SPEC 5.1).
+ * Skipped while no operating hour is active (nothing to compare against yet).
+ */
+async function cekDurasiMuatSlot(
+  d: { durasi_dasar_menit: number; durasi_per_kamar_menit: number; max_kamar: number },
+  formData: FormData,
+): Promise<FormState | null> {
+  const jam = await prisma.jamOperasional.findMany({ where: { aktif: true }, select: { jam_mulai: true, jam_selesai: true } });
+  if (jam.length === 0) return null;
+  const terpanjang = Math.max(...jam.map((j) => panjangSlotMenit(j.jam_mulai, j.jam_selesai)));
+  const durasi = d.durasi_dasar_menit + d.durasi_per_kamar_menit * d.max_kamar;
+  if (durasi <= terpanjang) return null;
+  return {
+    fieldErrors: {
+      max_kamar: [
+        `Pada ${d.max_kamar} kamar durasinya ${durasiLabel(durasi)}, melebihi slot jam operasional aktif terpanjang (${durasiLabel(terpanjang)}). Kurangi kamar maksimal atau durasi per kamar.`,
+      ],
+    },
+    values: formValues(formData),
+  };
+}
+
+const paketSudahAda = (formData: FormData): FormState => ({
+  fieldErrors: { tingkat_detail: ["Paket untuk jenis properti dan tingkat detail ini sudah ada. Ubah paket yang ada."] },
+  values: formValues(formData),
 });
 
 function layananData(formData: FormData) {
@@ -65,10 +112,13 @@ function layananData(formData: FormData) {
     nama_layanan: String(formData.get("nama_layanan") ?? ""),
     deskripsi: String(formData.get("deskripsi") ?? ""),
     jenis_properti: String(formData.get("jenis_properti") ?? ""),
-    jumlah_kamar: String(formData.get("jumlah_kamar") ?? ""),
     tingkat_detail: String(formData.get("tingkat_detail") ?? ""),
-    harga: String(formData.get("harga") ?? ""),
-    durasi_menit: String(formData.get("durasi_menit") ?? ""),
+    harga_dasar: String(formData.get("harga_dasar") ?? ""),
+    harga_per_kamar: String(formData.get("harga_per_kamar") ?? ""),
+    durasi_dasar_menit: String(formData.get("durasi_dasar_menit") ?? ""),
+    durasi_per_kamar_menit: String(formData.get("durasi_per_kamar_menit") ?? ""),
+    min_kamar: String(formData.get("min_kamar") ?? ""),
+    max_kamar: String(formData.get("max_kamar") ?? ""),
   });
   if (!parsed.success) return { error: fail(parsed.error, formData) } as const;
   return {
@@ -87,7 +137,14 @@ export async function createLayanan(
   await requireRole("admin");
   const r = layananData(formData);
   if (r.error) return r.error;
-  await prisma.layanan.create({ data: r.data });
+  const kebesaran = await cekDurasiMuatSlot(r.data, formData);
+  if (kebesaran) return kebesaran;
+  try {
+    await prisma.layanan.create({ data: r.data });
+  } catch (e) {
+    if (isUniqueViolation(e)) return paketSudahAda(formData);
+    throw e;
+  }
   revalidatePath("/admin/layanan");
   redirect("/admin/layanan");
 }
@@ -100,7 +157,14 @@ export async function updateLayanan(
   await requireRole("admin");
   const r = layananData(formData);
   if (r.error) return r.error;
-  await prisma.layanan.update({ where: { id_layanan: parseId(id) }, data: r.data });
+  const kebesaran = await cekDurasiMuatSlot(r.data, formData);
+  if (kebesaran) return kebesaran;
+  try {
+    await prisma.layanan.update({ where: { id_layanan: parseId(id) }, data: r.data });
+  } catch (e) {
+    if (isUniqueViolation(e)) return paketSudahAda(formData);
+    throw e;
+  }
   revalidatePath("/admin/layanan");
   redirect("/admin/layanan");
 }

@@ -227,3 +227,4 @@ export function LogoMark({ size = 32, ...props }: IconProps) {
     </svg>
   );
 }
+export const IconMinus = make(<path d="M5 12h14" />);

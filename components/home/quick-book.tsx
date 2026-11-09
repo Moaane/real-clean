@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
+import { durasiLabel, hitungPaket } from "@/lib/harga";
+import { rp } from "@/lib/booking-status";
 import { ButtonLink } from "@/components/ui";
 import { IconBuilding, IconClock, IconHome } from "@/components/icons";
 
@@ -9,12 +11,14 @@ export type QuickPaket = {
   id: number;
   nama: string;
   jenis: "rumah" | "kos";
-  kamar: number;
   tingkatKey: string;
   tingkat: string;
-  durasi: string;
-  harga: number;
-  hargaLabel: string;
+  hargaDasar: number;
+  hargaPerKamar: number;
+  durasiDasar: number;
+  durasiPerKamar: number;
+  minKamar: number;
+  maxKamar: number;
 };
 
 const JENIS = [
@@ -61,7 +65,10 @@ function Seg<T extends string>({
   );
 }
 
-/** Konfigurator cepat: jenis, tingkat, jumlah kamar → paket + harga langsung. */
+/**
+ * Konfigurator cepat: jenis, tingkat, jumlah kamar, lalu harga langsung.
+ * Harga dan durasi di sini hanya tampilan; server menghitung ulang saat booking.
+ */
 export function QuickBook({ paket }: { paket: QuickPaket[] }) {
   const jenisAda = JENIS.filter((j) => paket.some((p) => p.jenis === j.key));
   const [jenis, setJenis] = useState<"rumah" | "kos">(jenisAda[0]?.key ?? "rumah");
@@ -75,20 +82,23 @@ export function QuickBook({ paket }: { paket: QuickPaket[] }) {
   const [tingkatPilih, setTingkat] = useState<string>("");
   const tingkat = tingkatOpsi.some((t) => t.key === tingkatPilih) ? tingkatPilih : (tingkatOpsi[0]?.key ?? "");
 
-  const kandidat = useMemo(
-    () => {
-      // Satu paket per jumlah kamar (yang termurah) agar slider tidak berisi angka kembar.
-      const per = new Map<number, QuickPaket>();
-      for (const p of paket.filter((x) => x.jenis === jenis && x.tingkatKey === tingkat)) {
-        const cur = per.get(p.kamar);
-        if (!cur || p.harga < cur.harga) per.set(p.kamar, p);
-      }
-      return [...per.values()].sort((a, b) => a.kamar - b.kamar);
-    },
-    [paket, jenis, tingkat],
-  );
-  const [idx, setIdx] = useState(0);
-  const aktif = kandidat[Math.min(idx, kandidat.length - 1)];
+  // Satu paket per (jenis, tingkat); jumlah kamar dipilih bebas dalam min..max paket itu.
+  const aktif = paket.find((p) => p.jenis === jenis && p.tingkatKey === tingkat);
+  const [kamarPilih, setKamar] = useState(0);
+  const kamar = aktif ? Math.min(aktif.maxKamar, Math.max(aktif.minKamar, kamarPilih || aktif.minKamar)) : 0;
+  const hasil = aktif
+    ? hitungPaket(
+        {
+          harga_dasar: aktif.hargaDasar,
+          harga_per_kamar: aktif.hargaPerKamar,
+          durasi_dasar_menit: aktif.durasiDasar,
+          durasi_per_kamar_menit: aktif.durasiPerKamar,
+          min_kamar: aktif.minKamar,
+          max_kamar: aktif.maxKamar,
+        },
+        kamar,
+      )
+    : null;
 
   return (
     <div className="flex flex-col gap-5 rounded-xl border border-border bg-background p-5 md:p-7">
@@ -98,7 +108,7 @@ export function QuickBook({ paket }: { paket: QuickPaket[] }) {
         options={jenisAda.map((j) => ({ key: j.key, label: j.label, icon: j.icon }))}
         onChange={(v) => {
           setJenis(v);
-          setIdx(0);
+          setKamar(0);
         }}
       />
       <Seg
@@ -107,7 +117,7 @@ export function QuickBook({ paket }: { paket: QuickPaket[] }) {
         options={tingkatOpsi}
         onChange={(v) => {
           setTingkat(v);
-          setIdx(0);
+          setKamar(0);
         }}
       />
 
@@ -116,41 +126,40 @@ export function QuickBook({ paket }: { paket: QuickPaket[] }) {
         <label htmlFor="qb-kamar" className="mb-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted">
           Jumlah kamar
           <span className="text-base font-bold normal-case tracking-normal text-foreground tabular-nums">
-            {aktif ? `${aktif.kamar} kamar` : "-"}
+            {aktif ? `${kamar} kamar` : "-"}
           </span>
         </label>
         <input
           id="qb-kamar"
           type="range"
-          min={0}
-          max={Math.max(kandidat.length - 1, 1)}
+          min={aktif?.minKamar ?? 0}
+          max={aktif?.maxKamar ?? 1}
           step={1}
-          disabled={kandidat.length < 2}
-          value={Math.min(idx, Math.max(kandidat.length - 1, 0))}
-          onChange={(e) => setIdx(Number(e.target.value))}
+          disabled={!aktif || aktif.minKamar === aktif.maxKamar}
+          value={kamar}
+          onChange={(e) => setKamar(Number(e.target.value))}
           className="h-11 w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-50"
         />
         <div className="flex h-5 justify-between text-xs text-muted tabular-nums" aria-hidden="true">
-          {kandidat.map((k) => (
-            <span key={k.id}>{k.kamar}</span>
-          ))}
+          <span>{aktif?.minKamar}</span>
+          <span>{aktif?.maxKamar}</span>
         </div>
       </div>
 
-      {aktif ? (
+      {aktif && hasil ? (
         <div className="flex min-h-[176px] flex-col rounded-lg bg-primary-soft p-4 md:p-5">
           <p key={aktif.id} className="anim-rise line-clamp-1 min-h-5 text-sm font-semibold text-on-primary-soft">
             {aktif.nama}
           </p>
           <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
-            <p key={aktif.hargaLabel} className="anim-rise text-[32px] font-bold leading-none tracking-tight tabular-nums md:text-4xl">
-              {aktif.hargaLabel}
+            <p key={hasil.total} className="anim-rise text-[32px] font-bold leading-none tracking-tight tabular-nums md:text-4xl">
+              {rp(hasil.total)}
             </p>
             <span className="flex items-center gap-1.5 text-sm text-on-primary-soft">
-              <IconClock size={14} /> {aktif.durasi}
+              <IconClock size={14} /> {durasiLabel(hasil.durasi)}
             </span>
           </div>
-          <ButtonLink href={`/pesan?paket=${aktif.id}`} size="lg" arrow className="mt-auto w-full">
+          <ButtonLink href={`/pesan?paket=${aktif.id}&kamar=${kamar}`} size="lg" arrow className="mt-auto w-full">
             Pesan paket ini
           </ButtonLink>
         </div>

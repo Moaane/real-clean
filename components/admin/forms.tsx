@@ -54,10 +54,13 @@ export type LayananValues = {
   nama_layanan: string;
   deskripsi: string | null;
   jenis_properti: string;
-  jumlah_kamar: number;
   tingkat_detail: string;
-  harga: number;
-  durasi_menit: number;
+  harga_dasar: number;
+  harga_per_kamar: number;
+  durasi_dasar_menit: number;
+  durasi_per_kamar_menit: number;
+  min_kamar: number;
+  max_kamar: number;
   status_aktif: boolean;
 };
 
@@ -79,10 +82,18 @@ export function LayananForm({ action, initial: v, submitLabel }: { action: Actio
                 <option value="detail">Detail</option>
                 <option value="deep">Deep cleaning</option>
               </Select>
-              <Input name="jumlah_kamar" type="number" inputMode="numeric" min={1} max={100} label="Jumlah kamar" required defaultValue={val(s, "jumlah_kamar", v?.jumlah_kamar ?? 1)} error={fe.jumlah_kamar?.[0]} />
-              <Input name="durasi_menit" type="number" inputMode="numeric" min={15} step={15} label="Durasi (menit)" required defaultValue={val(s, "durasi_menit", v?.durasi_menit ?? 120)} error={fe.durasi_menit?.[0]} />
             </div>
-            <Input name="harga" type="number" inputMode="numeric" min={1} label="Harga (Rp)" required hint="Harga dihitung ulang di server dari data ini saat checkout." defaultValue={val(s, "harga", v?.harga)} error={fe.harga?.[0]} />
+            <p className="-mb-2 text-sm text-muted">
+              Hanya satu paket per kombinasi jenis properti dan tingkat detail. Total = harga dasar + harga per kamar × jumlah kamar, dihitung ulang di server saat checkout.
+            </p>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Input name="harga_dasar" type="number" inputMode="numeric" min={0} label="Harga dasar (Rp)" required defaultValue={val(s, "harga_dasar", v?.harga_dasar ?? 0)} error={fe.harga_dasar?.[0]} />
+              <Input name="harga_per_kamar" type="number" inputMode="numeric" min={0} label="Harga per kamar (Rp)" required defaultValue={val(s, "harga_per_kamar", v?.harga_per_kamar)} error={fe.harga_per_kamar?.[0]} />
+              <Input name="durasi_dasar_menit" type="number" inputMode="numeric" min={0} label="Durasi dasar (menit)" required defaultValue={val(s, "durasi_dasar_menit", v?.durasi_dasar_menit ?? 30)} error={fe.durasi_dasar_menit?.[0]} />
+              <Input name="durasi_per_kamar_menit" type="number" inputMode="numeric" min={0} label="Durasi per kamar (menit)" required defaultValue={val(s, "durasi_per_kamar_menit", v?.durasi_per_kamar_menit)} error={fe.durasi_per_kamar_menit?.[0]} />
+              <Input name="min_kamar" type="number" inputMode="numeric" min={1} max={200} label="Kamar minimal" required defaultValue={val(s, "min_kamar", v?.min_kamar ?? 1)} error={fe.min_kamar?.[0]} />
+              <Input name="max_kamar" type="number" inputMode="numeric" min={1} max={200} label="Kamar maksimal" required hint="Durasi total harus muat di slot jam operasional." defaultValue={val(s, "max_kamar", v?.max_kamar)} error={fe.max_kamar?.[0]} />
+            </div>
             <Textarea name="deskripsi" label="Deskripsi" defaultValue={val(s, "deskripsi", v?.deskripsi ?? "")} error={fe.deskripsi?.[0]} />
             <Toggle name="status_aktif" label="Tampilkan di katalog (aktif)" defaultChecked={checked(s, "status_aktif", v?.status_aktif ?? true)} />
           </>

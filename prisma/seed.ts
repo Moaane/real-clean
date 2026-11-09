@@ -35,17 +35,24 @@ async function main() {
     });
   }
 
+  // Satu paket per (jenis_properti, tingkat_detail). Harga/durasi: dasar + per kamar × jumlah kamar.
+  // Nilai sama dengan migrasi 20261110090000_harga_per_kamar. Durasi maksimum (max_kamar) muat di slot 2 jam.
   const layanan = [
-    { nama_layanan: "Rumah 2 Kamar - Reguler", deskripsi: "Sapu, pel, kamar mandi, dapur.", jenis_properti: "rumah", jumlah_kamar: 2, tingkat_detail: "reguler", harga: 150000, durasi_menit: 120 },
-    { nama_layanan: "Rumah 4 Kamar - Detail", deskripsi: "Termasuk kaca, sudut, dan perabot.", jenis_properti: "rumah", jumlah_kamar: 4, tingkat_detail: "detail", harga: 350000, durasi_menit: 240 },
-    { nama_layanan: "Rumah 3 Kamar - Deep Cleaning", deskripsi: "Pembersihan menyeluruh, noda membandel, dan kerak.", jenis_properti: "rumah", jumlah_kamar: 3, tingkat_detail: "deep", harga: 500000, durasi_menit: 300 },
-    { nama_layanan: "Kos 10 Kamar - Reguler", deskripsi: "Kamar, lorong, dan kamar mandi bersama.", jenis_properti: "kos", jumlah_kamar: 10, tingkat_detail: "reguler", harga: 450000, durasi_menit: 240 },
-    { nama_layanan: "Kos 20 Kamar - Detail", deskripsi: "Semua kamar, lorong, dapur, dan area umum secara detail.", jenis_properti: "kos", jumlah_kamar: 20, tingkat_detail: "detail", harga: 1100000, durasi_menit: 420 },
+    { nama_layanan: "Rumah - Reguler", deskripsi: "Sapu, pel, kamar mandi, dapur.", jenis_properti: "rumah", tingkat_detail: "reguler", harga_dasar: 50000, harga_per_kamar: 40000, durasi_dasar_menit: 30, durasi_per_kamar_menit: 15, min_kamar: 1, max_kamar: 6 },
+    { nama_layanan: "Rumah - Detail", deskripsi: "Termasuk kaca, sudut, dan perabot.", jenis_properti: "rumah", tingkat_detail: "detail", harga_dasar: 75000, harga_per_kamar: 60000, durasi_dasar_menit: 30, durasi_per_kamar_menit: 20, min_kamar: 1, max_kamar: 4 },
+    { nama_layanan: "Rumah - Deep Cleaning", deskripsi: "Pembersihan menyeluruh, noda membandel, dan kerak.", jenis_properti: "rumah", tingkat_detail: "deep", harga_dasar: 100000, harga_per_kamar: 90000, durasi_dasar_menit: 40, durasi_per_kamar_menit: 20, min_kamar: 1, max_kamar: 4 },
+    { nama_layanan: "Kos - Reguler", deskripsi: "Kamar, lorong, dan kamar mandi bersama.", jenis_properti: "kos", tingkat_detail: "reguler", harga_dasar: 50000, harga_per_kamar: 25000, durasi_dasar_menit: 20, durasi_per_kamar_menit: 8, min_kamar: 1, max_kamar: 12 },
+    { nama_layanan: "Kos - Detail", deskripsi: "Semua kamar, lorong, dapur, dan area umum secara detail.", jenis_properti: "kos", tingkat_detail: "detail", harga_dasar: 75000, harga_per_kamar: 40000, durasi_dasar_menit: 20, durasi_per_kamar_menit: 12, min_kamar: 1, max_kamar: 8 },
+    { nama_layanan: "Kos - Deep Cleaning", deskripsi: "Pembersihan menyeluruh semua kamar dan area bersama, termasuk noda membandel.", jenis_properti: "kos", tingkat_detail: "deep", harga_dasar: 100000, harga_per_kamar: 60000, durasi_dasar_menit: 24, durasi_per_kamar_menit: 16, min_kamar: 1, max_kamar: 6 },
   ] as const;
 
+  // update kosong: menjalankan seed ulang tidak menimpa perubahan harga dari admin.
   for (const l of layanan) {
-    const exists = await prisma.layanan.findFirst({ where: { nama_layanan: l.nama_layanan } });
-    if (!exists) await prisma.layanan.create({ data: l });
+    await prisma.layanan.upsert({
+      where: { jenis_properti_tingkat_detail: { jenis_properti: l.jenis_properti, tingkat_detail: l.tingkat_detail } },
+      update: {},
+      create: l,
+    });
   }
 
   const jam = [

@@ -1,12 +1,14 @@
 import { randomBytes } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
-import { nowWib, parseDate } from "./availability";
+import { jumlahKaryawanAktif, nowWib, parseDate } from "./availability";
+import { cekJumlahKamar, hitungPaket, panjangSlotMenit } from "./harga";
 import { kedaluwarsakanLewatBatas } from "./kedaluwarsa";
 import { prisma } from "./prisma";
 
 export type BookingInput = {
   userId: number;
   layananId: number;
+  jumlahKamar: number; // dipilih pelanggan; divalidasi terhadap min_kamar..max_kamar paket
   tanggal: string; // YYYY-MM-DD
   jamMulai: string; // HH:mm, must match an active jam_operasional
   alamat: string;
@@ -15,12 +17,12 @@ export type BookingInput = {
 
 export type BookingResult =
   | { ok: true; kode: string }
-  | { ok: false; error: string; field?: "tanggal" | "slot" | "layanan" };
+  | { ok: false; error: string; field?: "tanggal" | "slot" | "layanan" | "kamar" };
 
 class Rejected extends Error {
   constructor(
     message: string,
-    public field?: "tanggal" | "slot" | "layanan",
+    public field?: "tanggal" | "slot" | "layanan" | "kamar",
   ) {
     super(message);
   }
@@ -36,8 +38,9 @@ function newKode() {
 
 /**
  * Creates a MENUNGGU_PEMBAYARAN booking and reserves one unit of slot quota in
- * a single transaction. The price always comes from the database, never from
- * the caller. Quota is taken with a conditional UPDATE (terisi < kuota), which
+ * a single transaction. Price and duration are computed here from the package
+ * (harga_dasar + harga_per_kamar × jumlah_kamar); the caller only supplies the
+ * room count, which is range-checked. The booking keeps a snapshot of the prices. Quota is taken with a conditional UPDATE (terisi < effective capacity), which
  * Postgres serialises per row, so two requests can't both take the last slot.
  */
 export async function createBooking(input: BookingInput): Promise<BookingResult> {
@@ -62,10 +65,17 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
         });
         if (!layanan) throw new Rejected("Paket tidak tersedia", "layanan");
 
+        const salahKamar = cekJumlahKamar(layanan, input.jumlahKamar);
+        if (salahKamar) throw new Rejected(salahKamar, "kamar");
+        const { total, durasi } = hitungPaket(layanan, input.jumlahKamar);
+
         const jam = await tx.jamOperasional.findFirst({
           where: { jam_mulai: input.jamMulai, aktif: true },
         });
         if (!jam) throw new Rejected("Jam tidak tersedia", "slot");
+        if (durasi > panjangSlotMenit(jam.jam_mulai, jam.jam_selesai)) {
+          throw new Rejected("Durasi pengerjaan melebihi panjang slot. Kurangi jumlah kamar atau pilih jam lain", "slot");
+        }
 
         // Create the slot row on first use; a concurrent insert is ignored.
         await tx.jadwalSlot.createMany({
@@ -76,9 +86,11 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
           where: { tanggal_jam_mulai: { tanggal, jam_mulai: jam.jam_mulai } },
         });
 
-        // The template quota is the source of truth (see availability.ts).
+        // Effective capacity = min(template quota, active employees) (SPEC 5.1); the
+        // template is the source of truth (see availability.ts).
+        const kapasitas = Math.min(jam.kuota, await jumlahKaryawanAktif(tx));
         const taken = await tx.jadwalSlot.updateMany({
-          where: { id_slot: slot.id_slot, terisi: { lt: jam.kuota } },
+          where: { id_slot: slot.id_slot, terisi: { lt: kapasitas } },
           data: { terisi: { increment: 1 }, kuota: jam.kuota },
         });
         if (taken.count === 0) throw new Rejected("Slot sudah penuh, pilih jam lain", "slot");
@@ -91,7 +103,11 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
             id_slot: slot.id_slot,
             alamat_layanan: input.alamat,
             catatan: input.catatan || null,
-            total_harga: layanan.harga,
+            jumlah_kamar: input.jumlahKamar,
+            harga_dasar: layanan.harga_dasar,
+            harga_per_kamar: layanan.harga_per_kamar,
+            durasi_menit: durasi,
+            total_harga: total,
             batas_bayar: new Date(Date.now() + BAYAR_WINDOW_MS),
           },
           select: { kode_booking: true },

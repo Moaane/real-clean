@@ -79,18 +79,22 @@ model User {
 }
 
 model Layanan {
-  id_layanan     Int           @id @default(autoincrement())
-  nama_layanan   String        @db.VarChar(100)
-  deskripsi      String?
-  jenis_properti JenisProperti
-  jumlah_kamar   Int
-  tingkat_detail TingkatDetail
-  harga          Int
-  durasi_menit   Int
-  status_aktif   Boolean       @default(true)
+  id_layanan             Int           @id @default(autoincrement())
+  nama_layanan           String        @db.VarChar(100)
+  deskripsi              String?
+  jenis_properti         JenisProperti
+  tingkat_detail         TingkatDetail
+  harga_dasar            Int
+  harga_per_kamar        Int
+  durasi_dasar_menit     Int
+  durasi_per_kamar_menit Int
+  min_kamar              Int           @default(1)
+  max_kamar              Int
+  status_aktif           Boolean       @default(true)
 
   booking Booking[]
 
+  @@unique([jenis_properti, tingkat_detail])
   @@map("layanan")
 }
 
@@ -126,6 +130,11 @@ model Booking {
   id_layanan        Int
   id_slot           Int
   alamat_layanan    String
+  jumlah_kamar      Int
+  // Snapshot saat booking dibuat: perubahan harga paket tidak memengaruhi booking lama.
+  harga_dasar       Int
+  harga_per_kamar   Int
+  durasi_menit      Int
   total_harga       Int
   status            StatusBooking @default(MENUNGGU_PEMBAYARAN)
   batas_bayar       DateTime

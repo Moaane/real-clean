@@ -61,17 +61,33 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 **Cara tes**: lewat tunnel (ngrok/cloudflared) dan simulator sandbox. Signature palsu ditolak 403 tanpa mengubah status. Pembayaran sukses menjadi `DIBAYAR`. Notifikasi yang sama dikirim dua kali hasilnya tetap satu perubahan. Booking tidak dibayar menjadi `KEDALUWARSA` dan kuota kembali.
 
 ## M7. Notifikasi email
-- [ ] Setujui `nodemailer` dan konfigurasi SMTP (Mailtrap) di `.env`
-- [ ] Email invoice + kode booking saat `DIBAYAR`
+- [x] Setujui `nodemailer` dan konfigurasi SMTP (Mailtrap) di `.env`
+- [x] Email invoice + kode booking saat `DIBAYAR`
 - [ ] Email saat `SELESAI`, pembatalan ditolak, dan refund sukses (dipasang bertahap pada milestone terkait)
-- [ ] Gagal kirim hanya dicatat di log
+- [x] Gagal kirim hanya dicatat di log
 
 **Cara tes**: pembayaran sandbox sukses menghasilkan satu email di Mailtrap berisi kode booking dan total yang benar. Dengan SMTP dimatikan, status booking tetap berubah.
 
+## M8a. Refactor harga per kamar
+- [x] SPEC diperbarui (bagian 1, 3.1, 6, 9, 12): satu paket per jenis properti + tingkat detail, jumlah kamar dipilih pelanggan
+- [x] Skema: `layanan` (harga_dasar, harga_per_kamar, durasi_dasar_menit, durasi_per_kamar_menit, min_kamar, max_kamar, unik per jenis + tingkat), `booking` (jumlah_kamar + snapshot harga/durasi). Migrasi mempertahankan data lama
+- [x] Seed: 6 paket (rumah/kos × reguler/detail/deep), aman dijalankan dua kali
+- [ ] Admin CRUD paket: field baru + validasi (harga tidak negatif, min_kamar >= 1, max_kamar >= min_kamar)
+- [ ] Katalog menampilkan "mulai Rp X" (harga untuk min_kamar)
+- [ ] Form booking: pilih paket lalu jumlah kamar, total dan estimasi durasi tampil, dihitung ulang di server
+- [x] Server: validasi min..max kamar, tolak bila durasi melebihi panjang slot, simpan snapshot
+- [x] Midtrans: `item_details` = biaya dasar (qty 1) + per kamar (qty jumlah_kamar), jumlahnya sama dengan `gross_amount`
+- [ ] Detail booking (pelanggan, admin) menampilkan jumlah kamar
+- [x] Kapasitas efektif slot = min(kuota jam operasional, karyawan aktif), dipakai di ketersediaan dan checkout
+- [ ] Form booking: slot yang tidak muat (penuh atau kurang panjang) nonaktif beserta alasannya, tanggal terdekat bila satu tanggal tidak punya slot, teks "Lebih dari X kamar? Hubungi admin" di batas atas
+- [ ] Form paket admin menolak durasi pada `max_kamar` yang melebihi slot aktif terpanjang
+
+**Cara tes**: migrasi jalan dan seed dua kali tanpa duplikat. Mengubah jumlah kamar atau harga di request klien tidak memengaruhi total. Jumlah kamar di luar min..max ditolak, durasi melebihi slot ditolak. Admin menaikkan harga paket, booking lama tetap memakai snapshot. Popup Snap menampilkan nominal yang sama dengan total di database.
+
 ## M8. Admin: kelola booking dan penugasan
 - [ ] Daftar booking dengan filter status dan tanggal, plus detail
-- [ ] Daftar karyawan kosong untuk jadwal booking (SPEC 5.2)
-- [ ] Tugaskan karyawan: `DIBAYAR` menjadi `DITUGASKAN`, baris `penugasan` dibuat
+- [x] Daftar karyawan kosong untuk jadwal booking (SPEC 5.2)
+- [x] Tugaskan karyawan: `DIBAYAR` menjadi `DITUGASKAN`, baris `penugasan` dibuat
 - [ ] Email tugas baru ke karyawan
 
 **Cara tes**: karyawan yang bentrok jam tidak muncul di daftar, menugaskan booking yang bukan `DIBAYAR` ditolak, status dan penugasan tersimpan benar.
@@ -80,10 +96,20 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 - [ ] Daftar tugas dan jadwal hari ini (hanya milik sendiri)
 - [ ] Detail tugas (alamat, paket, jam, catatan)
 - [ ] Transisi status: `DITUGASKAN`, `DALAM_PERJALANAN`, `DIKERJAKAN`
-- [ ] Unggah foto bukti ke `./uploads` (JPG/PNG/WebP, batas ukuran) dan tandai `MENUNGGU_VERIFIKASI`
+- [ ] Setujui `@vercel/blob` dan buat Blob store di dashboard Vercel
+      (`BLOB_READ_WRITE_TOKEN` di `.env`)
+- [ ] Unggah foto bukti ke Vercel Blob (client upload, akses private).
+      Token upload hanya untuk karyawan pemilik tugas
+      (cek di `onBeforeGenerateToken`). JPG/PNG/WebP, maks 5 MB
+- [ ] Simpan URL/pathname blob di `bukti_kerja.foto_url`, lalu tandai
+      `MENUNGGU_VERIFIKASI`
 - [ ] Foto hanya bisa dibuka lewat route yang memeriksa session
 
-**Cara tes**: transisi yang melompat atau salah jenis ditolak, tidak bisa ke `MENUNGGU_VERIFIKASI` tanpa foto, file bukan gambar ditolak, karyawan lain tidak bisa membuka tugas/foto ini.
+**Cara tes**: transisi yang melompat atau salah jenis ditolak, tidak bisa
+ke `MENUNGGU_VERIFIKASI` tanpa foto, file bukan gambar atau lebih dari
+5 MB ditolak, karyawan lain tidak bisa minta token upload untuk tugas ini
+dan tidak bisa membuka tugas/foto ini, tidak ada file yang tertulis ke
+folder project.
 
 ## M10. Admin: verifikasi hasil kerja
 - [ ] Lihat foto bukti pada booking `MENUNGGU_VERIFIKASI`

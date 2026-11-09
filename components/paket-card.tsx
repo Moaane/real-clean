@@ -4,6 +4,7 @@ import { ButtonLink, Card } from "@/components/ui";
 import { IconBuilding, IconClock, IconHome, IconSparkle } from "@/components/icons";
 import { JENIS_PROPERTI, TINGKAT_DETAIL, durasiLabel } from "@/lib/katalog";
 import { rp } from "@/lib/booking-status";
+import { durasiMulai, hargaMulai, rentangKamar } from "@/lib/harga";
 
 /** Kartu paket lengkap (DESIGN §6.3), dipakai di /layanan dan langkah 1 pesan. */
 export function PaketCard({ paket }: { paket: Layanan }) {
@@ -23,11 +24,11 @@ export function PaketCard({ paket }: { paket: Layanan }) {
         <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-muted">
           <li className="flex items-center gap-1.5">
             <IconClock size={16} />
-            {durasiLabel(paket.durasi_menit)}
+            mulai {durasiLabel(durasiMulai(paket))}
           </li>
           <li className="flex items-center gap-1.5">
             <Icon size={16} />
-            {JENIS_PROPERTI[paket.jenis_properti].label}, {paket.jumlah_kamar} kamar
+            {JENIS_PROPERTI[paket.jenis_properti].label}, {rentangKamar(paket)}
           </li>
           <li className="flex items-center gap-1.5">
             <IconSparkle size={16} />
@@ -38,7 +39,10 @@ export function PaketCard({ paket }: { paket: Layanan }) {
       <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
         <p className="text-lg font-bold tabular-nums">
           <span className="block text-xs font-medium text-muted">Mulai dari</span>
-          {rp(paket.harga)}
+          {rp(hargaMulai(paket))}
+          {paket.harga_per_kamar > 0 && (
+            <span className="block text-xs font-medium text-muted">+ {rp(paket.harga_per_kamar)} per kamar tambahan</span>
+          )}
         </p>
         <ButtonLink href={`/pesan?paket=${paket.id_layanan}`} arrow>
           Pilih paket

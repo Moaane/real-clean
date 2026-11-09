@@ -8,13 +8,15 @@ import { formValues, type FormState } from "@/lib/form-state";
 
 const schema = z.object({
   layanan: z.coerce.number().int().min(1, "Pilih paket"),
+  kamar: z.coerce.number({ error: "Jumlah kamar harus berupa angka" }).int("Jumlah kamar harus bilangan bulat").min(1, "Jumlah kamar minimal 1").max(1000),
   tanggal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Tanggal tidak valid"),
   jam_mulai: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Pilih jam"),
   alamat: z.string().trim().min(10, "Alamat minimal 10 karakter").max(500),
   catatan: z.string().trim().max(500).optional(),
 });
 
-// Note: no price field is read from the form. The total is computed server-side.
+// Note: no price or duration is read from the form. Only the room count is, and the
+// server range-checks it and computes total and duration from the package.
 export async function submitBooking(
   _prev: FormState,
   formData: FormData,
@@ -24,6 +26,7 @@ export async function submitBooking(
 
   const parsed = schema.safeParse({
     layanan: String(formData.get("layanan") ?? ""),
+    kamar: String(formData.get("kamar") ?? ""),
     tanggal: String(formData.get("tanggal") ?? ""),
     jam_mulai: String(formData.get("jam_mulai") ?? ""),
     alamat: String(formData.get("alamat") ?? ""),
@@ -40,7 +43,7 @@ export async function submitBooking(
   if (!user) {
     const enc = (v: string) => encodeURIComponent(v).replace(/\./g, "%2E").replace(/[!'()*]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());
     const back =
-      `/pesan?paket=${d.layanan}&tanggal=${d.tanggal}&jam_mulai=${enc(d.jam_mulai)}` +
+      `/pesan?paket=${d.layanan}&kamar=${d.kamar}&tanggal=${d.tanggal}&jam_mulai=${enc(d.jam_mulai)}` +
       `&alamat=${enc(d.alamat)}` +
       (d.catatan ? `&catatan=${enc(d.catatan)}` : "");
     redirect(`/login?next=${encodeURIComponent(back)}`);
@@ -51,6 +54,7 @@ export async function submitBooking(
   const result = await createBooking({
     userId: user.id_user,
     layananId: d.layanan,
+    jumlahKamar: d.kamar,
     tanggal: d.tanggal,
     jamMulai: d.jam_mulai,
     alamat: d.alamat,

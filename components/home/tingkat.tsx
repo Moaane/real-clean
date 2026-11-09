@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import type { ReactNode } from "react";
 import { getPaketAktif, TINGKAT_DETAIL, durasiLabel } from "@/lib/katalog";
 import { rp } from "@/lib/booking-status";
+import { durasiMulai, hargaMulai } from "@/lib/harga";
 import { Photo } from "@/components/ui/photo";
 import { ButtonLink, SectionHeading } from "@/components/ui";
 import { IconClock, IconTag, IconSparkle } from "@/components/icons";
@@ -22,8 +23,8 @@ export async function Tingkat() {
     return {
       key: t,
       jumlah: list.length,
-      durasi: Math.min(...list.map((p) => p.durasi_menit)),
-      harga: Math.min(...list.map((p) => p.harga)),
+      durasi: Math.min(...list.map(durasiMulai)),
+      harga: Math.min(...list.map(hargaMulai)),
     };
   }).filter((x): x is NonNullable<typeof x> => x !== null);
 
@@ -46,11 +47,11 @@ export async function Tingkat() {
         </li>
         <li className="flex items-center gap-1.5 tabular-nums">
           <IconTag size={16} />
-          {rp(d.harga)}
+          mulai {rp(d.harga)}
         </li>
         <li className="flex items-center gap-1.5">
           <IconSparkle size={16} />
-          {d.jumlah} paket
+          {d.jumlah} jenis properti
         </li>
       </ul>
     </Kartu>

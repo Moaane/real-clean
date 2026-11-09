@@ -6,10 +6,15 @@ Sumber: diagram di `docs/` (flowchart utama/admin/karyawan, status booking, ERD,
 
 Website booking **jasa kebersihan** untuk dua jenis properti. Pelanggan memilih paket, mengisi alamat, lalu memilih tanggal dan jam. Karyawan datang ke lokasi.
 
-- **Rumah**: paket menurut jumlah kamar dan tingkat detail.
-- **Kos-kosan**: kos milik pelanggan yang dibersihkan (bukan penyewaan kamar), paket menurut jumlah kamar dan tingkat detail.
+- **Rumah**: satu paket per tingkat detail, harga menurut jumlah kamar.
+- **Kos-kosan**: kos milik pelanggan yang dibersihkan (bukan penyewaan kamar), satu paket per tingkat detail, harga menurut jumlah kamar.
 
-Harga berupa **paket tetap**: admin membuat paket per kombinasi jenis properti, jumlah kamar, dan tingkat detail (`reguler`, `detail`, `deep`). Tidak ada penyewaan kamar.
+**Model harga: harga per kamar.** Admin membuat **satu paket per kombinasi jenis properti dan tingkat detail** (`reguler`, `detail`, `deep`), jadi ada 6 paket. Setiap paket punya biaya dasar dan harga per kamar. **Jumlah kamar dipilih pelanggan saat booking**, dalam batas `min_kamar` sampai `max_kamar` milik paket. Total harga dan durasi dihitung di server:
+
+- `total = harga_dasar + harga_per_kamar × jumlah_kamar`
+- `durasi = durasi_dasar_menit + durasi_per_kamar_menit × jumlah_kamar`
+
+Tidak ada penyewaan kamar.
 
 Pembayaran lewat **Midtrans Snap (sandbox saja)**. Notifikasi lewat **email**.
 
@@ -34,9 +39,9 @@ Aturan akses:
 
 ### 3.1 Pelanggan
 1. Membuka website, melihat daftar paket kebersihan (rumah dan kos) dan slot tersedia (tanpa login).
-2. Memilih paket (jenis properti, jumlah kamar, tingkat detail), mengisi alamat, memilih tanggal dan slot jam.
+2. Memilih paket (jenis properti dan tingkat detail), lalu menentukan **jumlah kamar**. Total harga dan estimasi durasi langsung tampil. Setelah itu mengisi alamat, memilih tanggal dan slot jam. Hanya slot yang cukup panjang untuk durasi tersebut yang bisa dipilih.
 3. Menekan "Booking". Jika belum login, diarahkan ke login/daftar lalu kembali ke langkah ini. Nama, no. WA, dan email diambil dari profil.
-4. Sistem mengecek ketersediaan lagi di server dan menghitung total. Bila sudah tidak tersedia, pelanggan kembali ke pemilihan.
+4. Sistem mengecek ketersediaan lagi di server, memvalidasi jumlah kamar (`min_kamar`..`max_kamar`), memastikan durasi total muat di slot, dan menghitung total. Bila sudah tidak tersedia atau tidak valid, pelanggan kembali ke pemilihan.
 5. Booking dibuat berstatus `MENUNGGU_PEMBAYARAN`, slot terkunci, dan `batas_bayar` = sekarang + 1 jam.
 6. Sistem meminta token Snap ke Midtrans. Pelanggan membayar di popup Snap (VA, QRIS, e-wallet).
 7. Hasil pembayaran diketahui hanya dari webhook (lihat bagian 6).
@@ -94,7 +99,12 @@ Status `penugasan.status_tugas` mengikuti booking: `ditugaskan`, `dalam_perjalan
 ### 5.1 Slot jasa kebersihan
 - Admin mengatur **jam operasional** (template harian): `jam_mulai`, `jam_selesai`, `kuota` (jumlah tim paralel), `aktif`. Berlaku untuk semua tanggal dan semua paket.
 - Slot untuk satu tanggal = jam operasional aktif pada tanggal itu. Baris `jadwal_slot` (tanggal, jam_mulai, jam_selesai, kuota, terisi) dibuat saat booking pertama di slot tersebut.
-- Slot tersedia jika `terisi < kuota`. Tanggal yang sudah lewat tidak bisa dipilih.
+- **Kapasitas efektif** slot = `min(kuota jam operasional, jumlah karyawan aktif)`. Slot tersedia jika `terisi < kapasitas efektif`. Tanggal yang sudah lewat tidak bisa dipilih.
+- Slot juga harus **cukup panjang**: durasi total booking (`durasi_dasar + durasi_per_kamar × jumlah_kamar`) tidak boleh melebihi `jam_selesai - jam_mulai`.
+- Di form booking, setelah paket dan jumlah kamar dipilih, slot yang tidak muat (penuh atau terlalu pendek) ditampilkan nonaktif beserta alasannya. Bila tidak ada slot yang muat pada tanggal terpilih, ditampilkan tanggal terdekat yang tersedia untuk jumlah kamar itu.
+- Stepper jumlah kamar dibatasi `min_kamar`..`max_kamar`. Di batas atas tampil "Lebih dari X kamar? Hubungi admin untuk penawaran khusus."
+- Semua pemeriksaan di atas diulang di server saat checkout, di dalam transaksi yang mengunci kuota.
+- Admin tidak bisa menyimpan paket yang durasinya pada `max_kamar` melebihi slot jam operasional aktif terpanjang.
 - `terisi` bertambah saat booking dibuat (kunci) dan berkurang saat booking `KEDALUWARSA` atau `DIBATALKAN`. Perubahan dilakukan dalam transaksi database agar dua pelanggan tidak mengambil kuota terakhir bersamaan.
 
 ### 5.2 Penugasan karyawan
@@ -104,9 +114,10 @@ Karyawan "kosong" pada jadwal itu = akun aktif yang tidak punya penugasan lain y
 
 - Hanya environment sandbox. Server key dan client key hanya di `.env`.
 - `order_id` unik per pembayaran dan dipakai juga sebagai kunci idempotensi.
-- `gross_amount` dihitung ulang di server: `layanan.harga` (paket tetap). Angka dari klien tidak dipercaya.
+- `gross_amount` = `booking.total_harga`, yang dihitung di server saat booking dibuat dari data paket: `harga_dasar + harga_per_kamar × jumlah_kamar`. Jumlah kamar dan angka harga dari klien tidak dipercaya.
+- `item_details` Snap: biaya dasar (qty 1, harga `harga_dasar`) dan biaya per kamar (qty `jumlah_kamar`, harga `harga_per_kamar`), memakai snapshot di booking. Jumlah semua item harus sama persis dengan `gross_amount`. Item berharga 0 tidak dikirim.
 - Token Snap dibuat dengan `expiry` 1 jam, sama dengan `batas_bayar`.
-- Webhook: verifikasi `signature_key` = sha512(`order_id` + `status_code` + `gross_amount` + server key). Tidak valid: tolak (HTTP 403) dan catat log. Status booking tidak boleh berubah sebelum signature valid.
+- Webhook: verifikasi `signature_key` = sha512(`order_id` + `status_code` + `gross_amount` + `MIDTRANS_SIGNATURE_KEY`), memakai Signature Secret Key, bukan server key (sistem key Midtrans sejak 28 Okt 2026, lihat bagian 10). Tidak valid: tolak (HTTP 403) dan catat log. Status booking tidak boleh berubah sebelum signature valid.
 - Webhook idempoten: notifikasi yang sama (order_id + transaction_status) yang diterima lagi tidak mengubah apa pun. Transisi hanya dari status asal yang valid.
 - Pemetaan: `settlement` (dan `capture` dengan fraud `accept`) menjadi `DIBAYAR` dan `status_bayar = settlement`. `expire`, `cancel`, `deny` menjadi `KEDALUWARSA` dan `status_bayar = expire`. `pending` hanya menyimpan metode bayar.
 - Payload webhook disimpan di `pembayaran.payload_webhook`.
@@ -144,19 +155,19 @@ Penyesuaian dari LRS:
 
 **users**: id_user (PK), nama, email (unik), password (hash bcrypt), no_hp, role (`admin`/`karyawan`/`pelanggan`), status_aktif (default true), created_at.
 
-**layanan** (paket): id_layanan, nama_layanan, deskripsi, jenis_properti (`rumah`/`kos`), jumlah_kamar, tingkat_detail (`reguler`/`detail`/`deep`), harga, durasi_menit, status_aktif.
+**layanan** (paket): id_layanan, nama_layanan, deskripsi, jenis_properti (`rumah`/`kos`), tingkat_detail (`reguler`/`detail`/`deep`), harga_dasar, harga_per_kamar, durasi_dasar_menit, durasi_per_kamar_menit, min_kamar (default 1), max_kamar, status_aktif. Unik pada (jenis_properti, tingkat_detail). Harga integer rupiah, tidak negatif, dan total pada `min_kamar` harus lebih dari 0. `max_kamar >= min_kamar >= 1`.
 
 **jam_operasional** (baru): id, jam_mulai, jam_selesai, kuota, aktif. Unik pada (jam_mulai, jam_selesai).
 
 **jadwal_slot**: id_slot, tanggal, jam_mulai, jam_selesai, kuota, terisi. Unik pada (tanggal, jam_mulai).
 
-**booking**: id_booking, kode_booking (unik, 12 karakter), id_pelanggan (FK users), id_layanan (FK), id_slot (FK), alamat_layanan, total_harga, status, batas_bayar, catatan, created_at, dan tambahan: alasan_batal, batal_diajukan_at, batal_ditolak (boolean).
+**booking**: id_booking, kode_booking (unik, 12 karakter), id_pelanggan (FK users), id_layanan (FK), id_slot (FK), alamat_layanan, jumlah_kamar, snapshot saat booking (harga_dasar, harga_per_kamar, durasi_menit), total_harga, status, batas_bayar, catatan, created_at, dan tambahan: alasan_batal, batal_diajukan_at, batal_ditolak (boolean).
 
 **pembayaran**: id_pembayaran, id_booking (FK, unik), order_id (unik), metode_bayar, jumlah, status_bayar (`pending`/`settlement`/`expire`/`refund`), payment_url (URL/token Snap), waktu_bayar, payload_webhook, created_at.
 
 **penugasan**: id_penugasan, id_booking (FK), id_karyawan (FK users), id_admin (FK users), status_tugas, catatan_revisi, ditugaskan_at, mulai_at, selesai_at.
 
-**bukti_kerja**: id_bukti, id_penugasan (FK), foto_url (path file lokal), keterangan, uploaded_at.
+**bukti_kerja**: id_bukti, id_penugasan (FK), foto_url (URL atau pathname Vercel Blob, bukan path lokal; lihat bagian 10), keterangan, uploaded_at.
 
 **refund**: id_refund, id_pembayaran (FK), id_admin (FK users), jumlah, alasan, status_refund (`diproses`/`sukses`/`gagal`), created_at.
 
@@ -164,11 +175,29 @@ Aturan integritas: `id_layanan`, `id_slot`, dan `alamat_layanan` wajib. `kode_bo
 
 ## 10. Lingkungan dan penyimpanan
 
-- Database: **PostgreSQL** dengan **Prisma** (migrasi dan seed).
-- Session: cookie httpOnly berisi JWT bertanda tangan (`SESSION_SECRET`). Password di-hash bcrypt.
-- Foto bukti: folder lokal `./uploads` (masuk `.gitignore`), disajikan lewat route handler yang memeriksa session. Hanya JPG/PNG/WebP dengan batas ukuran per file.
-- Variabel `.env`: `DATABASE_URL`, `SESSION_SECRET`, `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`, `APP_URL`. Jangan di-commit.
-- Webhook butuh URL publik saat dites (ngrok atau cloudflared) yang diisi di dashboard sandbox Midtrans.
+- Hosting: **Vercel** (paket Hobby). Filesystem function read-only, jadi
+  aplikasi tidak boleh menulis file ke disk.
+- Database: **PostgreSQL** dengan **Prisma** (migrasi dan seed). Saat
+  deploy, pakai Postgres dari Marketplace Vercel (misalnya Neon) atau
+  Supabase.
+- Session: cookie httpOnly berisi JWT bertanda tangan (`SESSION_SECRET`).
+  Password di-hash bcrypt.
+- Foto bukti: **Vercel Blob** dengan akses private, diupload dari browser
+  (client upload). Token upload hanya diberikan ke karyawan yang login
+  (cek di `onBeforeGenerateToken`). Foto disajikan lewat route handler
+  yang memeriksa session. Database hanya menyimpan URL/pathname blob di
+  `bukti_kerja.foto_url`. Hanya JPG/PNG/WebP, maksimal 5 MB per file.
+- Variabel `.env`: `DATABASE_URL`, `SESSION_SECRET`,
+  `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY`, `MIDTRANS_SIGNATURE_KEY`,
+  `BLOB_READ_WRITE_TOKEN`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
+  `SMTP_PASS`, `MAIL_FROM`, `APP_URL`. Jangan di-commit. Di Vercel,
+  isi lewat Project Settings → Environment Variables.
+- Midtrans: `MIDTRANS_SERVER_KEY` untuk membuat transaksi,
+  `MIDTRANS_SIGNATURE_KEY` (Signature Secret Key) untuk verifikasi
+  `signature_key` webhook.
+- Webhook: saat development butuh URL publik (cloudflared atau ngrok).
+  Setelah deploy, Payment Notification URL di dashboard Midtrans diisi
+  `APP_URL` + path webhook, tanpa tunnel.
 
 ## 11. Di luar cakupan
 
@@ -183,3 +212,4 @@ WhatsApp, penyewaan kamar kos, produksi Midtrans, pembayaran ulang booking kedal
 5. Uang disimpan sebagai integer rupiah.
 6. Pengecekan "memenuhi syarat refund" dibuat eksplisit: ≥24 jam sebelum jadwal.
 7. Tidak ada penyewaan kamar kos. "Kos" hanyalah jenis properti yang dibersihkan. Tabel `kamar` dan kolom booking kos (check-in, durasi sewa) dihapus. Layanan menjadi paket dengan `jenis_properti`, `jumlah_kamar`, dan `tingkat_detail`.
+8. Harga paket dihitung **per kamar** (`harga_dasar + harga_per_kamar × jumlah_kamar`), dan jumlah kamar dipilih pelanggan saat booking. Diagram di `docs/` menganggap harga satu angka per paket. Booking menyimpan snapshot harga dan durasi, jadi perubahan harga paket oleh admin tidak memengaruhi booking yang sudah ada. Booking ditolak bila jumlah kamar di luar `min_kamar`..`max_kamar` atau durasi total melebihi panjang slot (`jam_selesai - jam_mulai`).

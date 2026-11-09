@@ -1,3 +1,5 @@
+import { after } from "next/server";
+import { kirimEmailInvoice } from "@/lib/notifikasi";
 import { signatureValid, prosesNotifikasi, type Notifikasi } from "@/lib/webhook-midtrans";
 
 // Midtrans payment notification (HTTP notification URL). No session: authenticity
@@ -34,6 +36,9 @@ export async function POST(request: Request) {
       console.error("[webhook] notifikasi valid tapi ditolak", hasil.alasan, body.order_id);
       return Response.json({ message: hasil.alasan }, { status: hasil.alasan === "order-tidak-ditemukan" ? 404 : 400 });
     }
+    // Only the notification that actually flipped the booking to DIBAYAR sends the
+    // invoice (duplicates report "duplikat"), and a mail failure cannot affect the reply.
+    if (hasil.aksi === "dibayar") after(() => kirimEmailInvoice(String(body.order_id)));
     return Response.json({ message: "ok", aksi: hasil.aksi });
   } catch (e) {
     // 500 makes Midtrans retry; the handler is idempotent so a retry is safe.
