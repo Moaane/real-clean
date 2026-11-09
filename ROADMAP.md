@@ -7,7 +7,7 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 - [x] `.env` dan `.env.example` (tanpa nilai rahasia), `.env` masuk `.gitignore`
 - [x] Schema Prisma sesuai SPEC bagian 9 (tanpa tabel pelanggan, dengan `jam_operasional`)
 - [x] Migrasi awal berhasil
-- [x] Seed: 1 admin, 2 karyawan, 1 pelanggan, 3 layanan, 5 kamar, 3 jam operasional
+- [x] Seed: 1 admin, 2 karyawan, 1 pelanggan, 5 paket (rumah dan kos), 3 jam operasional
 
 **Cara tes**: migrasi jalan di database kosong, seed bisa dijalankan dua kali tanpa duplikat, Prisma Studio menampilkan semua data seed, password tersimpan sebagai hash.
 
@@ -21,25 +21,23 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 **Cara tes**: tiap role hanya bisa membuka area miliknya (role lain diarahkan/ditolak), tanpa login diarahkan ke login, email duplikat ditolak, akun nonaktif tidak bisa masuk, logout menghapus akses.
 
 ## M2. Admin: data master
-- [ ] CRUD layanan kebersihan (harga, durasi, aktif/nonaktif)
-- [ ] CRUD kamar (nomor unik, tipe, fasilitas, harga/bulan, status)
-- [ ] CRUD jam operasional (jam, kuota, aktif)
-- [ ] Kelola akun karyawan (buat, ubah, aktif/nonaktif)
+- [x] CRUD paket kebersihan (jenis properti rumah/kos, jumlah kamar, tingkat detail, harga, durasi, aktif/nonaktif)
+- [x] CRUD jam operasional (jam, kuota, aktif)
+- [x] Kelola akun karyawan (buat, ubah, aktif/nonaktif)
 
-**Cara tes**: tiap CRUD terlihat di database, validasi menolak harga negatif/jam terbalik/nomor kamar ganda, data yang diubah terlihat di tampilan, karyawan nonaktif tidak bisa login.
+**Cara tes**: tiap CRUD terlihat di database, validasi menolak harga negatif/jam terbalik/jumlah kamar nol, data yang diubah terlihat di tampilan, karyawan nonaktif tidak bisa login.
 
 ## M3. Katalog publik dan ketersediaan
-- [ ] Halaman beranda: daftar layanan aktif dan kamar kos
+- [ ] Halaman beranda: daftar paket aktif (rumah dan kos)
 - [ ] Cek slot kebersihan per tanggal (hanya jam aktif, `terisi < kuota`, tanggal lampau tidak bisa)
-- [ ] Cek ketersediaan kamar untuk rentang check-in + durasi (SPEC 5.2)
 
-**Cara tes**: tanpa login semua halaman bisa dibuka. Ubah kuota jadi 0 lalu slot hilang. Buat data booking contoh di database yang bentrok lalu kamar tidak tersedia. Rentang tidak bentrok tetap tersedia. Kamar `perawatan` tidak muncul.
+**Cara tes**: tanpa login semua halaman bisa dibuka. Ubah kuota jadi 0 lalu slot hilang. Slot yang sudah penuh (`terisi` = kuota) tidak muncul. Tanggal lampau ditolak.
 
 ## M4. Checkout tanpa pembayaran
-- [ ] Form booking kebersihan dan kos, wajib login (kembali ke form setelah login)
-- [ ] Total dihitung di server dari data layanan/kamar
+- [ ] Form booking (pilih paket rumah atau kos), wajib login (kembali ke form setelah login)
+- [ ] Total dihitung di server dari data paket
 - [ ] Booking `MENUNGGU_PEMBAYARAN` + `batas_bayar` 1 jam + `kode_booking` unik
-- [ ] Kuota slot / kamar terkunci dalam satu transaksi database
+- [ ] Kuota slot terkunci dalam satu transaksi database
 - [ ] Halaman "Booking Saya" (daftar dan detail milik sendiri)
 
 **Cara tes**: dua booking bersamaan pada kuota terakhir, hanya satu yang berhasil. Mengubah harga di form tidak memengaruhi total. Pelanggan lain tidak bisa membuka detail booking orang lain.
@@ -56,7 +54,7 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 ## M6. Webhook pembayaran
 - [ ] Route webhook dengan verifikasi `signature_key`
 - [ ] Idempoten: notifikasi ganda tidak memproses dua kali
-- [ ] `settlement`/`capture` menjadi `DIBAYAR`. `expire`/`cancel`/`deny` menjadi `KEDALUWARSA` dan slot/kamar dilepas
+- [ ] `settlement`/`capture` menjadi `DIBAYAR`. `expire`/`cancel`/`deny` menjadi `KEDALUWARSA` dan slot dilepas
 - [ ] Payload disimpan. Percobaan dengan signature salah dicatat di log
 - [ ] Pengecekan `batas_bayar` terlewati saat ketersediaan dihitung / halaman dibuka
 
@@ -72,7 +70,7 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 
 ## M8. Admin: kelola booking dan penugasan
 - [ ] Daftar booking dengan filter status dan tanggal, plus detail
-- [ ] Daftar karyawan kosong untuk jadwal booking (SPEC 5.3)
+- [ ] Daftar karyawan kosong untuk jadwal booking (SPEC 5.2)
 - [ ] Tugaskan karyawan: `DIBAYAR` menjadi `DITUGASKAN`, baris `penugasan` dibuat
 - [ ] Email tugas baru ke karyawan
 
@@ -80,8 +78,8 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 
 ## M9. Dashboard karyawan
 - [ ] Daftar tugas dan jadwal hari ini (hanya milik sendiri)
-- [ ] Detail tugas (alamat/kamar, jam, catatan)
-- [ ] Transisi status: kebersihan `DITUGASKAN`, `DALAM_PERJALANAN`, `DIKERJAKAN`. Kos `DITUGASKAN`, `DIKERJAKAN`
+- [ ] Detail tugas (alamat, paket, jam, catatan)
+- [ ] Transisi status: `DITUGASKAN`, `DALAM_PERJALANAN`, `DIKERJAKAN`
 - [ ] Unggah foto bukti ke `./uploads` (JPG/PNG/WebP, batas ukuran) dan tandai `MENUNGGU_VERIFIKASI`
 - [ ] Foto hanya bisa dibuka lewat route yang memeriksa session
 
@@ -97,7 +95,7 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 ## M11. Pembatalan dan refund
 - [ ] Pelanggan ajukan batal dari "Booking Saya" (alasan, hanya saat `DIBAYAR`/`DITUGASKAN`)
 - [ ] Admin melihat apakah memenuhi syarat ≥24 jam sebelum jadwal, lalu setuju atau tolak
-- [ ] Setuju: `DIBATALKAN`, kuota/kamar dilepas, penugasan dibatalkan, refund lewat API Midtrans sandbox
+- [ ] Setuju: `DIBATALKAN`, slot dilepas, penugasan dibatalkan, refund lewat API Midtrans sandbox
 - [ ] Sukses menjadi `DIREFUND`. Gagal dicatat `status_refund = gagal` dan ditampilkan ke admin
 - [ ] Email saat ditolak dan saat refund sukses
 

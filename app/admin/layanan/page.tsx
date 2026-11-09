@@ -23,6 +23,9 @@ async function List({ searchParams }: { searchParams: PageProps<"/admin/layanan"
         <thead>
           <tr className="border-b border-zinc-300">
             <th className="py-2">Nama</th>
+            <th>Properti</th>
+            <th>Kamar</th>
+            <th>Detail</th>
             <th>Harga</th>
             <th>Durasi</th>
             <th>Status</th>
@@ -33,6 +36,9 @@ async function List({ searchParams }: { searchParams: PageProps<"/admin/layanan"
           {items.map((l) => (
             <tr key={l.id_layanan} className="border-b border-zinc-200">
               <td className="py-2">{l.nama_layanan}</td>
+              <td>{l.jenis_properti}</td>
+              <td>{l.jumlah_kamar}</td>
+              <td>{l.tingkat_detail}</td>
               <td>{rp(l.harga)}</td>
               <td>{l.durasi_menit} menit</td>
               <td>{l.status_aktif ? "Aktif" : "Nonaktif"}</td>
@@ -49,7 +55,7 @@ async function List({ searchParams }: { searchParams: PageProps<"/admin/layanan"
           ))}
           {items.length === 0 && (
             <tr>
-              <td colSpan={5} className="py-4 text-zinc-500">
+              <td colSpan={8} className="py-4 text-zinc-500">
                 Belum ada layanan.
               </td>
             </tr>
@@ -64,7 +70,7 @@ export default function Page(props: PageProps<"/admin/layanan">) {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-6 py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Layanan Kebersihan</h1>
+        <h1 className="text-2xl font-semibold">Paket Kebersihan</h1>
         <Link href="/admin/layanan/baru" className="rounded bg-black px-4 py-2 text-sm text-white dark:bg-white dark:text-black">
           Tambah
         </Link>

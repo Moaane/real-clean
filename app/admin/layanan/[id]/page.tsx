@@ -19,6 +19,9 @@ async function Content({ params }: { params: PageProps<"/admin/layanan/[id]">["p
       initial={{
         nama_layanan: l.nama_layanan,
         deskripsi: l.deskripsi ?? "",
+        jenis_properti: l.jenis_properti,
+        jumlah_kamar: String(l.jumlah_kamar),
+        tingkat_detail: l.tingkat_detail,
         harga: String(l.harga),
         durasi_menit: String(l.durasi_menit),
         ...(l.status_aktif ? { status_aktif: "on" } : {}),

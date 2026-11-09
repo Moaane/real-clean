@@ -10,7 +10,7 @@ async function Content() {
     <MasterForm
       action={createLayanan}
       fields={layananFields}
-      initial={{ status_aktif: "on" }}
+      initial={{ jenis_properti: "rumah", tingkat_detail: "reguler", jumlah_kamar: "1", status_aktif: "on" }}
       submitLabel="Simpan"
       cancelHref="/admin/layanan"
     />

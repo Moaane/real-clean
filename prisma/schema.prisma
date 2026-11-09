@@ -14,9 +14,15 @@ enum Role {
   pelanggan
 }
 
-enum JenisBooking {
-  kebersihan
+enum JenisProperti {
+  rumah
   kos
+}
+
+enum TingkatDetail {
+  reguler
+  detail
+  deep
 }
 
 enum StatusBooking {
@@ -30,12 +36,6 @@ enum StatusBooking {
   SELESAI
   DIBATALKAN
   DIREFUND
-}
-
-enum StatusKamar {
-  tersedia
-  terisi
-  perawatan
 }
 
 enum StatusBayar {
@@ -79,12 +79,15 @@ model User {
 }
 
 model Layanan {
-  id_layanan   Int     @id @default(autoincrement())
-  nama_layanan String  @db.VarChar(100)
-  deskripsi    String?
-  harga        Int
-  durasi_menit Int
-  status_aktif Boolean @default(true)
+  id_layanan     Int           @id @default(autoincrement())
+  nama_layanan   String        @db.VarChar(100)
+  deskripsi      String?
+  jenis_properti JenisProperti
+  jumlah_kamar   Int
+  tingkat_detail TingkatDetail
+  harga          Int
+  durasi_menit   Int
+  status_aktif   Boolean       @default(true)
 
   booking Booking[]
 
@@ -116,30 +119,13 @@ model JadwalSlot {
   @@map("jadwal_slot")
 }
 
-model Kamar {
-  id_kamar        Int         @id @default(autoincrement())
-  nomor_kamar     String      @unique @db.VarChar(10)
-  tipe_kamar      String      @db.VarChar(50)
-  fasilitas       String?
-  harga_per_bulan Int
-  status_kamar    StatusKamar @default(tersedia)
-
-  booking Booking[]
-
-  @@map("kamar")
-}
-
 model Booking {
   id_booking        Int           @id @default(autoincrement())
   kode_booking      String        @unique @db.VarChar(12)
   id_pelanggan      Int
-  jenis_booking     JenisBooking
-  id_layanan        Int?
-  id_slot           Int?
-  alamat_layanan    String?
-  id_kamar          Int?
-  tanggal_checkin   DateTime?     @db.Date
-  durasi_bulan      Int?
+  id_layanan        Int
+  id_slot           Int
+  alamat_layanan    String
   total_harga       Int
   status            StatusBooking @default(MENUNGGU_PEMBAYARAN)
   batas_bayar       DateTime
@@ -150,15 +136,13 @@ model Booking {
   created_at        DateTime      @default(now())
 
   pelanggan  User        @relation(fields: [id_pelanggan], references: [id_user])
-  layanan    Layanan?    @relation(fields: [id_layanan], references: [id_layanan])
-  slot       JadwalSlot? @relation(fields: [id_slot], references: [id_slot])
-  kamar      Kamar?      @relation(fields: [id_kamar], references: [id_kamar])
+  layanan    Layanan     @relation(fields: [id_layanan], references: [id_layanan])
+  slot       JadwalSlot  @relation(fields: [id_slot], references: [id_slot])
   pembayaran Pembayaran?
   penugasan  Penugasan[]
 
   @@index([id_pelanggan])
   @@index([status])
-  @@index([id_kamar, tanggal_checkin])
   @@map("booking")
 }
 

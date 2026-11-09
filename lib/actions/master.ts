@@ -45,6 +45,13 @@ function parseId(id: number) {
 const layananSchema = z.object({
   nama_layanan: z.string().trim().min(2, "Nama minimal 2 karakter").max(100),
   deskripsi: z.string().trim().max(2000).optional(),
+  jenis_properti: z.enum(["rumah", "kos"], { error: "Jenis properti tidak valid" }),
+  jumlah_kamar: z.coerce
+    .number({ error: "Jumlah kamar harus berupa angka" })
+    .int("Jumlah kamar harus bilangan bulat")
+    .min(1, "Jumlah kamar minimal 1")
+    .max(100, "Jumlah kamar maksimal 100"),
+  tingkat_detail: z.enum(["reguler", "detail", "deep"], { error: "Tingkat detail tidak valid" }),
   harga: rupiah("Harga"),
   durasi_menit: z.coerce
     .number({ error: "Durasi harus berupa angka" })
@@ -57,6 +64,9 @@ function layananData(formData: FormData) {
   const parsed = layananSchema.safeParse({
     nama_layanan: String(formData.get("nama_layanan") ?? ""),
     deskripsi: String(formData.get("deskripsi") ?? ""),
+    jenis_properti: String(formData.get("jenis_properti") ?? ""),
+    jumlah_kamar: String(formData.get("jumlah_kamar") ?? ""),
+    tingkat_detail: String(formData.get("tingkat_detail") ?? ""),
     harga: String(formData.get("harga") ?? ""),
     durasi_menit: String(formData.get("durasi_menit") ?? ""),
   });
@@ -109,85 +119,6 @@ export async function deleteLayanan(formData: FormData) {
   }
   revalidatePath("/admin/layanan");
   redirect("/admin/layanan");
-}
-
-/* ----------------------------------- Kamar ---------------------------------- */
-
-const kamarSchema = z.object({
-  nomor_kamar: z.string().trim().min(1, "Nomor kamar wajib diisi").max(10),
-  tipe_kamar: z.string().trim().min(2, "Tipe minimal 2 karakter").max(50),
-  fasilitas: z.string().trim().max(2000).optional(),
-  harga_per_bulan: rupiah("Harga per bulan"),
-  status_kamar: z.enum(["tersedia", "terisi", "perawatan"], {
-    error: "Status tidak valid",
-  }),
-});
-
-function kamarData(formData: FormData) {
-  const parsed = kamarSchema.safeParse({
-    nomor_kamar: String(formData.get("nomor_kamar") ?? ""),
-    tipe_kamar: String(formData.get("tipe_kamar") ?? ""),
-    fasilitas: String(formData.get("fasilitas") ?? ""),
-    harga_per_bulan: String(formData.get("harga_per_bulan") ?? ""),
-    status_kamar: String(formData.get("status_kamar") ?? ""),
-  });
-  if (!parsed.success) return { error: fail(parsed.error, formData) } as const;
-  return { data: { ...parsed.data, fasilitas: parsed.data.fasilitas || null } } as const;
-}
-
-const nomorGanda = (formData: FormData): FormState => ({
-  fieldErrors: { nomor_kamar: ["Nomor kamar sudah dipakai"] },
-  values: formValues(formData),
-});
-
-export async function createKamar(
-  _prev: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  await requireRole("admin");
-  const r = kamarData(formData);
-  if (r.error) return r.error;
-  try {
-    await prisma.kamar.create({ data: r.data });
-  } catch (e) {
-    if (isUniqueViolation(e)) return nomorGanda(formData);
-    throw e;
-  }
-  revalidatePath("/admin/kamar");
-  redirect("/admin/kamar");
-}
-
-export async function updateKamar(
-  id: number,
-  _prev: FormState,
-  formData: FormData,
-): Promise<FormState> {
-  await requireRole("admin");
-  const r = kamarData(formData);
-  if (r.error) return r.error;
-  try {
-    await prisma.kamar.update({ where: { id_kamar: parseId(id) }, data: r.data });
-  } catch (e) {
-    if (isUniqueViolation(e)) return nomorGanda(formData);
-    throw e;
-  }
-  revalidatePath("/admin/kamar");
-  redirect("/admin/kamar");
-}
-
-export async function deleteKamar(formData: FormData) {
-  await requireRole("admin");
-  const id = parseId(Number(formData.get("id")));
-  try {
-    await prisma.kamar.delete({ where: { id_kamar: id } });
-  } catch (e) {
-    if (isForeignKeyViolation(e)) {
-      redirect("/admin/kamar?error=dipakai");
-    }
-    throw e;
-  }
-  revalidatePath("/admin/kamar");
-  redirect("/admin/kamar");
 }
 
 /* ------------------------------ Jam operasional ----------------------------- */

@@ -36,30 +36,16 @@ async function main() {
   }
 
   const layanan = [
-    { nama_layanan: "Cleaning Rumah Reguler", deskripsi: "Sapu, pel, kamar mandi, dapur untuk rumah tipe kecil-menengah.", harga: 150000, durasi_menit: 120 },
-    { nama_layanan: "Deep Cleaning", deskripsi: "Pembersihan menyeluruh termasuk sudut, kaca, dan perabot.", harga: 350000, durasi_menit: 240 },
-    { nama_layanan: "Cuci Sofa & Kasur", deskripsi: "Pembersihan tungau dan noda untuk sofa atau kasur.", harga: 200000, durasi_menit: 90 },
-  ];
+    { nama_layanan: "Rumah 2 Kamar - Reguler", deskripsi: "Sapu, pel, kamar mandi, dapur.", jenis_properti: "rumah", jumlah_kamar: 2, tingkat_detail: "reguler", harga: 150000, durasi_menit: 120 },
+    { nama_layanan: "Rumah 4 Kamar - Detail", deskripsi: "Termasuk kaca, sudut, dan perabot.", jenis_properti: "rumah", jumlah_kamar: 4, tingkat_detail: "detail", harga: 350000, durasi_menit: 240 },
+    { nama_layanan: "Rumah 3 Kamar - Deep Cleaning", deskripsi: "Pembersihan menyeluruh, noda membandel, dan kerak.", jenis_properti: "rumah", jumlah_kamar: 3, tingkat_detail: "deep", harga: 500000, durasi_menit: 300 },
+    { nama_layanan: "Kos 10 Kamar - Reguler", deskripsi: "Kamar, lorong, dan kamar mandi bersama.", jenis_properti: "kos", jumlah_kamar: 10, tingkat_detail: "reguler", harga: 450000, durasi_menit: 240 },
+    { nama_layanan: "Kos 20 Kamar - Detail", deskripsi: "Semua kamar, lorong, dapur, dan area umum secara detail.", jenis_properti: "kos", jumlah_kamar: 20, tingkat_detail: "detail", harga: 1100000, durasi_menit: 420 },
+  ] as const;
 
   for (const l of layanan) {
     const exists = await prisma.layanan.findFirst({ where: { nama_layanan: l.nama_layanan } });
     if (!exists) await prisma.layanan.create({ data: l });
-  }
-
-  const kamar = [
-    { nomor_kamar: "A1", tipe_kamar: "Standar", fasilitas: "Kasur, lemari, kipas", harga_per_bulan: 900000 },
-    { nomor_kamar: "A2", tipe_kamar: "Standar", fasilitas: "Kasur, lemari, kipas", harga_per_bulan: 900000 },
-    { nomor_kamar: "B1", tipe_kamar: "Deluxe", fasilitas: "Kasur, lemari, AC, kamar mandi dalam", harga_per_bulan: 1500000 },
-    { nomor_kamar: "B2", tipe_kamar: "Deluxe", fasilitas: "Kasur, lemari, AC, kamar mandi dalam", harga_per_bulan: 1500000 },
-    { nomor_kamar: "C1", tipe_kamar: "VIP", fasilitas: "Kasur queen, AC, TV, kamar mandi dalam", harga_per_bulan: 2200000 },
-  ];
-
-  for (const k of kamar) {
-    await prisma.kamar.upsert({
-      where: { nomor_kamar: k.nomor_kamar },
-      update: {},
-      create: k,
-    });
   }
 
   const jam = [

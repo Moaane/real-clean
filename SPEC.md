@@ -4,10 +4,12 @@ Sumber: diagram di `docs/` (flowchart utama/admin/karyawan, status booking, ERD,
 
 ## 1. Ringkasan
 
-Website booking dua jenis layanan:
+Website booking **jasa kebersihan** untuk dua jenis properti. Pelanggan memilih paket, mengisi alamat, lalu memilih tanggal dan jam. Karyawan datang ke lokasi.
 
-- **Kebersihan**: pelanggan memilih paket, mengisi alamat, lalu memilih tanggal dan jam. Karyawan datang ke lokasi.
-- **Kos-kosan**: pelanggan memilih kamar, durasi sewa (bulan), dan tanggal check-in. Karyawan menyiapkan kamar dan menyerahkan kunci.
+- **Rumah**: paket menurut jumlah kamar dan tingkat detail.
+- **Kos-kosan**: kos milik pelanggan yang dibersihkan (bukan penyewaan kamar), paket menurut jumlah kamar dan tingkat detail.
+
+Harga berupa **paket tetap**: admin membuat paket per kombinasi jenis properti, jumlah kamar, dan tingkat detail (`reguler`, `detail`, `deep`). Tidak ada penyewaan kamar.
 
 Pembayaran lewat **Midtrans Snap (sandbox saja)**. Notifikasi lewat **email**.
 
@@ -18,7 +20,7 @@ Semua aktor login dengan email dan password. Satu tabel `users`, kolom `role`.
 | Aktor | Role | Bisa |
 |---|---|---|
 | Pelanggan | `pelanggan` | Daftar dan login sendiri. Melihat katalog tanpa login. Checkout (wajib login), membayar, melihat "Booking Saya", mengajukan pembatalan. |
-| Admin | `admin` | Mengelola layanan, kamar, jam operasional, akun karyawan. Mengelola booking: menugaskan karyawan, verifikasi hasil kerja, memutuskan pembatalan dan refund. Melihat dashboard dan laporan. Akun admin dibuat lewat seed, tidak ada pendaftaran publik. |
+| Admin | `admin` | Mengelola paket kebersihan, jam operasional, akun karyawan. Mengelola booking: menugaskan karyawan, verifikasi hasil kerja, memutuskan pembatalan dan refund. Melihat dashboard dan laporan. Akun admin dibuat lewat seed, tidak ada pendaftaran publik. |
 | Karyawan | `karyawan` | Melihat tugas miliknya, mengubah status pengerjaan, mengunggah foto bukti. Akun dibuat admin. |
 
 Aturan akses:
@@ -31,29 +33,26 @@ Aturan akses:
 ## 3. Alur utama
 
 ### 3.1 Pelanggan
-1. Membuka website, melihat daftar layanan kebersihan, kamar kos, dan ketersediaan (tanpa login).
-2. Memilih jenis layanan:
-   - Kebersihan: paket, alamat, tanggal, slot jam.
-   - Kos: kamar, durasi sewa (bulan), tanggal check-in.
+1. Membuka website, melihat daftar paket kebersihan (rumah dan kos) dan slot tersedia (tanpa login).
+2. Memilih paket (jenis properti, jumlah kamar, tingkat detail), mengisi alamat, memilih tanggal dan slot jam.
 3. Menekan "Booking". Jika belum login, diarahkan ke login/daftar lalu kembali ke langkah ini. Nama, no. WA, dan email diambil dari profil.
 4. Sistem mengecek ketersediaan lagi di server dan menghitung total. Bila sudah tidak tersedia, pelanggan kembali ke pemilihan.
-5. Booking dibuat berstatus `MENUNGGU_PEMBAYARAN`, slot atau kamar terkunci, dan `batas_bayar` = sekarang + 1 jam.
+5. Booking dibuat berstatus `MENUNGGU_PEMBAYARAN`, slot terkunci, dan `batas_bayar` = sekarang + 1 jam.
 6. Sistem meminta token Snap ke Midtrans. Pelanggan membayar di popup Snap (VA, QRIS, e-wallet).
 7. Hasil pembayaran diketahui hanya dari webhook (lihat bagian 6).
 8. Pelanggan memantau status di "Booking Saya" dan bisa mengajukan pembatalan (bagian 7).
 
 ### 3.2 Admin
 1. Login. Dashboard menampilkan ringkasan booking hari ini.
-2. Menu: kelola layanan, kamar, jam operasional, akun karyawan, booking, laporan transaksi dan pendapatan.
+2. Menu: kelola paket, jam operasional, akun karyawan, booking, laporan transaksi dan pendapatan.
 3. Booking `DIBAYAR`: memilih karyawan yang kosong di jadwal itu, status menjadi `DITUGASKAN`, karyawan dinotifikasi.
 4. Booking `MENUNGGU_VERIFIKASI`: memeriksa foto bukti. Sesuai: `SELESAI`. Tidak sesuai: kembali ke karyawan dengan catatan revisi.
 5. Pengajuan batal: sesuai syarat, setujui (`DIBATALKAN` lalu proses refund). Tidak sesuai, tolak dan beri tahu pelanggan.
 
 ### 3.3 Karyawan
 1. Login. Melihat daftar tugas dan jadwal hari ini.
-2. Membuka detail tugas: alamat atau kamar, jam, catatan.
-3. Kebersihan: berangkat (`DALAM_PERJALANAN`), tiba dan mulai (`DIKERJAKAN`), selesai.
-   Kos: mulai menyiapkan kamar (`DIKERJAKAN`), bersihkan, serahkan kunci.
+2. Membuka detail tugas: alamat, paket, jam, catatan.
+3. Berangkat (`DALAM_PERJALANAN`), tiba dan mulai (`DIKERJAKAN`), selesai.
 4. Unggah foto bukti dan tandai selesai: `MENUNGGU_VERIFIKASI`.
 5. Jika admin meminta revisi, status kembali `DIKERJAKAN`. Karyawan membaca catatan, memperbaiki, dan mengunggah bukti lagi.
 
@@ -65,11 +64,11 @@ Aturan akses:
 | `KEDALUWARSA` | Tidak dibayar sebelum `batas_bayar`. Slot dilepas. Final. |
 | `DIBAYAR` | Webhook settlement valid. |
 | `DITUGASKAN` | Admin sudah memilih karyawan. |
-| `DALAM_PERJALANAN` | Khusus kebersihan: karyawan berangkat. |
+| `DALAM_PERJALANAN` | Karyawan berangkat ke lokasi. |
 | `DIKERJAKAN` | Sedang dikerjakan (atau sedang direvisi). |
 | `MENUNGGU_VERIFIKASI` | Foto bukti sudah diunggah, menunggu admin. |
 | `SELESAI` | Admin menyetujui. Final. |
-| `DIBATALKAN` | Pembatalan disetujui. Slot atau kamar dilepas. Menunggu refund. |
+| `DIBATALKAN` | Pembatalan disetujui. Slot dilepas. Menunggu refund. |
 | `DIREFUND` | Refund sukses di gateway. Final. |
 
 Transisi yang valid (selain ini ditolak oleh server) dan pemicunya:
@@ -80,8 +79,7 @@ Transisi yang valid (selain ini ditolak oleh server) dan pemicunya:
 | `MENUNGGU_PEMBAYARAN` | `DIBAYAR` | webhook settlement/capture valid |
 | `MENUNGGU_PEMBAYARAN` | `KEDALUWARSA` | webhook expire/cancel/deny, atau pengecekan `batas_bayar` terlewati |
 | `DIBAYAR` | `DITUGASKAN` | admin memilih karyawan |
-| `DITUGASKAN` | `DALAM_PERJALANAN` | karyawan (hanya jenis kebersihan) |
-| `DITUGASKAN` | `DIKERJAKAN` | karyawan (hanya jenis kos) |
+| `DITUGASKAN` | `DALAM_PERJALANAN` | karyawan |
 | `DALAM_PERJALANAN` | `DIKERJAKAN` | karyawan tiba |
 | `DIKERJAKAN` | `MENUNGGU_VERIFIKASI` | karyawan unggah bukti (minimal 1 foto) |
 | `MENUNGGU_VERIFIKASI` | `SELESAI` | admin setuju |
@@ -99,20 +97,14 @@ Status `penugasan.status_tugas` mengikuti booking: `ditugaskan`, `dalam_perjalan
 - Slot tersedia jika `terisi < kuota`. Tanggal yang sudah lewat tidak bisa dipilih.
 - `terisi` bertambah saat booking dibuat (kunci) dan berkurang saat booking `KEDALUWARSA` atau `DIBATALKAN`. Perubahan dilakukan dalam transaksi database agar dua pelanggan tidak mengambil kuota terakhir bersamaan.
 
-### 5.2 Kamar kos
-- Rentang sewa = [`tanggal_checkin`, `tanggal_checkin` + `durasi_bulan`).
-- Kamar tersedia jika `status_kamar` bukan `perawatan` dan tidak ada booking lain berstatus aktif (selain `KEDALUWARSA`, `DIBATALKAN`, `DIREFUND`) dengan rentang yang bertabrakan.
-- Kunci kamar dilakukan dalam transaksi database yang sama dengan pembuatan booking.
-- `status_kamar` (`tersedia`, `terisi`, `perawatan`) bersifat informatif dan bisa diatur admin. Hanya `perawatan` yang memblokir booking.
-
-### 5.3 Penugasan karyawan
-Karyawan "kosong" pada jadwal itu = akun aktif yang tidak punya penugasan lain yang bentrok jamnya pada tanggal tersebut (jam_mulai sampai jam_selesai slot; untuk kos, pada tanggal check-in).
+### 5.2 Penugasan karyawan
+Karyawan "kosong" pada jadwal itu = akun aktif yang tidak punya penugasan lain yang bentrok jamnya pada tanggal tersebut (jam_mulai sampai jam_selesai slot).
 
 ## 6. Pembayaran (Midtrans Snap, sandbox)
 
 - Hanya environment sandbox. Server key dan client key hanya di `.env`.
 - `order_id` unik per pembayaran dan dipakai juga sebagai kunci idempotensi.
-- `gross_amount` dihitung ulang di server: kebersihan = `layanan.harga`, kos = `kamar.harga_per_bulan * durasi_bulan`. Angka dari klien tidak dipercaya.
+- `gross_amount` dihitung ulang di server: `layanan.harga` (paket tetap). Angka dari klien tidak dipercaya.
 - Token Snap dibuat dengan `expiry` 1 jam, sama dengan `batas_bayar`.
 - Webhook: verifikasi `signature_key` = sha512(`order_id` + `status_code` + `gross_amount` + server key). Tidak valid: tolak (HTTP 403) dan catat log. Status booking tidak boleh berubah sebelum signature valid.
 - Webhook idempoten: notifikasi yang sama (order_id + transaction_status) yang diterima lagi tidak mengubah apa pun. Transisi hanya dari status asal yang valid.
@@ -124,8 +116,8 @@ Karyawan "kosong" pada jadwal itu = akun aktif yang tidak punya penugasan lain y
 ## 7. Pembatalan dan refund
 
 - Pelanggan mengajukan pembatalan dari "Booking Saya" dengan alasan, hanya saat status `DIBAYAR` atau `DITUGASKAN`.
-- Syarat refund penuh: diajukan **≥ 24 jam** sebelum jadwal (jam_mulai slot, atau tanggal check-in untuk kos). Pengajuan yang tidak memenuhi syarat ditampilkan ke admin sebagai tidak memenuhi syarat dan biasanya ditolak.
-- Admin menyetujui atau menolak. Menolak: status tidak berubah, pelanggan diberi tahu. Menyetujui: status `DIBATALKAN`, slot atau kamar dilepas, penugasan (jika ada) dibatalkan, lalu refund dikirim ke API refund Midtrans (sandbox) sebesar total yang dibayar.
+- Syarat refund penuh: diajukan **≥ 24 jam** sebelum jadwal (jam_mulai slot). Pengajuan yang tidak memenuhi syarat ditampilkan ke admin sebagai tidak memenuhi syarat dan biasanya ditolak.
+- Admin menyetujui atau menolak. Menolak: status tidak berubah, pelanggan diberi tahu. Menyetujui: status `DIBATALKAN`, slot dilepas, penugasan (jika ada) dibatalkan, lalu refund dikirim ke API refund Midtrans (sandbox) sebesar total yang dibayar.
 - Refund sukses: `refund.status_refund = sukses`, `pembayaran.status_bayar = refund`, booking `DIREFUND`.
 - Refund gagal (misalnya VA/QRIS tidak mendukung refund via API): `status_refund = gagal`, booking tetap `DIBATALKAN`, kegagalan dan alasannya ditampilkan ke admin.
 
@@ -152,15 +144,13 @@ Penyesuaian dari LRS:
 
 **users**: id_user (PK), nama, email (unik), password (hash bcrypt), no_hp, role (`admin`/`karyawan`/`pelanggan`), status_aktif (default true), created_at.
 
-**layanan**: id_layanan, nama_layanan, deskripsi, harga, durasi_menit, status_aktif.
+**layanan** (paket): id_layanan, nama_layanan, deskripsi, jenis_properti (`rumah`/`kos`), jumlah_kamar, tingkat_detail (`reguler`/`detail`/`deep`), harga, durasi_menit, status_aktif.
 
 **jam_operasional** (baru): id, jam_mulai, jam_selesai, kuota, aktif. Unik pada (jam_mulai, jam_selesai).
 
 **jadwal_slot**: id_slot, tanggal, jam_mulai, jam_selesai, kuota, terisi. Unik pada (tanggal, jam_mulai).
 
-**kamar**: id_kamar, nomor_kamar (unik), tipe_kamar, fasilitas, harga_per_bulan, status_kamar (`tersedia`/`terisi`/`perawatan`).
-
-**booking**: id_booking, kode_booking (unik, 12 karakter), id_pelanggan (FK users), jenis_booking (`kebersihan`/`kos`), id_layanan (FK, null untuk kos), id_slot (FK, null untuk kos), alamat_layanan (kebersihan), id_kamar (FK, null untuk kebersihan), tanggal_checkin (kos), durasi_bulan (kos), total_harga, status, batas_bayar, catatan, created_at, dan tambahan: alasan_batal, batal_diajukan_at, batal_ditolak (boolean).
+**booking**: id_booking, kode_booking (unik, 12 karakter), id_pelanggan (FK users), id_layanan (FK), id_slot (FK), alamat_layanan, total_harga, status, batas_bayar, catatan, created_at, dan tambahan: alasan_batal, batal_diajukan_at, batal_ditolak (boolean).
 
 **pembayaran**: id_pembayaran, id_booking (FK, unik), order_id (unik), metode_bayar, jumlah, status_bayar (`pending`/`settlement`/`expire`/`refund`), payment_url (URL/token Snap), waktu_bayar, payload_webhook, created_at.
 
@@ -170,7 +160,7 @@ Penyesuaian dari LRS:
 
 **refund**: id_refund, id_pembayaran (FK), id_admin (FK users), jumlah, alasan, status_refund (`diproses`/`sukses`/`gagal`), created_at.
 
-Aturan integritas: FK booking sesuai jenis (kebersihan wajib id_layanan, id_slot, alamat. Kos wajib id_kamar, tanggal_checkin, durasi_bulan). `kode_booking` dibuat acak dan tidak berurutan.
+Aturan integritas: `id_layanan`, `id_slot`, dan `alamat_layanan` wajib. `kode_booking` dibuat acak dan tidak berurutan.
 
 ## 10. Lingkungan dan penyimpanan
 
@@ -182,7 +172,7 @@ Aturan integritas: FK booking sesuai jenis (kebersihan wajib id_layanan, id_slot
 
 ## 11. Di luar cakupan
 
-WhatsApp, produksi Midtrans, pembayaran ulang booking kedaluwarsa (pelanggan membuat booking baru), pembatalan sebagian atau refund parsial, ulasan/rating, multi-bahasa, aplikasi mobile.
+WhatsApp, penyewaan kamar kos, produksi Midtrans, pembayaran ulang booking kedaluwarsa (pelanggan membuat booking baru), pembatalan sebagian atau refund parsial, ulasan/rating, multi-bahasa, aplikasi mobile.
 
 ## 12. Perbedaan dari diagram di `docs/`
 
@@ -192,4 +182,4 @@ WhatsApp, produksi Midtrans, pembayaran ulang booking kedaluwarsa (pelanggan mem
 4. Kolom pembatalan ditambahkan pada `booking`.
 5. Uang disimpan sebagai integer rupiah.
 6. Pengecekan "memenuhi syarat refund" dibuat eksplisit: ≥24 jam sebelum jadwal.
-7. `status_kamar` tidak menentukan ketersediaan. Yang menentukan adalah booking yang bentrok.
+7. Tidak ada penyewaan kamar kos. "Kos" hanyalah jenis properti yang dibersihkan. Tabel `kamar` dan kolom booking kos (check-in, durasi sewa) dihapus. Layanan menjadi paket dengan `jenis_properti`, `jumlah_kamar`, dan `tingkat_detail`.
