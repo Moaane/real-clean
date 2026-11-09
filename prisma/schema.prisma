@@ -1,0 +1,230 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../generated/prisma"
+  importFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  admin
+  karyawan
+  pelanggan
+}
+
+enum JenisBooking {
+  kebersihan
+  kos
+}
+
+enum StatusBooking {
+  MENUNGGU_PEMBAYARAN
+  KEDALUWARSA
+  DIBAYAR
+  DITUGASKAN
+  DALAM_PERJALANAN
+  DIKERJAKAN
+  MENUNGGU_VERIFIKASI
+  SELESAI
+  DIBATALKAN
+  DIREFUND
+}
+
+enum StatusKamar {
+  tersedia
+  terisi
+  perawatan
+}
+
+enum StatusBayar {
+  pending
+  settlement
+  expire
+  refund
+}
+
+enum StatusRefund {
+  diproses
+  sukses
+  gagal
+}
+
+enum StatusTugas {
+  ditugaskan
+  dalam_perjalanan
+  dikerjakan
+  menunggu_verifikasi
+  revisi
+  selesai
+}
+
+model User {
+  id_user      Int      @id @default(autoincrement())
+  nama         String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(100)
+  password     String   @db.VarChar(255)
+  no_hp        String?  @db.VarChar(20)
+  role         Role
+  status_aktif Boolean  @default(true)
+  created_at   DateTime @default(now())
+
+  booking            Booking[]
+  penugasan_karyawan Penugasan[] @relation("PenugasanKaryawan")
+  penugasan_admin    Penugasan[] @relation("PenugasanAdmin")
+  refund             Refund[]
+
+  @@map("users")
+}
+
+model Layanan {
+  id_layanan   Int     @id @default(autoincrement())
+  nama_layanan String  @db.VarChar(100)
+  deskripsi    String?
+  harga        Int
+  durasi_menit Int
+  status_aktif Boolean @default(true)
+
+  booking Booking[]
+
+  @@map("layanan")
+}
+
+model JamOperasional {
+  id          Int     @id @default(autoincrement())
+  jam_mulai   String  @db.VarChar(5) // "HH:mm"
+  jam_selesai String  @db.VarChar(5) // "HH:mm"
+  kuota       Int
+  aktif       Boolean @default(true)
+
+  @@unique([jam_mulai, jam_selesai])
+  @@map("jam_operasional")
+}
+
+model JadwalSlot {
+  id_slot     Int      @id @default(autoincrement())
+  tanggal     DateTime @db.Date
+  jam_mulai   String   @db.VarChar(5) // "HH:mm"
+  jam_selesai String   @db.VarChar(5) // "HH:mm"
+  kuota       Int
+  terisi      Int      @default(0)
+
+  booking Booking[]
+
+  @@unique([tanggal, jam_mulai])
+  @@map("jadwal_slot")
+}
+
+model Kamar {
+  id_kamar        Int         @id @default(autoincrement())
+  nomor_kamar     String      @unique @db.VarChar(10)
+  tipe_kamar      String      @db.VarChar(50)
+  fasilitas       String?
+  harga_per_bulan Int
+  status_kamar    StatusKamar @default(tersedia)
+
+  booking Booking[]
+
+  @@map("kamar")
+}
+
+model Booking {
+  id_booking        Int           @id @default(autoincrement())
+  kode_booking      String        @unique @db.VarChar(12)
+  id_pelanggan      Int
+  jenis_booking     JenisBooking
+  id_layanan        Int?
+  id_slot           Int?
+  alamat_layanan    String?
+  id_kamar          Int?
+  tanggal_checkin   DateTime?     @db.Date
+  durasi_bulan      Int?
+  total_harga       Int
+  status            StatusBooking @default(MENUNGGU_PEMBAYARAN)
+  batas_bayar       DateTime
+  catatan           String?
+  alasan_batal      String?
+  batal_diajukan_at DateTime?
+  batal_ditolak     Boolean       @default(false)
+  created_at        DateTime      @default(now())
+
+  pelanggan  User        @relation(fields: [id_pelanggan], references: [id_user])
+  layanan    Layanan?    @relation(fields: [id_layanan], references: [id_layanan])
+  slot       JadwalSlot? @relation(fields: [id_slot], references: [id_slot])
+  kamar      Kamar?      @relation(fields: [id_kamar], references: [id_kamar])
+  pembayaran Pembayaran?
+  penugasan  Penugasan[]
+
+  @@index([id_pelanggan])
+  @@index([status])
+  @@index([id_kamar, tanggal_checkin])
+  @@map("booking")
+}
+
+model Pembayaran {
+  id_pembayaran   Int         @id @default(autoincrement())
+  id_booking      Int         @unique
+  order_id        String      @unique @db.VarChar(50)
+  metode_bayar    String?     @db.VarChar(30)
+  jumlah          Int
+  status_bayar    StatusBayar @default(pending)
+  payment_url     String?
+  waktu_bayar     DateTime?
+  payload_webhook Json?
+  created_at      DateTime    @default(now())
+
+  booking Booking  @relation(fields: [id_booking], references: [id_booking])
+  refund  Refund[]
+
+  @@map("pembayaran")
+}
+
+model Penugasan {
+  id_penugasan   Int         @id @default(autoincrement())
+  id_booking     Int
+  id_karyawan    Int
+  id_admin       Int
+  status_tugas   StatusTugas @default(ditugaskan)
+  catatan_revisi String?
+  ditugaskan_at  DateTime    @default(now())
+  mulai_at       DateTime?
+  selesai_at     DateTime?
+
+  booking  Booking      @relation(fields: [id_booking], references: [id_booking])
+  karyawan User         @relation("PenugasanKaryawan", fields: [id_karyawan], references: [id_user])
+  admin    User         @relation("PenugasanAdmin", fields: [id_admin], references: [id_user])
+  bukti    BuktiKerja[]
+
+  @@index([id_booking])
+  @@index([id_karyawan])
+  @@map("penugasan")
+}
+
+model BuktiKerja {
+  id_bukti     Int      @id @default(autoincrement())
+  id_penugasan Int
+  foto_url     String   @db.VarChar(255)
+  keterangan   String?
+  uploaded_at  DateTime @default(now())
+
+  penugasan Penugasan @relation(fields: [id_penugasan], references: [id_penugasan])
+
+  @@index([id_penugasan])
+  @@map("bukti_kerja")
+}
+
+model Refund {
+  id_refund     Int          @id @default(autoincrement())
+  id_pembayaran Int
+  id_admin      Int
+  jumlah        Int
+  alasan        String?
+  status_refund StatusRefund @default(diproses)
+  created_at    DateTime     @default(now())
+
+  pembayaran Pembayaran @relation(fields: [id_pembayaran], references: [id_pembayaran])
+  admin      User       @relation(fields: [id_admin], references: [id_user])
+
+  @@map("refund")
+}
