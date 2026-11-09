@@ -1,3 +1,4 @@
+import { kedaluwarsakanLewatBatas } from "./kedaluwarsa";
 import { prisma } from "./prisma";
 
 const TZ = "Asia/Jakarta";
@@ -35,6 +36,9 @@ export type SlotResult =
 
 /** Open cleaning slots for a date (SPEC 5.1). */
 export async function getSlotTersedia(tanggal: string | undefined): Promise<SlotResult> {
+  // Unpaid bookings past batas_bayar must not keep holding quota (SPEC 6).
+  await kedaluwarsakanLewatBatas();
+
   const date = parseDate(tanggal);
   if (!date) return { ok: false, error: "Tanggal tidak valid" };
 

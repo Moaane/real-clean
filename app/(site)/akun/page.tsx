@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { kedaluwarsakanLewatBatas } from "@/lib/kedaluwarsa";
 import { rp, tampilStatus, tanggalId } from "@/lib/booking-status";
 import { ButtonLink, Card, EmptyState, SectionHeading, Skeleton, StatusBadge } from "@/components/ui";
 import { IconCalendar, IconChevronRight, IconReceipt } from "@/components/icons";
@@ -13,6 +14,7 @@ export const metadata: Metadata = { title: "Booking saya" };
 async function Daftar() {
   await connection();
   const user = await requireRole("pelanggan");
+  await kedaluwarsakanLewatBatas();
   const list = await prisma.booking.findMany({
     where: { id_pelanggan: user.id_user },
     include: { layanan: true, slot: true },

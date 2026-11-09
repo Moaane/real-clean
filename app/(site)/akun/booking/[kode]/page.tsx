@@ -5,9 +5,12 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { kedaluwarsakanLewatBatas } from "@/lib/kedaluwarsa";
 import { durasiLabel } from "@/lib/katalog";
 import { rp, tampilStatus, tanggalId, waktuId } from "@/lib/booking-status";
-import { Alert, Button, Card, Skeleton, Stepper, StatusBadge } from "@/components/ui";
+import { Alert, Card, Skeleton, Stepper, StatusBadge } from "@/components/ui";
+import { BayarButton } from "@/components/pesan/bayar-button";
+import { clientKey, SNAP_JS_URL } from "@/lib/midtrans";
 import { Timeline } from "@/components/ui/timeline";
 import { IconArrowRight, IconMapPin, IconUser } from "@/components/icons";
 import type { StatusBooking } from "@/generated/prisma/enums";
@@ -36,12 +39,14 @@ function Baris({ label, children }: { label: string; children: React.ReactNode }
 async function Detail({ params }: { params: Promise<{ kode: string }> }) {
   await connection();
   const [{ kode }, user] = await Promise.all([params, requireRole("pelanggan")]);
+  await kedaluwarsakanLewatBatas();
   const b = await prisma.booking.findFirst({
     // Selalu dibatasi pemilik: pelanggan lain mendapat 404, bukan data.
     where: { kode_booking: kode.toUpperCase(), id_pelanggan: user.id_user },
     include: {
       layanan: true,
       slot: true,
+      pembayaran: { select: { status_bayar: true } },
       penugasan: { include: { karyawan: { select: { nama: true } } }, orderBy: { ditugaskan_at: "desc" }, take: 1 },
     },
   });
@@ -127,10 +132,13 @@ async function Detail({ params }: { params: Promise<{ kode: string }> }) {
                 Bayar sebelum <strong className="text-foreground">{waktuId(b.batas_bayar)} WIB</strong>, jika tidak
                 booking akan kedaluwarsa.
               </p>
-              <Button size="lg" arrow disabled className="w-full">
-                Bayar sekarang
-              </Button>
-              <Alert tone="info">Pembayaran online sedang disiapkan dan akan segera tersedia.</Alert>
+              <BayarButton kode={b.kode_booking} clientKey={clientKey()} snapUrl={SNAP_JS_URL} />
+              {b.pembayaran?.status_bayar === "pending" && (
+                <Alert tone="info">
+                  Status booking diperbarui setelah pembayaran Anda dikonfirmasi. Halaman ini hanya menampilkan status
+                  terkini.
+                </Alert>
+              )}
             </Card>
           )}
 

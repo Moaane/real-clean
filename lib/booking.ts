@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { Prisma } from "@/generated/prisma/client";
 import { nowWib, parseDate } from "./availability";
+import { kedaluwarsakanLewatBatas } from "./kedaluwarsa";
 import { prisma } from "./prisma";
 
 export type BookingInput = {
@@ -50,6 +51,8 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   if (input.tanggal === today.date && input.jamMulai <= today.time) {
     return { ok: false, error: "Jam tersebut sudah lewat", field: "slot" };
   }
+
+  await kedaluwarsakanLewatBatas();
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {

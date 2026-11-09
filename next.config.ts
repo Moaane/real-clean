@@ -1,10 +1,11 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
   /* config options here */
   experimental: {
     agentFeedback: true,
   },
+  allowedDevOrigins: ["departure-wine-penalties-was.trycloudflare.com"],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -15,6 +16,6 @@ const nextConfig: NextConfig = {
       },
     },
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

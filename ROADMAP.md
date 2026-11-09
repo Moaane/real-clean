@@ -43,20 +43,20 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 **Cara tes**: dua booking bersamaan pada kuota terakhir, hanya satu yang berhasil. Mengubah harga di form tidak memengaruhi total. Pelanggan lain tidak bisa membuka detail booking orang lain.
 
 ## M5. Midtrans Snap (sandbox)
-- [ ] Setujui kunci sandbox di `.env`, tanpa SDK (REST + fetch)
-- [ ] Buat transaksi Snap (`order_id` unik, gross_amount dari server, expiry 1 jam)
-- [ ] Baris `pembayaran` dibuat berstatus `pending`
-- [ ] Tombol "Bayar" membuka popup Snap
-- [ ] Halaman setelah bayar hanya menampilkan status dari database
+- [x] Setujui kunci sandbox di `.env`
+- [x] Buat transaksi Snap (`order_id` unik, gross_amount dari server, expiry 1 jam)
+- [x] Baris `pembayaran` dibuat berstatus `pending`
+- [x] Tombol "Bayar" membuka popup Snap
+- [x] Halaman setelah bayar hanya menampilkan status dari database
 
 **Cara tes**: popup tampil dengan nominal benar, `payment_url`/token tersimpan, klik "selesai" di popup tanpa webhook **tidak** mengubah status menjadi `DIBAYAR`.
 
 ## M6. Webhook pembayaran
-- [ ] Route webhook dengan verifikasi `signature_key`
-- [ ] Idempoten: notifikasi ganda tidak memproses dua kali
-- [ ] `settlement`/`capture` menjadi `DIBAYAR`. `expire`/`cancel`/`deny` menjadi `KEDALUWARSA` dan slot dilepas
-- [ ] Payload disimpan. Percobaan dengan signature salah dicatat di log
-- [ ] Pengecekan `batas_bayar` terlewati saat ketersediaan dihitung / halaman dibuka
+- [x] Route webhook dengan verifikasi `signature_key`
+- [x] Idempoten: notifikasi ganda tidak memproses dua kali
+- [x] `settlement`/`capture` menjadi `DIBAYAR`. `expire`/`cancel`/`deny` menjadi `KEDALUWARSA` dan slot dilepas
+- [x] Payload disimpan. Percobaan dengan signature salah dicatat di log
+- [x] Pengecekan `batas_bayar` terlewati saat ketersediaan dihitung / halaman dibuka
 
 **Cara tes**: lewat tunnel (ngrok/cloudflared) dan simulator sandbox. Signature palsu ditolak 403 tanpa mengubah status. Pembayaran sukses menjadi `DIBAYAR`. Notifikasi yang sama dikirim dua kali hasilnya tetap satu perubahan. Booking tidak dibayar menjadi `KEDALUWARSA` dan kuota kembali.
 
