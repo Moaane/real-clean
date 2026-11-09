@@ -1,29 +1,15 @@
-import { Suspense } from "react";
-import { layananFields } from "@/components/admin/layanan-fields";
-import { MasterForm } from "@/components/admin/master-form";
+import type { Metadata } from "next";
 import { createLayanan } from "@/lib/actions/master";
-import { requireRole } from "@/lib/auth";
+import { LayananForm } from "@/components/admin/forms";
+import { PageHeader } from "@/components/dash/page-header";
 
-async function Content() {
-  await requireRole("admin");
-  return (
-    <MasterForm
-      action={createLayanan}
-      fields={layananFields}
-      initial={{ jenis_properti: "rumah", tingkat_detail: "reguler", jumlah_kamar: "1", status_aktif: "on" }}
-      submitLabel="Simpan"
-      cancelHref="/admin/layanan"
-    />
-  );
-}
+export const metadata: Metadata = { title: "Tambah paket" };
 
 export default function Page() {
   return (
-    <main className="page">
-      <h1 className="text-2xl font-semibold">Tambah Layanan</h1>
-      <Suspense fallback={<p>Memuat…</p>}>
-        <Content />
-      </Suspense>
-    </main>
+    <>
+      <PageHeader title="Tambah" accent="paket" />
+      <LayananForm action={createLayanan} submitLabel="Simpan paket" />
+    </>
   );
 }

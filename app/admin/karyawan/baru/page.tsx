@@ -1,29 +1,15 @@
-import { Suspense } from "react";
-import { karyawanFields } from "@/components/admin/karyawan-fields";
-import { MasterForm } from "@/components/admin/master-form";
+import type { Metadata } from "next";
 import { createKaryawan } from "@/lib/actions/master";
-import { requireRole } from "@/lib/auth";
+import { KaryawanForm } from "@/components/admin/forms";
+import { PageHeader } from "@/components/dash/page-header";
 
-async function Content() {
-  await requireRole("admin");
-  return (
-    <MasterForm
-      action={createKaryawan}
-      fields={karyawanFields("baru")}
-      initial={{ status_aktif: "on" }}
-      submitLabel="Simpan"
-      cancelHref="/admin/karyawan"
-    />
-  );
-}
+export const metadata: Metadata = { title: "Tambah karyawan" };
 
 export default function Page() {
   return (
-    <main className="page">
-      <h1 className="text-2xl font-semibold">Tambah Karyawan</h1>
-      <Suspense fallback={<p>Memuat…</p>}>
-        <Content />
-      </Suspense>
-    </main>
+    <>
+      <PageHeader title="Tambah" accent="karyawan" />
+      <KaryawanForm action={createKaryawan} submitLabel="Simpan karyawan" />
+    </>
   );
 }

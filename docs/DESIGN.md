@@ -1,11 +1,12 @@
-# GoClean Design System v3 ("Medical Teal")
+# GoClean Design System v4 ("Clean Wave", tema terang)
 
-Status: **spesifikasi desain**. Belum ada kode yang diubah. Dokumen ini menggantikan versi sebelumnya (hijau-teal + CTA oranye).
+
+Status: **spesifikasi desain, diterapkan di landing page**. Menggantikan v3 (Medical Teal): sekarang satu tema terang netral dengan satu aksen hijau. Tema gelap dihapus.
 Stack: Next.js 16 App Router, Tailwind v4 (token di `@theme inline` pada `app/globals.css`), tanpa dependency baru.
 
 Sumber:
 - **Bentuk, layout, hierarki:** analisis 6 mockup di `docs/mockups/` (warna mockup diabaikan).
-- **Warna:** palet *Medical Clinic / Healthcare* dari database `ui-ux-pro-max`, dengan nilai primary dan accent digelapkan agar teks putih lolos kontras 4.5:1.
+- **Warna:** abu terang netral + satu aksen hijau `#34B05A` seperti referensi Clean Wave. Teks di atas hijau memakai `#111111` agar lolos kontras.
 - **Font:** Plus Jakarta Sans (heading dan body).
 
 ---
@@ -28,24 +29,29 @@ Alur booking tidak ada di mockup (mockup hanya landing page). Stepper, badge sta
 
 Nilai kontras diperkirakan dari rumus WCAG. Ukur ulang dengan alat kontras saat implementasi.
 
-### 2.1 Token inti (light)
+### 2.1 Token inti
 
 | Token | Hex | Pakai untuk | Kontras |
 |---|---|---|---|
-| `--background` | `#F0FDFA` | latar halaman | n/a |
-| `--surface` | `#FFFFFF` | kartu, input, navbar | n/a |
-| `--surface-2` | `#E6F7F4` | latar section, header tabel, hover baris | n/a |
-| `--border` | `#CCFBF1` | border dekoratif kartu | n/a |
-| `--border-strong` | `#7FB5AE` | border input dan kontrol (UI ≥ 3:1) | ≥ 3:1 di atas surface |
-| `--foreground` | `#134E4A` | teks utama | ≥ 8:1 |
-| `--muted` | `#475569` | teks sekunder | ≥ 6:1 di `--background` |
-| `--primary` | `#0E7490` | tombol utama, tautan, fokus, frasa kunci judul | 5.4:1 dengan putih |
-| `--primary-hover` | `#155E75` | hover/press primary | 7:1 dengan putih |
-| `--primary-bright` | `#0891B2` | dekoratif saja (ikon besar, ilustrasi, garis aktif). **Bukan untuk teks.** | n/a |
-| `--on-primary` | `#FFFFFF` | teks di atas primary | n/a |
-| `--primary-soft` | `#CFFAFE` | chip aktif lembut, item nav aktif | n/a |
-| `--on-primary-soft` | `#155E75` | teks di atas primary-soft | ≥ 6:1 |
-| `--ring` | `#0E7490` | cincin fokus | ≥ 3:1 |
+| `--background` | `#F0F2F4` | latar halaman | n/a |
+| `--surface` | `#FFFFFF` | kartu, section, input, navbar | n/a |
+| `--surface-2` | `#E6E9EC` | hover baris, header tabel, latar kosong foto | n/a |
+| `--border` | `#DDE1E5` | border dekoratif kartu | n/a |
+| `--border-strong` | `#8A9199` | border input dan kontrol | ≥ 3:1 di atas surface |
+| `--foreground` | `#111111` | teks utama | ≥ 15:1 |
+| `--muted` | `#5B6470` | teks sekunder | ≥ 5.5:1 di `--background` |
+| `--primary` | `#34B05A` | tombol utama, **kata sorot di judul besar**, ikon dekoratif | teks `#111` di atasnya ±7.6:1 |
+| `--primary-hover` | `#2D9A4F` | hover/press tombol primary | teks `#111` ±5.4:1 |
+| `--primary-bright` | `#34B05A` | dekoratif saja (ikon besar, ilustrasi) | n/a |
+| `--on-primary` | `#111111` | teks di atas `--primary` | n/a |
+| `--primary-soft` | `#DDF3E4` | chip lembut, panel Solusi, item nav aktif | n/a |
+| `--on-primary-soft` | `#1E6B38` | teks di atas primary-soft | ≥ 5:1 |
+| `--primary-ink` | `#1F7A3D` | **teks kecil dan tautan hijau** | ±5:1 di `--background` |
+| `--ring` | `#1F7A3D` | cincin fokus | ≥ 3:1 |
+
+Aturan hijau:
+- `#34B05A` di atas `#F0F2F4` hanya ±2.4:1. Jadi `--primary` **tidak boleh** dipakai untuk teks kecil. Satu-satunya pengecualian adalah kata sorot pada judul besar (≥ 32px) sesuai referensi. Untuk teks kecil, tautan, dan angka aktif pakai `--primary-ink`.
+- Putih di atas `#34B05A` hanya ±2.9:1, karena itu teks tombol utama `#111111`.
 
 ### 2.2 Warna semantik
 
@@ -54,7 +60,7 @@ Nilai kontras diperkirakan dari rumus WCAG. Ukur ulang dengan alat kontras saat 
 | `ok` | `#15803D` | `#DCFCE7` | sukses, dibayar, slot tersedia |
 | `warn` | `#B45309` | `#FEF3C7` | menunggu, perlu perhatian |
 | `danger` | `#B91C1C` | `#FEE2E2` | error, batal |
-| `info` | `#155E75` | `#CFFAFE` | proses berjalan |
+| `info` | `#1D5F8A` | `#DCEAF7` | proses berjalan (biru, agar tidak mirip aksen hijau) |
 | `neutral` | `#475569` | `#E2E8F0` | tidak aktif, kedaluwarsa |
 
 Teks di atas latar lembut ≥ 4.5:1. Warna tidak boleh menjadi satu-satunya pembeda. Selalu sertakan ikon atau teks.
@@ -67,33 +73,17 @@ Pemetaan ke `StatusBooking` (`lib/booking-status.ts`). Setiap badge berisi **iko
 |---|---|---|---|---|
 | `MENUNGGU_PEMBAYARAN` | warn | `#FEF3C7` | `#B45309` | jam |
 | `DIBAYAR` | ok | `#DCFCE7` | `#15803D` | centang |
-| `DITUGASKAN` | info | `#CFFAFE` | `#155E75` | orang |
-| `DALAM_PERJALANAN` | info | `#CFFAFE` | `#155E75` | panah rute |
-| `DIKERJAKAN` | info | `#CFFAFE` | `#155E75` | percikan |
+| `DITUGASKAN` | info | `#DCEAF7` | `#1D5F8A` | orang |
+| `DALAM_PERJALANAN` | info | `#DCEAF7` | `#1D5F8A` | panah rute |
+| `DIKERJAKAN` | info | `#DCEAF7` | `#1D5F8A` | percikan |
 | `MENUNGGU_VERIFIKASI` | warn | `#FEF3C7` | `#B45309` | perisai |
-| `SELESAI` | ok (solid) | `#15803D` | `#FFFFFF` | centang ganda |
+| `SELESAI` | ok (solid) | `#15803D` | `#FFFFFF` | centang ganda (putih ±5:1 di hijau tua) |
 | `KEDALUWARSA` | neutral | `#E2E8F0` | `#475569` | jam coret |
 | `DIBATALKAN` | danger | `#FEE2E2` | `#B91C1C` | silang |
 | `DIREFUND` | neutral | `#E2E8F0` | `#475569` | panah balik |
 
-Catatan implementasi: `statusBadgeClass()` saat ini hanya punya 4 kelas (`badge-on`, `badge-warn`, `badge-off`, `badge-soft`). Perlu dipetakan ulang ke 5 tone di atas (`ok`, `warn`, `danger`, `info`, `neutral`) saat milestone implementasi.
 
-### 2.4 Dark mode (opsional, `prefers-color-scheme: dark`)
-
-| Token | Hex |
-|---|---|
-| `--background` | `#0B1F1E` |
-| `--surface` | `#10292A` |
-| `--surface-2` | `#16383A` |
-| `--border` | `#1F4A4B` |
-| `--foreground` | `#E6FAF6` |
-| `--muted` | `#A5C4C2` |
-| `--primary` | `#22D3EE` |
-| `--primary-hover` | `#67E8F9` |
-| `--on-primary` | `#06262B` |
-| `--ok` / `--warn` / `--danger` / `--info` | `#86EFAC` / `#FCD34D` / `#FCA5A5` / `#67E8F9` |
-
-Aturan: komponen memakai token semantik saja, tanpa hex mentah.
+Aturan: komponen memakai token semantik saja, tanpa hex mentah. Tidak ada tema gelap.
 
 ## 3. Tipografi
 
@@ -101,15 +91,18 @@ Aturan: komponen memakai token semantik saja, tanpa hex mentah.
 
 | Level | Mobile / Desktop | Bobot | Line-height | Letter-spacing |
 |---|---|---|---|---|
-| Display (hero) | 36 / 56 | 800 | 1.1 | -0.02em |
-| H1 | 28 / 40 | 700 | 1.15 | -0.02em |
+| Display (hero) | 36 / 56 | **500** | 1.02 | -0.03em |
+| Judul section publik | 32 / 48 | **500** | 1.02 | -0.03em |
+| H1 (akun, admin, form) | 28 / 40 | 700 | 1.15 | -0.02em |
 | H2 | 22 / 30 | 700 | 1.25 | -0.01em |
 | H3 | 18 / 20 | 600 | 1.3 | 0 |
 | Body | 16 | 400 | 1.6 | 0 |
 | Small | 14 | 400/500 | 1.5 | 0 |
 | Caption | 12 (minimum) | 500 | 1.4 | 0.01em |
 
-- Display dan H1 boleh huruf kapital semua seperti mockup (hanya untuk judul section di halaman publik). Judul di halaman akun, admin, dan form memakai huruf biasa.
+Display dan judul section publik memakai utilitas `title-display` (kapital, bobot 500, rapat) di `app/globals.css`.
+
+- Display dan judul section boleh huruf kapital semua seperti mockup (hanya di halaman publik). Judul di halaman akun, admin, dan form memakai huruf biasa.
 - Satu frasa kunci per judul diberi warna `--primary`.
 - Harga memakai `tabular-nums`, format `Rp 150.000`. Heading memakai `text-wrap: balance`.
 
@@ -141,9 +134,9 @@ Set SVG outline, stroke 1.75px, ukuran 20px (UI) dan 24px (navigasi), dari `comp
 
 | Varian | Latar | Teks | Border | Dipakai |
 |---|---|---|---|---|
-| `primary` | `--primary` | `--on-primary` | none | CTA utama (Pesan, Bayar, Simpan, Masuk) |
+| `primary` | `--primary` | `--on-primary` (`#111111`, gelap) | none | CTA utama (Pesan, Bayar, Simpan, Masuk) |
 | `outline` | transparan | `--foreground` | 1px `--border-strong` | aksi sekunder (mockup: "Contact us") |
-| `ghost` | transparan | `--primary` | none | aksi tersier, tautan aksi |
+| `ghost` | transparan | `--primary-ink` | none | aksi tersier, tautan aksi |
 | `soft` | `--primary-soft` | `--on-primary-soft` | none | aksi ringan di dalam kartu |
 | `danger` | transparan | `--danger` | 1px `--danger` | Batalkan, Hapus (selalu dengan konfirmasi) |
 
@@ -259,6 +252,20 @@ Skip link "Lewati ke konten" ada di awal DOM.
 - Status dan error diumumkan lewat `aria-live` (polite untuk status, assertive untuk error).
 - Gambar paket punya `alt` bermakna. Gambar dekoratif memakai `alt=""`.
 
+## 9b. Aset foto (`public/images/*.webp`)
+
+Semua foto lewat `components/ui/photo.tsx` (`next/image`, `fill`, `object-cover`, radius dari `className`). Bila berkas belum ada, tampil bingkai kosong dengan rasio yang sama (tanpa layout shift).
+
+| Berkas | Dipakai di | Rasio |
+|---|---|---|
+| `hero.webp` | hero beranda | 21:9 (desktop), 4:3 (mobile) |
+| `solusi.webp` | panel Solusi | 4:5 |
+| `tingkat-reguler.webp`, `tingkat-detail.webp`, `tingkat-deep.webp` | kartu Tiga tingkat | 4:5 |
+| `paket-rumah.webp`, `paket-kos.webp` | kartu paket (beranda, /layanan) | 1:1 / 4:3 |
+| `petugas-1.webp` … `petugas-4.webp` | avatar bulat petugas | 1:1 |
+
+Foto petugas dipetakan menurut urutan, belum terikat ke akun karyawan tertentu.
+
 ## 10. Pemetaan ke kode saat ini
 
 Ini hanya daftar, belum dikerjakan.
@@ -290,7 +297,7 @@ Tiap langkah verifikasi dengan `pnpm lint && pnpm build`, dan cek manual di leba
 - [ ] `cursor-pointer` di semua elemen yang bisa diklik
 - [ ] Hover/press ada transisi 150–250ms
 - [ ] Fokus keyboard terlihat di semua kontrol
-- [ ] Kontras diverifikasi (light dan dark bila dipakai)
+- [ ] Kontras diverifikasi (teks kecil memakai `--primary-ink`, bukan `--primary`)
 - [ ] Tanpa scroll horizontal di 375px
 - [ ] `prefers-reduced-motion` dihormati
 - [ ] Satu CTA `primary` `lg` per layar

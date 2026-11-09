@@ -1,41 +1,45 @@
-import { existsSync } from "node:fs";
-import path from "node:path";
 import Image from "next/image";
-import { Icon, type IconName } from "@/components/icons";
+import { existsSync } from "node:fs";
+import type { ComponentType } from "react";
 import { cn } from "@/lib/cn";
+import { IconSparkle, type IconProps } from "@/components/icons";
 
-type PhotoProps = {
-  /** Path under /public, e.g. "/images/landing/hero.webp". */
-  src: string;
-  /** Meaningful alt text. Use "" only for purely decorative photos. */
-  alt: string;
-  /** Reserved aspect ratio, e.g. "4 / 3". Prevents layout shift in both photo and fallback states. */
-  ratio: string;
-  sizes: string;
-  icon?: IconName;
-  priority?: boolean;
-  className?: string;
-};
+/** Cek berkas di public/images (path relatif terhadap root proyek, tempat server dijalankan). */
+export const fotoAda = (name: string) => existsSync(`public/images/${name}.webp`);
 
 /**
- * Photo slot. Renders the file from /public when it exists; otherwise a token-colored
- * illustration panel with the same ratio, so the page looks finished before photos are added.
+ * Foto dari `public/images/<name>.webp`. Bila berkas belum ada, tampil bingkai
+ * placeholder dengan rasio yang sama sehingga layout tidak bergeser.
  */
-export function Photo({ src, alt, ratio, sizes, icon = "sparkle", priority, className }: PhotoProps) {
-  const exists = existsSync(path.join(process.cwd(), "public", src));
+export function Photo({
+  name,
+  alt = "",
+  className,
+  sizes = "(min-width: 1024px) 50vw, 100vw",
+  priority,
+  icon: Icon = IconSparkle,
+}: {
+  name: string;
+  alt?: string;
+  /** Wajib memuat rasio, mis. `aspect-[4/3]`, dan radius. */
+  className?: string;
+  sizes?: string;
+  priority?: boolean;
+  icon?: ComponentType<IconProps>;
+}) {
+  const exists = fotoAda(name);
   return (
-    <div
-      className={cn("relative w-full overflow-hidden rounded-lg bg-surface-2", className)}
-      style={{ aspectRatio: ratio }}
-    >
+    <div className={cn("relative overflow-hidden bg-surface-2", className)}>
       {exists ? (
-        <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
+        <Image src={`/images/${name}.webp`} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
       ) : (
         <div
-          aria-hidden="true"
-          className="absolute inset-0 grid place-items-center bg-gradient-to-br from-primary-soft to-surface-2 text-primary-bright"
+          role={alt ? "img" : undefined}
+          aria-label={alt || undefined}
+          aria-hidden={alt ? undefined : true}
+          className="absolute inset-0 flex items-center justify-center text-primary-bright/60"
         >
-          <Icon name={icon} size={64} strokeWidth={1.25} />
+          <Icon size={56} strokeWidth={1.25} />
         </div>
       )}
     </div>

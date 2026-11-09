@@ -13,12 +13,20 @@ export const STATUS_LABEL: Record<StatusBooking, string> = {
   DIREFUND: "Dana dikembalikan",
 };
 
-export function statusBadgeClass(s: StatusBooking) {
-  if (s === "SELESAI" || s === "DIBAYAR") return "badge-on";
-  if (s === "MENUNGGU_PEMBAYARAN") return "badge-warn";
-  if (s === "KEDALUWARSA" || s === "DIBATALKAN" || s === "DIREFUND") return "badge-off";
-  return "badge-soft";
-}
+export type StatusTone = "ok" | "ok-solid" | "warn" | "danger" | "info" | "neutral";
+
+export const STATUS_TONE: Record<StatusBooking, StatusTone> = {
+  MENUNGGU_PEMBAYARAN: "warn",
+  DIBAYAR: "ok",
+  DITUGASKAN: "info",
+  DALAM_PERJALANAN: "info",
+  DIKERJAKAN: "info",
+  MENUNGGU_VERIFIKASI: "warn",
+  SELESAI: "ok-solid",
+  KEDALUWARSA: "neutral",
+  DIBATALKAN: "danger",
+  DIREFUND: "neutral",
+};
 
 export const rp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 
@@ -28,3 +36,8 @@ export const tanggalId = (d: Date) =>
 
 export const waktuId = (d: Date) =>
   d.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta" });
+
+/** Booking yang lewat batas bayar tampil sebagai kedaluwarsa (status resmi diubah oleh webhook). Panggil setelah `connection()`. */
+export function tampilStatus(status: StatusBooking, batasBayar: Date): StatusBooking {
+  return status === "MENUNGGU_PEMBAYARAN" && batasBayar.getTime() < Date.now() ? "KEDALUWARSA" : status;
+}

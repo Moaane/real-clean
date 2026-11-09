@@ -1,59 +1,31 @@
-import type { InputHTMLAttributes, ReactNode } from "react";
-import { Icon } from "@/components/icons";
+import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
+import { Field, controlClass, useFieldIds, type FieldProps } from "./field";
 
-type FieldProps = {
-  id: string;
-  label: string;
-  required?: boolean;
-  hint?: string;
-  error?: string;
-  children: ReactNode;
-};
+export { controlClass };
 
-/** Visible label + control + hint + error. The control must use the same `id`. */
-export function Field({ id, label, required, hint, error, children }: FieldProps) {
+type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & FieldProps;
+
+export function Input({ label, required, hint, error, id, className, ...props }: InputProps) {
+  const ids = useFieldIds({ id, hint, error });
   return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-semibold">
-        {label}
-        {required && <span className="ml-1 font-normal text-muted">(wajib)</span>}
-      </label>
-      {children}
-      {hint && !error && (
-        <p id={`${id}-hint`} className="text-sm text-muted">
-          {hint}
-        </p>
-      )}
-      {error && (
-        <p id={`${id}-error`} role="alert" className="flex items-start gap-1.5 text-sm text-danger">
-          <Icon name="shield" size={16} className="mt-0.5 shrink-0" />
-          {error}
-        </p>
-      )}
-    </div>
+    <Field label={label} required={required} hint={hint} error={error} {...ids}>
+      <input className={cn(controlClass, "h-12", className)} required={required} {...ids.aria} {...props} />
+    </Field>
   );
 }
 
-export type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "id"> & {
-  name: string;
-  label: string;
-  id?: string;
-  hint?: string;
-  error?: string;
-};
+type TextareaProps = Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "id"> & FieldProps;
 
-export function Input({ name, label, id = name, hint, error, required, className, ...props }: InputProps) {
-  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
+export function Textarea({ label, required, hint, error, id, className, rows = 4, ...props }: TextareaProps) {
+  const ids = useFieldIds({ id, hint, error });
   return (
-    <Field id={id} label={label} required={required} hint={hint} error={error}>
-      <input
-        id={id}
-        name={name}
+    <Field label={label} required={required} hint={hint} error={error} {...ids}>
+      <textarea
+        rows={rows}
+        className={cn(controlClass, "min-h-24 py-3", className)}
         required={required}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-        className={cn("input", className)}
+        {...ids.aria}
         {...props}
       />
     </Field>

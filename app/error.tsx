@@ -1,24 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
-import { Icon } from "@/components/icons";
-import { Button } from "@/components/ui";
+import { Alert, Button } from "@/components/ui";
 
-export default function Error({ error, retry }: { error: unknown; retry: () => void }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
+export default function GlobalError({ reset }: { error: Error; reset: () => void }) {
   return (
-    <main id="konten" className="mx-auto flex w-full max-w-md flex-1 flex-col items-center justify-center gap-4 px-4 py-16 text-center">
-      <span className="grid size-14 place-items-center rounded-pill bg-danger-soft text-danger">
-        <Icon name="shield" size={28} />
-      </span>
-      <h1 className="h2">Halaman gagal dimuat</h1>
-      <p role="alert" className="text-muted">
-        Terjadi kendala saat menampilkan halaman ini. Coba lagi beberapa saat.
-      </p>
-      <Button onClick={() => retry()}>Coba lagi</Button>
+    <main id="konten" className="mx-auto flex max-w-xl flex-col gap-5 px-4 py-24">
+      <h1 className="text-[28px] font-bold leading-tight">Terjadi kesalahan</h1>
+      <Alert tone="danger" title="Halaman gagal dimuat">
+        Coba muat ulang. Jika masih gagal, hubungi admin.
+      </Alert>
+      <div>
+        <Button onClick={reset}>Coba lagi</Button>
+      </div>
     </main>
   );
 }

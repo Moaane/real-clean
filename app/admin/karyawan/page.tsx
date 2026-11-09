@@ -1,77 +1,84 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Icon } from "@/components/icons";
-import { Suspense } from "react";
-import { toggleKaryawan } from "@/lib/actions/master";
-import { requireRole } from "@/lib/auth";
+import { dynamic, ActiveDot, AddLink, Dyn, th } from "@/components/admin/ui";
 import { prisma } from "@/lib/prisma";
+import { toggleKaryawan } from "@/lib/actions/master";
+import { EmptyState } from "@/components/ui";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { buttonClass } from "@/components/ui/button";
+import { PageHeader } from "@/components/dash/page-header";
+import { IconUsers } from "@/components/icons";
 
-async function List() {
-  await requireRole("admin");
-  const items = await prisma.user.findMany({
+export const metadata: Metadata = { title: "Karyawan" };
+
+async function Daftar() {
+  await dynamic();
+  const rows = await prisma.user.findMany({
     where: { role: "karyawan" },
-    orderBy: { id_user: "asc" },
+    orderBy: { nama: "asc" },
     select: { id_user: true, nama: true, email: true, no_hp: true, status_aktif: true },
   });
-
+  if (rows.length === 0)
+    return <EmptyState icon={IconUsers} title="Belum ada akun karyawan." action={<AddLink href="/admin/karyawan/baru">Tambah karyawan</AddLink>} />;
   return (
-    <div className="card overflow-x-auto p-0">
-      <table className="data-table">
-      <thead>
-        <tr>
-          <th>Nama</th>
-          <th>Email</th>
-          <th>No. HP</th>
-          <th>Status</th>
-          <th />
-        </tr>
-      </thead>
-      <tbody>
-        {items.map((u) => (
-          <tr key={u.id_user}>
-            <td>{u.nama}</td>
-            <td>{u.email}</td>
-            <td>{u.no_hp}</td>
-            <td><span className={`badge ${u.status_aktif ? "badge-on" : "badge-off"}`}>{u.status_aktif ? "Aktif" : "Nonaktif"}</span></td>
-            <td><div className="flex items-center gap-3">
-              <Link href={`/admin/karyawan/${u.id_user}`} className="link">
-                Ubah
-              </Link>
-              <form action={toggleKaryawan}>
-                <input type="hidden" name="id" value={u.id_user} />
-                <input type="hidden" name="aktif" value={String(!u.status_aktif)} />
-                <button type="submit" className="link">
-                  {u.status_aktif ? "Nonaktifkan" : "Aktifkan"}
-                </button>
-              </form>
-            </div></td>
-          </tr>
-        ))}
-        {items.length === 0 && (
+    <div className="overflow-x-auto rounded-xl border border-border bg-surface p-5">
+      <table className="w-full min-w-[640px] text-left text-sm">
+        <thead>
           <tr>
-            <td colSpan={5} className="text-muted">
-              Belum ada karyawan.
-            </td>
+            <th className={th}>Nama</th>
+            <th className={th}>Kontak</th>
+            <th className={th}>Status</th>
+            <th className={th + " text-right"}>Aksi</th>
           </tr>
-        )}
-      </tbody>
-    </table>
-      </div>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {rows.map((k) => (
+            <tr key={k.id_user} className="transition duration-150 hover:bg-surface-2/60">
+              <td className="py-3 pr-4 font-semibold">{k.nama}</td>
+              <td className="py-3 pr-4">
+                <span className="block">{k.email}</span>
+                <span className="text-muted">{k.no_hp}</span>
+              </td>
+              <td className="py-3 pr-4">
+                <ActiveDot aktif={k.status_aktif} />
+              </td>
+              <td className="py-3">
+                <div className="flex justify-end gap-2">
+                  <Link href={`/admin/karyawan/${k.id_user}`} className={buttonClass("outline", "sm")}>
+                    Ubah
+                  </Link>
+                  <ConfirmDialog
+                    trigger={k.status_aktif ? "Nonaktifkan" : "Aktifkan"}
+                    variant={k.status_aktif ? "danger" : "soft"}
+                    title={k.status_aktif ? "Nonaktifkan karyawan?" : "Aktifkan karyawan?"}
+                    description={
+                      k.status_aktif
+                        ? `${k.nama} tidak akan bisa masuk dan tidak bisa ditugaskan.`
+                        : `${k.nama} bisa masuk dan ditugaskan kembali.`
+                    }
+                    confirmLabel={k.status_aktif ? "Nonaktifkan" : "Aktifkan"}
+                    action={toggleKaryawan}
+                    fields={{ id: String(k.id_user), aktif: String(!k.status_aktif) }}
+                  />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
 export default function Page() {
   return (
-    <main className="page">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-extrabold tracking-tight">Akun Karyawan</h1>
-        <Link href="/admin/karyawan/baru" className="btn btn-primary">
-          <Icon name="plus" size={18} />
-          Tambah
-        </Link>
-      </div>
-      <Suspense fallback={<p>Memuat…</p>}>
-        <List />
-      </Suspense>
-    </main>
+    <>
+      <PageHeader title="Akun" accent="karyawan" description="Buat dan kelola akun petugas lapangan.">
+        <AddLink href="/admin/karyawan/baru">Tambah karyawan</AddLink>
+      </PageHeader>
+      <Dyn>
+        <Daftar />
+      </Dyn>
+    </>
   );
 }

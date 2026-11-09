@@ -1,40 +1,32 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
-import { karyawanFields } from "@/components/admin/karyawan-fields";
-import { MasterForm } from "@/components/admin/master-form";
-import { updateKaryawan } from "@/lib/actions/master";
-import { requireRole } from "@/lib/auth";
+import { dynamic, Dyn } from "@/components/admin/ui";
 import { prisma } from "@/lib/prisma";
+import { updateKaryawan } from "@/lib/actions/master";
+import { KaryawanForm } from "@/components/admin/forms";
+import { PageHeader } from "@/components/dash/page-header";
 
-async function Content({ params }: { params: PageProps<"/admin/karyawan/[id]">["params"] }) {
-  await requireRole("admin");
+export const metadata: Metadata = { title: "Ubah karyawan" };
+
+async function Isi({ params }: { params: Promise<{ id: string }> }) {
+  await dynamic();
   const id = Number((await params).id);
-  if (!Number.isInteger(id)) notFound();
-  const u = await prisma.user.findFirst({ where: { id_user: id, role: "karyawan" } });
-  if (!u) notFound();
-  return (
-    <MasterForm
-      action={updateKaryawan.bind(null, id)}
-      fields={karyawanFields("ubah")}
-      initial={{
-        nama: u.nama,
-        email: u.email,
-        no_hp: u.no_hp ?? "",
-        ...(u.status_aktif ? { status_aktif: "on" } : {}),
-      }}
-      submitLabel="Simpan perubahan"
-      cancelHref="/admin/karyawan"
-    />
-  );
+  if (!Number.isInteger(id) || id < 1) notFound();
+  const k = await prisma.user.findFirst({
+    where: { id_user: id, role: "karyawan" },
+    select: { nama: true, email: true, no_hp: true, status_aktif: true },
+  });
+  if (!k) notFound();
+  return <KaryawanForm edit action={updateKaryawan.bind(null, id)} initial={k} submitLabel="Simpan perubahan" />;
 }
 
-export default function Page(props: PageProps<"/admin/karyawan/[id]">) {
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <main className="page">
-      <h1 className="text-2xl font-semibold">Ubah Karyawan</h1>
-      <Suspense fallback={<p>Memuat…</p>}>
-        <Content params={props.params} />
-      </Suspense>
-    </main>
+    <>
+      <PageHeader title="Ubah" accent="karyawan" />
+      <Dyn>
+        <Isi params={params} />
+      </Dyn>
+    </>
   );
 }
