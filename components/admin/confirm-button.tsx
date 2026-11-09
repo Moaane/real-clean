@@ -13,7 +13,7 @@ export function ConfirmButton({
       onClick={(e) => {
         if (!confirm(message)) e.preventDefault();
       }}
-      className="text-sm text-red-600 underline"
+      className="link-danger"
     >
       {children}
     </button>

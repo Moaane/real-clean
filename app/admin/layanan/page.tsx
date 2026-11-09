@@ -15,14 +15,15 @@ async function List({ searchParams }: { searchParams: PageProps<"/admin/layanan"
   return (
     <>
       {error === "dipakai" && (
-        <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">
-          Layanan sudah dipakai booking dan tidak bisa dihapus. Nonaktifkan saja.
+        <p role="alert" className="alert-error">
+          Paket sudah dipakai booking dan tidak bisa dihapus. Nonaktifkan saja.
         </p>
       )}
-      <table className="w-full text-left text-sm">
+      <div className="card overflow-x-auto p-0">
+      <table className="data-table">
         <thead>
-          <tr className="border-b border-zinc-300">
-            <th className="py-2">Nama</th>
+          <tr>
+            <th>Nama</th>
             <th>Properti</th>
             <th>Kamar</th>
             <th>Detail</th>
@@ -34,44 +35,45 @@ async function List({ searchParams }: { searchParams: PageProps<"/admin/layanan"
         </thead>
         <tbody>
           {items.map((l) => (
-            <tr key={l.id_layanan} className="border-b border-zinc-200">
-              <td className="py-2">{l.nama_layanan}</td>
+            <tr key={l.id_layanan}>
+              <td>{l.nama_layanan}</td>
               <td>{l.jenis_properti}</td>
               <td>{l.jumlah_kamar}</td>
               <td>{l.tingkat_detail}</td>
               <td>{rp(l.harga)}</td>
               <td>{l.durasi_menit} menit</td>
-              <td>{l.status_aktif ? "Aktif" : "Nonaktif"}</td>
-              <td className="flex gap-3 py-2">
-                <Link href={`/admin/layanan/${l.id_layanan}`} className="underline">
+              <td><span className={`badge ${l.status_aktif ? "badge-on" : "badge-off"}`}>{l.status_aktif ? "Aktif" : "Nonaktif"}</span></td>
+              <td><div className="flex items-center gap-3">
+                <Link href={`/admin/layanan/${l.id_layanan}`} className="link">
                   Ubah
                 </Link>
                 <form action={deleteLayanan}>
                   <input type="hidden" name="id" value={l.id_layanan} />
-                  <ConfirmButton message={`Hapus layanan "${l.nama_layanan}"?`}>Hapus</ConfirmButton>
+                  <ConfirmButton message={`Hapus paket "${l.nama_layanan}"?`}>Hapus</ConfirmButton>
                 </form>
-              </td>
+              </div></td>
             </tr>
           ))}
           {items.length === 0 && (
             <tr>
-              <td colSpan={8} className="py-4 text-zinc-500">
-                Belum ada layanan.
+              <td colSpan={8} className="text-muted">
+                Belum ada paket.
               </td>
             </tr>
           )}
         </tbody>
       </table>
+      </div>
     </>
   );
 }
 
 export default function Page(props: PageProps<"/admin/layanan">) {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-6 py-8">
+    <main className="page">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Paket Kebersihan</h1>
-        <Link href="/admin/layanan/baru" className="rounded bg-black px-4 py-2 text-sm text-white dark:bg-white dark:text-black">
+        <Link href="/admin/layanan/baru" className="btn btn-primary">
           Tambah
         </Link>
       </div>

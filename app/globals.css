@@ -1,26 +1,120 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f7f6;
+  --foreground: #12201d;
+  --surface: #ffffff;
+  --border: #d9e2df;
+  --muted: #5a6b67;
+  --primary: #0f766e;
+  --primary-hover: #115e59;
+  --primary-soft: #e0f2ef;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --ok-soft: #dcf3e4;
+  --ok: #166534;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0b1210;
+    --foreground: #e6efec;
+    --surface: #131d1a;
+    --border: #25332f;
+    --muted: #8fa19c;
+    --primary: #2dd4bf;
+    --primary-hover: #5eead4;
+    --primary-soft: #12302b;
+    --danger: #f87171;
+    --danger-soft: #3a1815;
+    --ok-soft: #12301d;
+    --ok: #86efac;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+@layer components {
+  .page {
+    @apply mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-5 py-8 sm:px-6;
+  }
+
+  .card {
+    @apply rounded-xl border border-border bg-surface p-5 shadow-sm;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none transition;
+    @apply focus:border-primary focus:ring-2 focus:ring-primary/30;
+  }
+
+  .btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-[var(--primary-hover)];
+  }
+  @media (prefers-color-scheme: dark) {
+    .btn-primary {
+      color: #04211d;
+    }
+  }
+  .btn-outline {
+    @apply border border-border bg-surface hover:bg-primary-soft;
+  }
+
+  .link {
+    @apply cursor-pointer text-sm font-medium text-primary underline-offset-4 hover:underline;
+  }
+  .link-danger {
+    @apply cursor-pointer text-sm font-medium text-danger underline-offset-4 hover:underline;
+  }
+
+  .alert-error {
+    @apply rounded-lg border border-danger/30 bg-[var(--danger-soft)] px-3 py-2 text-sm text-danger;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .badge-on {
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+  .badge-off {
+    @apply bg-border text-muted;
+  }
+  .badge-soft {
+    @apply bg-primary-soft text-primary;
+  }
+
+  .data-table {
+    @apply w-full text-left text-sm;
+  }
+  .data-table th {
+    @apply bg-primary-soft px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+  .data-table td {
+    @apply border-t border-border px-4 py-3 align-middle;
+  }
+  .data-table tbody tr:hover {
+    background: color-mix(in srgb, var(--primary-soft) 45%, transparent);
+  }
 }

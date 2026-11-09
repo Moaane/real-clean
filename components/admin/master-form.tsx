@@ -14,7 +14,7 @@ export type FieldDef = {
   autoComplete?: string;
 };
 
-const inputClass = "rounded border border-zinc-300 bg-transparent px-3 py-2";
+const inputClass = "input";
 
 export function MasterForm({
   action,
@@ -33,9 +33,9 @@ export function MasterForm({
   const values = state.values ?? initial;
 
   return (
-    <form action={formAction} className="flex max-w-lg flex-col gap-4">
+    <form action={formAction} className="card flex max-w-xl flex-col gap-4">
       {state.error && (
-        <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p role="alert" className="alert-error">
           {state.error}
         </p>
       )}
@@ -51,7 +51,7 @@ export function MasterForm({
           <label
             key={f.name}
             className={
-              type === "checkbox" ? "flex items-center gap-2 text-sm" : "flex flex-col gap-1 text-sm"
+              type === "checkbox" ? "flex items-center gap-2 text-sm font-medium" : "flex flex-col gap-1.5 text-sm font-medium"
             }
           >
             {type === "checkbox" ? (
@@ -87,9 +87,9 @@ export function MasterForm({
                 )}
               </>
             )}
-            {f.hint && <span className="text-xs text-zinc-500">{f.hint}</span>}
+            {f.hint && <span className="text-xs font-normal text-muted">{f.hint}</span>}
             {errors?.map((msg) => (
-              <span key={msg} className="text-xs text-red-600">
+              <span key={msg} className="text-xs text-danger">
                 {msg}
               </span>
             ))}
@@ -100,11 +100,11 @@ export function MasterForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded bg-black px-4 py-2 text-white disabled:opacity-50 dark:bg-white dark:text-black"
+          className="btn btn-primary"
         >
           {pending ? "Menyimpan…" : submitLabel}
         </button>
-        <Link href={cancelHref} className="rounded border border-zinc-400 px-4 py-2">
+        <Link href={cancelHref} className="btn btn-outline">
           Batal
         </Link>
       </div>

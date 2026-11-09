@@ -7,17 +7,17 @@ async function AuthLinks() {
   const user = await getCurrentUser();
   if (user) {
     return (
-      <Link href={ROLE_HOME[user.role]} className="underline">
+      <Link href={ROLE_HOME[user.role]} className="btn btn-outline">
         {user.nama}
       </Link>
     );
   }
   return (
     <>
-      <Link href="/login" className="underline">
+      <Link href="/login" className="btn btn-outline">
         Masuk
       </Link>
-      <Link href="/daftar" className="underline">
+      <Link href="/daftar" className="btn btn-primary">
         Daftar
       </Link>
     </>
@@ -26,16 +26,19 @@ async function AuthLinks() {
 
 export function SiteHeader() {
   return (
-    <header className="flex flex-wrap items-center gap-4 border-b border-zinc-300 px-6 py-3 text-sm">
-      <Link href="/" className="mr-auto text-base font-semibold">
-        GoClean
-      </Link>
-      <Link href="/layanan" className="underline-offset-4 hover:underline">
-        Paket & Slot
-      </Link>
-      <Suspense fallback={null}>
-        <AuthLinks />
-      </Suspense>
+    <header className="sticky top-0 z-10 border-b border-border bg-surface/90 backdrop-blur">
+      <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-5 py-3 sm:px-6">
+        <Link href="/" className="mr-auto flex items-center gap-2 text-lg font-bold">
+          <span className="grid size-8 place-items-center rounded-lg bg-primary text-sm text-white">G</span>
+          GoClean
+        </Link>
+        <Link href="/layanan" className="hidden px-2 text-sm font-medium text-muted hover:text-foreground sm:block">
+          Paket &amp; Slot
+        </Link>
+        <Suspense fallback={null}>
+          <AuthLinks />
+        </Suspense>
+      </div>
     </header>
   );
 }

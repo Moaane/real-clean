@@ -13,10 +13,11 @@ async function List() {
   });
 
   return (
-    <table className="w-full text-left text-sm">
+    <div className="card overflow-x-auto p-0">
+      <table className="data-table">
       <thead>
-        <tr className="border-b border-zinc-300">
-          <th className="py-2">Nama</th>
+        <tr>
+          <th>Nama</th>
           <th>Email</th>
           <th>No. HP</th>
           <th>Status</th>
@@ -25,43 +26,44 @@ async function List() {
       </thead>
       <tbody>
         {items.map((u) => (
-          <tr key={u.id_user} className="border-b border-zinc-200">
-            <td className="py-2">{u.nama}</td>
+          <tr key={u.id_user}>
+            <td>{u.nama}</td>
             <td>{u.email}</td>
             <td>{u.no_hp}</td>
-            <td>{u.status_aktif ? "Aktif" : "Nonaktif"}</td>
-            <td className="flex gap-3 py-2">
-              <Link href={`/admin/karyawan/${u.id_user}`} className="underline">
+            <td><span className={`badge ${u.status_aktif ? "badge-on" : "badge-off"}`}>{u.status_aktif ? "Aktif" : "Nonaktif"}</span></td>
+            <td><div className="flex items-center gap-3">
+              <Link href={`/admin/karyawan/${u.id_user}`} className="link">
                 Ubah
               </Link>
               <form action={toggleKaryawan}>
                 <input type="hidden" name="id" value={u.id_user} />
                 <input type="hidden" name="aktif" value={String(!u.status_aktif)} />
-                <button type="submit" className="underline">
+                <button type="submit" className="link">
                   {u.status_aktif ? "Nonaktifkan" : "Aktifkan"}
                 </button>
               </form>
-            </td>
+            </div></td>
           </tr>
         ))}
         {items.length === 0 && (
           <tr>
-            <td colSpan={5} className="py-4 text-zinc-500">
+            <td colSpan={5} className="text-muted">
               Belum ada karyawan.
             </td>
           </tr>
         )}
       </tbody>
     </table>
+      </div>
   );
 }
 
 export default function Page() {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-6 py-8">
+    <main className="page">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Akun Karyawan</h1>
-        <Link href="/admin/karyawan/baru" className="rounded bg-black px-4 py-2 text-sm text-white dark:bg-white dark:text-black">
+        <Link href="/admin/karyawan/baru" className="btn btn-primary">
           Tambah
         </Link>
       </div>

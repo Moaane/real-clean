@@ -34,7 +34,7 @@ async function Content({ params }: { params: PageProps<"/admin/layanan/[id]">["p
 
 export default function Page(props: PageProps<"/admin/layanan/[id]">) {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-6 py-8">
+    <main className="page">
       <h1 className="text-2xl font-semibold">Ubah Layanan</h1>
       <Suspense fallback={<p>Memuat…</p>}>
         <Content params={props.params} />

@@ -10,10 +10,11 @@ async function List() {
   const items = await prisma.jamOperasional.findMany({ orderBy: { jam_mulai: "asc" } });
 
   return (
-    <table className="w-full text-left text-sm">
+    <div className="card overflow-x-auto p-0">
+      <table className="data-table">
       <thead>
-        <tr className="border-b border-zinc-300">
-          <th className="py-2">Jam</th>
+        <tr>
+          <th>Jam</th>
           <th>Kuota</th>
           <th>Status</th>
           <th />
@@ -21,41 +22,42 @@ async function List() {
       </thead>
       <tbody>
         {items.map((j) => (
-          <tr key={j.id} className="border-b border-zinc-200">
-            <td className="py-2">
+          <tr key={j.id}>
+            <td>
               {j.jam_mulai} – {j.jam_selesai}
             </td>
             <td>{j.kuota}</td>
-            <td>{j.aktif ? "Aktif" : "Nonaktif"}</td>
-            <td className="flex gap-3 py-2">
-              <Link href={`/admin/jam/${j.id}`} className="underline">
+            <td><span className={`badge ${j.aktif ? "badge-on" : "badge-off"}`}>{j.aktif ? "Aktif" : "Nonaktif"}</span></td>
+            <td><div className="flex items-center gap-3">
+              <Link href={`/admin/jam/${j.id}`} className="link">
                 Ubah
               </Link>
               <form action={deleteJam}>
                 <input type="hidden" name="id" value={j.id} />
                 <ConfirmButton message={`Hapus jam ${j.jam_mulai}–${j.jam_selesai}?`}>Hapus</ConfirmButton>
               </form>
-            </td>
+            </div></td>
           </tr>
         ))}
         {items.length === 0 && (
           <tr>
-            <td colSpan={4} className="py-4 text-zinc-500">
+            <td colSpan={4} className="text-muted">
               Belum ada jam operasional.
             </td>
           </tr>
         )}
       </tbody>
     </table>
+      </div>
   );
 }
 
 export default function Page() {
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-4 px-6 py-8">
+    <main className="page">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Jam Operasional</h1>
-        <Link href="/admin/jam/baru" className="rounded bg-black px-4 py-2 text-sm text-white dark:bg-white dark:text-black">
+        <Link href="/admin/jam/baru" className="btn btn-primary">
           Tambah
         </Link>
       </div>

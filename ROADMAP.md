@@ -28,8 +28,8 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 **Cara tes**: tiap CRUD terlihat di database, validasi menolak harga negatif/jam terbalik/jumlah kamar nol, data yang diubah terlihat di tampilan, karyawan nonaktif tidak bisa login.
 
 ## M3. Katalog publik dan ketersediaan
-- [ ] Halaman beranda: daftar paket aktif (rumah dan kos)
-- [ ] Cek slot kebersihan per tanggal (hanya jam aktif, `terisi < kuota`, tanggal lampau tidak bisa)
+- [x] Halaman beranda: daftar paket aktif (rumah dan kos)
+- [x] Cek slot kebersihan per tanggal (hanya jam aktif, `terisi < kuota`, tanggal lampau tidak bisa)
 
 **Cara tes**: tanpa login semua halaman bisa dibuka. Ubah kuota jadi 0 lalu slot hilang. Slot yang sudah penuh (`terisi` = kuota) tidak muncul. Tanggal lampau ditolak.
 
