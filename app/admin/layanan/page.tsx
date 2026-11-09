@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Icon } from "@/components/icons";
 import { Suspense } from "react";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { deleteLayanan } from "@/lib/actions/master";
@@ -72,8 +73,9 @@ export default function Page(props: PageProps<"/admin/layanan">) {
   return (
     <main className="page">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Paket Kebersihan</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">Paket Kebersihan</h1>
         <Link href="/admin/layanan/baru" className="btn btn-primary">
+          <Icon name="plus" size={18} />
           Tambah
         </Link>
       </div>

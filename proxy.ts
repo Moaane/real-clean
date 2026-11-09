@@ -8,7 +8,9 @@ import { AREA_ROLE, ROLE_HOME } from "@/lib/roles";
 export async function proxy(request: NextRequest) {
   const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value);
   if (!session) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const login = new URL("/login", request.url);
+    login.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
+    return NextResponse.redirect(login);
   }
 
   const area = "/" + request.nextUrl.pathname.split("/")[1];

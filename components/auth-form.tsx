@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import type { AuthState } from "@/lib/actions/auth";
+import { Icon } from "./icons";
 
 type Field = {
   name: "nama" | "email" | "no_hp" | "password";
@@ -13,33 +14,39 @@ type Field = {
 
 export function AuthForm({
   title,
+  subtitle,
   action,
   fields,
   submitLabel,
   footer,
+  next,
 }: {
   title: string;
+  subtitle: string;
   action: (prev: AuthState, formData: FormData) => Promise<AuthState>;
   fields: Field[];
   submitLabel: string;
   footer: { text: string; href: string; label: string };
+  next?: string;
 }) {
-  const [state, formAction, pending] = useActionState<AuthState, FormData>(
-    action,
-    {},
-  );
+  const [state, formAction, pending] = useActionState<AuthState, FormData>(action, {});
+  const footerHref = next ? `${footer.href}?next=${encodeURIComponent(next)}` : footer.href;
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-6 py-16">
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      <form action={formAction} className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>
+        <p className="mt-1 text-sm text-muted">{subtitle}</p>
+      </div>
+      <form action={formAction} className="card flex flex-col gap-4">
+        {next && <input type="hidden" name="next" value={next} />}
         {state.error && (
           <p role="alert" className="alert-error">
             {state.error}
           </p>
         )}
         {fields.map((f) => (
-          <label key={f.name} className="flex flex-col gap-1.5 text-sm font-medium">
+          <label key={f.name} className="label">
             {f.label}
             <input
               name={f.name}
@@ -50,26 +57,23 @@ export function AuthForm({
               className="input"
             />
             {state.fieldErrors?.[f.name]?.map((msg) => (
-              <span key={msg} className="text-xs text-danger">
+              <span key={msg} className="text-xs font-medium text-danger">
                 {msg}
               </span>
             ))}
           </label>
         ))}
-        <button
-          type="submit"
-          disabled={pending}
-          className="btn btn-primary"
-        >
+        <button type="submit" disabled={pending} className="btn btn-primary mt-1">
           {pending ? "Memproses…" : submitLabel}
+          {!pending && <Icon name="arrow" size={18} />}
         </button>
       </form>
-      <p className="text-sm text-muted">
+      <p className="text-center text-sm text-muted">
         {footer.text}{" "}
-        <Link href={footer.href} className="link">
+        <Link href={footerHref} className="link">
           {footer.label}
         </Link>
       </p>
-    </main>
+    </div>
   );
 }

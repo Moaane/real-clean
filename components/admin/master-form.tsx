@@ -51,7 +51,7 @@ export function MasterForm({
           <label
             key={f.name}
             className={
-              type === "checkbox" ? "flex items-center gap-2 text-sm font-medium" : "flex flex-col gap-1.5 text-sm font-medium"
+              type === "checkbox" ? "flex min-h-11 items-center gap-2 text-sm font-semibold" : "label"
             }
           >
             {type === "checkbox" ? (
@@ -89,7 +89,7 @@ export function MasterForm({
             )}
             {f.hint && <span className="text-xs font-normal text-muted">{f.hint}</span>}
             {errors?.map((msg) => (
-              <span key={msg} className="text-xs text-danger">
+              <span key={msg} className="text-xs font-medium text-danger">
                 {msg}
               </span>
             ))}

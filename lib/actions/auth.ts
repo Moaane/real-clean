@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import type { Role } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { ROLE_HOME } from "@/lib/roles";
 import { createSession, deleteSession } from "@/lib/session";
@@ -31,6 +32,18 @@ const loginSchema = z.object({
 // Compared against when the email is unknown so response time doesn't reveal
 // whether an account exists.
 const DUMMY_HASH = bcrypt.hashSync("dummy-password", 10);
+
+// Only same-site paths inside the customer area (/akun, /pesan) are honoured, so `next` can
+// never become an open redirect or send a customer into another role's area.
+const NEXT_PATTERN = /^\/(?:akun|pesan)(\/[A-Za-z0-9_\-./]*)?(\?[A-Za-z0-9_\-=&%.]*)?$/;
+
+function destination(formData: FormData, role: Role) {
+  const next = String(formData.get("next") ?? "");
+  if (role === "pelanggan" && NEXT_PATTERN.test(next) && !next.includes("..")) {
+    return next;
+  }
+  return ROLE_HOME[role];
+}
 
 export async function register(
   _prev: AuthState,
@@ -70,7 +83,7 @@ export async function register(
   });
 
   await createSession({ userId: user.id_user, role: user.role });
-  redirect(ROLE_HOME[user.role]);
+  redirect(destination(formData, user.role));
 }
 
 export async function login(
@@ -98,7 +111,7 @@ export async function login(
   }
 
   await createSession({ userId: user.id_user, role: user.role });
-  redirect(ROLE_HOME[user.role]);
+  redirect(destination(formData, user.role));
 }
 
 export async function logout() {

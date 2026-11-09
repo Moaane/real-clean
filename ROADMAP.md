@@ -34,11 +34,11 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 **Cara tes**: tanpa login semua halaman bisa dibuka. Ubah kuota jadi 0 lalu slot hilang. Slot yang sudah penuh (`terisi` = kuota) tidak muncul. Tanggal lampau ditolak.
 
 ## M4. Checkout tanpa pembayaran
-- [ ] Form booking (pilih paket rumah atau kos), wajib login (kembali ke form setelah login)
-- [ ] Total dihitung di server dari data paket
-- [ ] Booking `MENUNGGU_PEMBAYARAN` + `batas_bayar` 1 jam + `kode_booking` unik
-- [ ] Kuota slot terkunci dalam satu transaksi database
-- [ ] Halaman "Booking Saya" (daftar dan detail milik sendiri)
+- [x] Form booking (pilih paket rumah atau kos), tamu boleh mengisi form di `/pesan`, login diminta saat "Lanjut ke pembayaran" (kembali ke form terisi setelah login)
+- [x] Total dihitung di server dari data paket
+- [x] Booking `MENUNGGU_PEMBAYARAN` + `batas_bayar` 1 jam + `kode_booking` unik
+- [x] Kuota slot terkunci dalam satu transaksi database
+- [x] Halaman "Booking Saya" (daftar dan detail milik sendiri)
 
 **Cara tes**: dua booking bersamaan pada kuota terakhir, hanya satu yang berhasil. Mengubah harga di form tidak memengaruhi total. Pelanggan lain tidak bisa membuka detail booking orang lain.
 

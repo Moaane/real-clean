@@ -153,6 +153,21 @@ const jamGanda = (formData: FormData): FormState => ({
   values: formValues(formData),
 });
 
+// A slot is keyed by (date, jam_mulai), so two templates sharing a start time
+// would fight over the same slot row.
+async function jamMulaiDipakai(jamMulai: string, exceptId?: number) {
+  const dup = await prisma.jamOperasional.findFirst({
+    where: { jam_mulai: jamMulai, ...(exceptId ? { id: { not: exceptId } } : {}) },
+    select: { id: true },
+  });
+  return dup !== null;
+}
+
+const jamMulaiGanda = (formData: FormData): FormState => ({
+  fieldErrors: { jam_mulai: ["Jam mulai ini sudah dipakai jam operasional lain"] },
+  values: formValues(formData),
+});
+
 export async function createJam(
   _prev: FormState,
   formData: FormData,
@@ -160,6 +175,7 @@ export async function createJam(
   await requireRole("admin");
   const r = jamData(formData);
   if (r.error) return r.error;
+  if (await jamMulaiDipakai(r.data.jam_mulai)) return jamMulaiGanda(formData);
   try {
     await prisma.jamOperasional.create({ data: r.data });
   } catch (e) {
@@ -178,6 +194,7 @@ export async function updateJam(
   await requireRole("admin");
   const r = jamData(formData);
   if (r.error) return r.error;
+  if (await jamMulaiDipakai(r.data.jam_mulai, parseId(id))) return jamMulaiGanda(formData);
   try {
     await prisma.jamOperasional.update({ where: { id: parseId(id) }, data: r.data });
   } catch (e) {

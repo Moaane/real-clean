@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Icon } from "@/components/icons";
 import { Suspense } from "react";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { deleteJam } from "@/lib/actions/master";
@@ -56,8 +57,9 @@ export default function Page() {
   return (
     <main className="page">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Jam Operasional</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">Jam Operasional</h1>
         <Link href="/admin/jam/baru" className="btn btn-primary">
+          <Icon name="plus" size={18} />
           Tambah
         </Link>
       </div>

@@ -1,0 +1,297 @@
+# GoClean Design System v3 ("Medical Teal")
+
+Status: **spesifikasi desain**. Belum ada kode yang diubah. Dokumen ini menggantikan versi sebelumnya (hijau-teal + CTA oranye).
+Stack: Next.js 16 App Router, Tailwind v4 (token di `@theme inline` pada `app/globals.css`), tanpa dependency baru.
+
+Sumber:
+- **Bentuk, layout, hierarki:** analisis 6 mockup di `docs/mockups/` (warna mockup diabaikan).
+- **Warna:** palet *Medical Clinic / Healthcare* dari database `ui-ux-pro-max`, dengan nilai primary dan accent digelapkan agar teks putih lolos kontras 4.5:1.
+- **Font:** Plus Jakarta Sans (heading dan body).
+
+---
+
+## 1. Bahasa visual (dari mockup)
+
+| Ciri | Aturan |
+|---|---|
+| Bentuk | Pil penuh untuk tombol, chip, dan badge. Kartu dan gambar memakai radius besar. |
+| Hierarki | Judul besar dan tegas, dengan **satu frasa kunci berwarna `primary`**. Di bawahnya teks netral kecil. |
+| Spasi | Lega. Jarak antar section besar, padding kartu besar, gap konsisten. |
+| Kedalaman | Datar. Kartu putih di atas latar mint pucat, border 1px, tanpa shadow berat. |
+| CTA | Satu CTA utama per bagian, berbentuk pil dengan ikon panah. CTA sekunder berupa pil outline. |
+| Ikon | Garis tipis (outline), selalu dari `components/icons.tsx`. Tanpa emoji. |
+| Foto | Foto asli pekerjaan dan petugas, sudut membulat, tidak dipotong asal. |
+
+Alur booking tidak ada di mockup (mockup hanya landing page). Stepper, badge status, dan form diturunkan dari bahasa visual yang sama.
+
+## 2. Warna
+
+Nilai kontras diperkirakan dari rumus WCAG. Ukur ulang dengan alat kontras saat implementasi.
+
+### 2.1 Token inti (light)
+
+| Token | Hex | Pakai untuk | Kontras |
+|---|---|---|---|
+| `--background` | `#F0FDFA` | latar halaman | n/a |
+| `--surface` | `#FFFFFF` | kartu, input, navbar | n/a |
+| `--surface-2` | `#E6F7F4` | latar section, header tabel, hover baris | n/a |
+| `--border` | `#CCFBF1` | border dekoratif kartu | n/a |
+| `--border-strong` | `#7FB5AE` | border input dan kontrol (UI ≥ 3:1) | ≥ 3:1 di atas surface |
+| `--foreground` | `#134E4A` | teks utama | ≥ 8:1 |
+| `--muted` | `#475569` | teks sekunder | ≥ 6:1 di `--background` |
+| `--primary` | `#0E7490` | tombol utama, tautan, fokus, frasa kunci judul | 5.4:1 dengan putih |
+| `--primary-hover` | `#155E75` | hover/press primary | 7:1 dengan putih |
+| `--primary-bright` | `#0891B2` | dekoratif saja (ikon besar, ilustrasi, garis aktif). **Bukan untuk teks.** | n/a |
+| `--on-primary` | `#FFFFFF` | teks di atas primary | n/a |
+| `--primary-soft` | `#CFFAFE` | chip aktif lembut, item nav aktif | n/a |
+| `--on-primary-soft` | `#155E75` | teks di atas primary-soft | ≥ 6:1 |
+| `--ring` | `#0E7490` | cincin fokus | ≥ 3:1 |
+
+### 2.2 Warna semantik
+
+| Token | Teks/ikon | Latar lembut | Pakai untuk |
+|---|---|---|---|
+| `ok` | `#15803D` | `#DCFCE7` | sukses, dibayar, slot tersedia |
+| `warn` | `#B45309` | `#FEF3C7` | menunggu, perlu perhatian |
+| `danger` | `#B91C1C` | `#FEE2E2` | error, batal |
+| `info` | `#155E75` | `#CFFAFE` | proses berjalan |
+| `neutral` | `#475569` | `#E2E8F0` | tidak aktif, kedaluwarsa |
+
+Teks di atas latar lembut ≥ 4.5:1. Warna tidak boleh menjadi satu-satunya pembeda. Selalu sertakan ikon atau teks.
+
+### 2.3 Badge status booking
+
+Pemetaan ke `StatusBooking` (`lib/booking-status.ts`). Setiap badge berisi **ikon + label** (label dari `STATUS_LABEL`).
+
+| Status | Tone | Latar | Teks | Ikon |
+|---|---|---|---|---|
+| `MENUNGGU_PEMBAYARAN` | warn | `#FEF3C7` | `#B45309` | jam |
+| `DIBAYAR` | ok | `#DCFCE7` | `#15803D` | centang |
+| `DITUGASKAN` | info | `#CFFAFE` | `#155E75` | orang |
+| `DALAM_PERJALANAN` | info | `#CFFAFE` | `#155E75` | panah rute |
+| `DIKERJAKAN` | info | `#CFFAFE` | `#155E75` | percikan |
+| `MENUNGGU_VERIFIKASI` | warn | `#FEF3C7` | `#B45309` | perisai |
+| `SELESAI` | ok (solid) | `#15803D` | `#FFFFFF` | centang ganda |
+| `KEDALUWARSA` | neutral | `#E2E8F0` | `#475569` | jam coret |
+| `DIBATALKAN` | danger | `#FEE2E2` | `#B91C1C` | silang |
+| `DIREFUND` | neutral | `#E2E8F0` | `#475569` | panah balik |
+
+Catatan implementasi: `statusBadgeClass()` saat ini hanya punya 4 kelas (`badge-on`, `badge-warn`, `badge-off`, `badge-soft`). Perlu dipetakan ulang ke 5 tone di atas (`ok`, `warn`, `danger`, `info`, `neutral`) saat milestone implementasi.
+
+### 2.4 Dark mode (opsional, `prefers-color-scheme: dark`)
+
+| Token | Hex |
+|---|---|
+| `--background` | `#0B1F1E` |
+| `--surface` | `#10292A` |
+| `--surface-2` | `#16383A` |
+| `--border` | `#1F4A4B` |
+| `--foreground` | `#E6FAF6` |
+| `--muted` | `#A5C4C2` |
+| `--primary` | `#22D3EE` |
+| `--primary-hover` | `#67E8F9` |
+| `--on-primary` | `#06262B` |
+| `--ok` / `--warn` / `--danger` / `--info` | `#86EFAC` / `#FCD34D` / `#FCA5A5` / `#67E8F9` |
+
+Aturan: komponen memakai token semantik saja, tanpa hex mentah.
+
+## 3. Tipografi
+
+**Plus Jakarta Sans** untuk heading dan body, bobot 400, 500, 600, 700, 800. Pakai `next/font/google` (bukan `@import`). Daftarkan `--font-sans` di `@theme inline`.
+
+| Level | Mobile / Desktop | Bobot | Line-height | Letter-spacing |
+|---|---|---|---|---|
+| Display (hero) | 36 / 56 | 800 | 1.1 | -0.02em |
+| H1 | 28 / 40 | 700 | 1.15 | -0.02em |
+| H2 | 22 / 30 | 700 | 1.25 | -0.01em |
+| H3 | 18 / 20 | 600 | 1.3 | 0 |
+| Body | 16 | 400 | 1.6 | 0 |
+| Small | 14 | 400/500 | 1.5 | 0 |
+| Caption | 12 (minimum) | 500 | 1.4 | 0.01em |
+
+- Display dan H1 boleh huruf kapital semua seperti mockup (hanya untuk judul section di halaman publik). Judul di halaman akun, admin, dan form memakai huruf biasa.
+- Satu frasa kunci per judul diberi warna `--primary`.
+- Harga memakai `tabular-nums`, format `Rp 150.000`. Heading memakai `text-wrap: balance`.
+
+## 4. Spasi, radius, elevasi
+
+- **Skala spasi (4px):** 4, 8, 12, 16, 24, 32, 48, 64, 96.
+- Jarak antar section: 64 (mobile) / 96 (desktop). Padding kartu: 20 (mobile) / 28 (desktop). Gap antar kartu: 16–24.
+- **Radius:**
+
+| Token | Nilai | Dipakai untuk |
+|---|---|---|
+| `--radius-sm` | 8px | tag kecil, tooltip |
+| `--radius-md` | 12px | input, alert |
+| `--radius-lg` | 20px | kartu, gambar |
+| `--radius-xl` | 28px | kartu section besar, modal, sheet |
+| `--radius-pill` | 9999px | tombol, chip, badge, avatar |
+
+- **Elevasi:** kartu hanya `border 1px var(--border)`. Shadow `0 8px 24px rgb(19 78 74 / 0.10)` hanya untuk dropdown, modal, dan bar sticky bawah.
+- **Container:** `max-w-6xl` (publik), `max-w-5xl` (pelanggan), `max-w-7xl` (admin). Padding horizontal 16 (mobile) / 24 (desktop).
+- **Breakpoint:** 375 (dasar), 768, 1024, 1440. Tanpa scroll horizontal di semua lebar.
+
+## 5. Ikon
+
+Set SVG outline, stroke 1.75px, ukuran 20px (UI) dan 24px (navigasi), dari `components/icons.tsx`. Ikon dekoratif memakai `aria-hidden`. Tombol hanya-ikon wajib punya `aria-label`.
+
+## 6. Spesifikasi komponen
+
+### 6.1 Button
+
+| Varian | Latar | Teks | Border | Dipakai |
+|---|---|---|---|---|
+| `primary` | `--primary` | `--on-primary` | none | CTA utama (Pesan, Bayar, Simpan, Masuk) |
+| `outline` | transparan | `--foreground` | 1px `--border-strong` | aksi sekunder (mockup: "Contact us") |
+| `ghost` | transparan | `--primary` | none | aksi tersier, tautan aksi |
+| `soft` | `--primary-soft` | `--on-primary-soft` | none | aksi ringan di dalam kartu |
+| `danger` | transparan | `--danger` | 1px `--danger` | Batalkan, Hapus (selalu dengan konfirmasi) |
+
+- **Bentuk:** pil (`--radius-pill`). Opsional ikon panah di kanan untuk CTA navigasi (mockup).
+- **Ukuran:** `md` tinggi 44px, padding-x 20px, font 15/600 (default, mobile dan desktop). `lg` tinggi 52px, padding-x 28px, font 16/600 (hero, bar bayar). `sm` tinggi 36px, font 14/600, **hanya** untuk desktop admin dan tabel, dengan area sentuh tetap diperluas ke 44px.
+- **State:** hover → `primary-hover` (150ms). `:active` scale 0.98. `:disabled` opacity 0.5 dan `aria-disabled`. `loading` → spinner + teks "Memproses…" dan tombol nonaktif agar tidak ada double submit. `:focus-visible` → ring 2px `--ring` dengan offset 2px, jangan dihapus.
+- Satu `primary` `lg` per layar sebagai aksi utama.
+
+### 6.2 Input
+
+- Tinggi 48px, padding-x 16px, font 16 (mencegah zoom iOS), radius `--radius-md`, latar `--surface`, border 1px `--border-strong`.
+- **Label** selalu terlihat di atas field (14/600, `--foreground`). Placeholder bukan label. Field wajib ditandai teks "(wajib)".
+- **State:** hover → border `--foreground` 40%. Fokus → border `--primary` + ring 2px `--ring`. Error → border `--danger`, pesan 14px `--danger` dengan ikon di bawah field, terhubung lewat `aria-describedby`, field diberi `aria-invalid`. Disabled → latar `--surface-2`, opacity 0.6.
+- Teks bantu 14px `--muted` di bawah field.
+- Validasi saat `blur`, bukan tiap ketikan. Atribut `autocomplete` dan `inputmode` sesuai (telepon: `tel`).
+- Varian: `select` (chevron kanan, tinggi sama), `textarea` (min 96px), password (tombol tampil/sembunyikan dengan `aria-label`).
+
+### 6.3 Card
+
+| Varian | Spesifikasi |
+|---|---|
+| `card` | latar `--surface`, border 1px `--border`, radius `--radius-lg`, padding 20/28, tanpa shadow |
+| `card-interactive` | seperti `card`, hover → border `--primary` 40% dan `translateY(-2px)` (200ms). Seluruh kartu fokusable, `focus-visible` ring |
+| `card-section` | latar `--surface`, radius `--radius-xl`, dipakai membungkus satu section besar seperti di mockup |
+
+**Kartu paket layanan** (dari mockup 2 dan 6):
+1. Foto/ilustrasi rasio 4:3, radius `--radius-lg` (dimensi dipesan di muka, tanpa layout shift).
+2. Nama paket (H3).
+3. Ringkasan "termasuk apa" 2–3 baris `--muted`.
+4. Metadata (durasi, jenis) dengan ikon garis kecil 16px.
+5. Harga "mulai dari" (`tabular-nums`, 18/700).
+6. CTA `primary` "Pilih paket".
+
+### 6.4 Badge
+
+- Pil, tinggi 28px, padding-x 12px, font 13/600, ikon 14px di kiri, gap 6px.
+- Warna sesuai tabel di §2.3 (latar lembut + teks gelap, kecuali `SELESAI` yang solid).
+- **Chip filter** (mockup 2: Offices, Houses…): pil tinggi 44px, border 1px `--border-strong`. Aktif → latar `--primary`, teks `--on-primary`, ikon centang. Dikelompokkan dengan `role="radiogroup"` atau `tablist`.
+- **Lencana angka kecil** (mockup 4: "8 years") memakai gaya `soft` dan posisi menempel di sudut avatar.
+
+### 6.5 Stepper booking
+
+Alur pelanggan: **1 Layanan → 2 Jadwal → 3 Detail → 4 Bayar**.
+
+| Aspek | Spesifikasi |
+|---|---|
+| Orientasi | Horizontal. Di mobile cukup 4 titik + label langkah aktif ("Langkah 2 dari 4: Jadwal") |
+| Lingkaran langkah | 32px, font 14/700 |
+| Selesai | latar `--primary`, ikon centang putih, bisa diklik untuk kembali |
+| Aktif | border 2px `--primary`, angka `--primary`, latar `--primary-soft`, `aria-current="step"` |
+| Belum | border 1px `--border-strong`, angka `--muted` |
+| Garis penghubung | 2px. Terisi `--primary` untuk langkah yang selesai, `--border` untuk sisanya |
+| Label | 14/600 di bawah (desktop) atau sebaris (mobile) |
+| Markup | `<ol>` dengan `aria-label="Langkah pemesanan"` |
+
+**Pemilih tanggal dan jam** (di langkah 2):
+- Tanggal: strip horizontal 14 hari (chip pil 64×72). Hari tutup atau penuh dinonaktifkan dengan teks "Penuh".
+- Jam: grid chip 3–4 kolom dari data jam operasional. Slot terisi memakai `aria-disabled` plus teks, bukan hanya warna pudar. Pilihan aktif: latar `--primary` dan ikon centang.
+- **Bar ringkasan sticky** di bawah layar mobile: paket, tanggal-jam, total, tombol `primary` `lg`. Total hanya tampilan, karena server menghitung ulang harga (aturan di CLAUDE.md).
+
+**Timeline status** di halaman detail booking: vertikal, titik terisi `--primary` untuk langkah selesai, cincin untuk langkah aktif, abu untuk langkah berikutnya.
+
+### 6.6 Navbar
+
+| Aspek | Spesifikasi |
+|---|---|
+| Bentuk | Bar di dalam kartu membulat `--radius-xl` (mockup 1), atau sticky penuh lebar dengan border bawah 1px `--border` |
+| Tinggi | 64px (desktop), 56px (mobile) |
+| Latar | `--surface` (boleh 90% opak + blur ringan saat sticky) |
+| Kiri | Logo (ikon 32px + "GoClean" 18/700) |
+| Tengah (≥ 768px) | Tautan: Layanan, Cara Kerja, Booking Saya. 15/500, jarak 32px |
+| Kanan | Belum login → `outline` "Masuk" + `primary` "Daftar". Sudah login → avatar/inisial + menu Akun |
+| Aktif | Tautan aktif: latar `--primary-soft`, teks `--on-primary-soft`, `aria-current="page"`. Radius pil, tinggi 40px |
+| Mobile | Hamburger membuka sheet dari atas. Pelanggan juga mendapat **bottom nav** 4 item (Beranda, Layanan, Booking, Akun). Target sentuh ≥ 44px |
+| Karyawan | Bottom nav 3 item: Tugas hari ini, Riwayat, Akun |
+| Admin | Sidebar kiri 260px (desktop), drawer (mobile): Ringkasan, Booking, Layanan, Kamar/Jam, Karyawan, Pembayaran |
+
+Skip link "Lewati ke konten" ada di awal DOM.
+
+### 6.7 Komponen lain (ringkas)
+
+- **Tabel admin:** header `--surface-2`, teks 12px kapital `--muted`. Baris 56px, hover `--surface-2`. Di bawah 768px menjadi daftar kartu. Aksi per baris lewat menu dengan label aksesibel. Hapus selalu lewat dialog konfirmasi.
+- **Alert:** latar `*-soft`, border 1px warna sama, ikon di kiri. `role="alert"` untuk error.
+- **Toast:** bawah (mobile) / kanan-atas (desktop), hilang dalam 4–5 detik, tidak mengambil fokus, tidak untuk error kritis.
+- **Empty state:** ikon, satu kalimat, satu CTA.
+- **Skeleton:** untuk daftar paket dan riwayat. Jangan pakai spinner layar penuh.
+- **Modal/sheet:** perangkap fokus, `Esc` menutup, fokus kembali ke pemicu. Di mobile berupa bottom sheet, radius atas `--radius-xl`.
+- **Avatar petugas:** bulat 64px, lencana pengalaman (badge `soft`) di sudut. Dipakai di halaman detail booking untuk petugas yang ditugaskan.
+
+## 7. Layout halaman
+
+1. **Beranda:** hero dua kolom (judul besar + frasa kunci `primary` di kiri, paragraf + CTA di kanan), foto lebar di bawahnya. Lalu baris kepercayaan, paket populer, cara kerja 3 langkah, FAQ akordeon, footer dengan kontak.
+2. **Daftar layanan:** judul + deskripsi dua kolom, chip filter (Rumah / Kos), grid kartu paket (1 kolom di mobile, 2 di tablet, 3 di desktop).
+3. **Booking:** Stepper di atas, konten langkah di tengah (max 640px), bar ringkasan sticky.
+4. **Pembayaran:** ringkasan, tombol bayar ke gateway sandbox. Halaman setelah redirect berbunyi "Menunggu konfirmasi pembayaran". Status berubah menjadi *Dibayar* hanya setelah webhook, bukan setelah redirect.
+5. **Riwayat dan detail booking:** daftar kartu dengan badge status. Detail dengan timeline.
+6. **Login/Daftar:** satu kolom, form terpusat (`auth-shell`).
+7. **Karyawan dan Admin:** sesuai §6.6.
+
+## 8. Gerak
+
+- Hover/warna 150ms. Perubahan panel 200–250ms. Sheet/modal masuk 250ms (`ease-out`), keluar 180ms (`ease-in`).
+- Hanya animasikan `opacity` dan `transform`.
+- Gerak harus bermakna (sheet naik dari bawah, centang muncul saat langkah selesai). Tanpa animasi dekoratif berulang.
+- `prefers-reduced-motion`: matikan transform, sisakan fade.
+
+## 9. Aksesibilitas (wajib lolos)
+
+- Kontras teks ≥ 4.5:1, komponen UI ≥ 3:1.
+- Semua fungsi bisa dipakai dengan keyboard, fokus selalu terlihat, urutan tab sesuai urutan visual.
+- Target sentuh ≥ 44×44px dengan jarak ≥ 8px.
+- Zoom 200% tidak merusak layout dan jangan matikan zoom di viewport.
+- Status dan error diumumkan lewat `aria-live` (polite untuk status, assertive untuk error).
+- Gambar paket punya `alt` bermakna. Gambar dekoratif memakai `alt=""`.
+
+## 10. Pemetaan ke kode saat ini
+
+Ini hanya daftar, belum dikerjakan.
+
+| Berkas | Perubahan yang diperlukan |
+|---|---|
+| `app/globals.css` | Ganti token warna, tambah `--surface-2`, `--border-strong`, `--primary-soft`, token semantik (`ok/warn/danger/info/neutral`), `--radius-*`. Ganti kelas tombol, input, kartu, badge sesuai §6 |
+| `app/layout.tsx` | Pasang Plus Jakarta Sans lewat `next/font/google` |
+| `lib/booking-status.ts` | Petakan `statusBadgeClass` ke 5 tone dan tambahkan ikon per status |
+| `components/site-header.tsx` | Sesuaikan ke spesifikasi Navbar §6.6 |
+| `components/booking-form.tsx` | Tambah Stepper §6.5 dan bar ringkasan sticky |
+| `components/ui/*`, `components/landing/*` | Selaraskan dengan token baru |
+
+## 11. Urutan implementasi yang disarankan
+
+Sesuai CLAUDE.md, kerjakan per milestone:
+
+1. Token + font + komponen dasar (Button, Input, Card, Badge).
+2. Navbar dan navigasi bawah/sidebar.
+3. Beranda dan daftar layanan.
+4. Stepper dan alur booking, lalu detail booking dengan timeline.
+5. Auth, admin, karyawan.
+
+Tiap langkah verifikasi dengan `pnpm lint && pnpm build`, dan cek manual di lebar 375/768/1024/1440.
+
+## 12. Checklist sebelum rilis
+
+- [ ] Tidak ada emoji sebagai ikon, tidak ada hex mentah di komponen
+- [ ] `cursor-pointer` di semua elemen yang bisa diklik
+- [ ] Hover/press ada transisi 150–250ms
+- [ ] Fokus keyboard terlihat di semua kontrol
+- [ ] Kontras diverifikasi (light dan dark bila dipakai)
+- [ ] Tanpa scroll horizontal di 375px
+- [ ] `prefers-reduced-motion` dihormati
+- [ ] Satu CTA `primary` `lg` per layar
+- [ ] Total harga di UI hanya tampilan, server tetap menghitung ulang

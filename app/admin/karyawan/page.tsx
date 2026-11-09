@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Icon } from "@/components/icons";
 import { Suspense } from "react";
 import { toggleKaryawan } from "@/lib/actions/master";
 import { requireRole } from "@/lib/auth";
@@ -62,8 +63,9 @@ export default function Page() {
   return (
     <main className="page">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Akun Karyawan</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">Akun Karyawan</h1>
         <Link href="/admin/karyawan/baru" className="btn btn-primary">
+          <Icon name="plus" size={18} />
           Tambah
         </Link>
       </div>

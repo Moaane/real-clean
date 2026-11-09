@@ -1,39 +1,47 @@
-import Link from "next/link";
-import { connection } from "next/server";
 import { Suspense } from "react";
-import { PaketList } from "@/components/paket-list";
+import { CaraKerja } from "@/components/landing/cara-kerja";
+import { ClosingCta } from "@/components/landing/closing-cta";
+import { Faq } from "@/components/landing/faq";
+import { LandingFooter } from "@/components/landing/footer";
+import { Hero } from "@/components/landing/hero";
+import { PaketSkeleton } from "@/components/landing/paket-card";
+import { PaketSection } from "@/components/landing/paket-section";
+import { Solusi } from "@/components/landing/solusi";
+import { Tingkat } from "@/components/landing/tingkat";
+import { TrustBar } from "@/components/landing/trust-bar";
 import { SiteHeader } from "@/components/site-header";
-import { prisma } from "@/lib/prisma";
-
-async function Katalog() {
-  await connection(); // always read fresh data, never bake it in at build time
-  const items = await prisma.layanan.findMany({
-    where: { status_aktif: true },
-    orderBy: [{ jumlah_kamar: "asc" }, { harga: "asc" }],
-  });
-  return <PaketList items={items} />;
-}
+import { SectionHeading } from "@/components/ui";
 
 export default function Home() {
   return (
     <>
       <SiteHeader />
-      <main className="page gap-10">
-        <section className="rounded-2xl bg-primary-soft px-6 py-12 sm:px-10">
-          <h1 className="max-w-xl text-3xl font-bold leading-tight sm:text-4xl">
-            Rumah dan kos bersih, tanpa repot.
-          </h1>
-          <p className="mt-3 max-w-lg text-muted">
-            Pilih paket sesuai jumlah kamar dan tingkat kebersihan, tentukan tanggal dan jam, tim kami datang ke lokasi.
-          </p>
-          <Link href="/layanan" className="btn btn-primary mt-6">
-            Cek slot tersedia
-          </Link>
+      <main id="konten" className="flex flex-1 flex-col">
+        <Hero />
+        <TrustBar />
+        <section id="paket" aria-labelledby="paket-judul" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 py-16 sm:px-6 md:py-24">
+          <SectionHeading
+            id="paket-judul"
+            align="split"
+            upper
+            title="Paket"
+            highlight="kebersihan"
+            after="kami"
+            lead="Harga tetap per paket. Pilih sesuai jenis properti dan jumlah kamar."
+          />
+          <div className="mt-8">
+            <Suspense fallback={<PaketSkeleton />}>
+              <PaketSection />
+            </Suspense>
+          </div>
         </section>
-        <Suspense fallback={<p className="text-muted">Memuat…</p>}>
-          <Katalog />
-        </Suspense>
+        <Solusi />
+        <CaraKerja />
+        <Tingkat />
+        <Faq />
+        <ClosingCta />
       </main>
+      <LandingFooter />
     </>
   );
 }
