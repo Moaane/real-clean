@@ -1,4 +1,4 @@
-# GoClean Design System v4 ("Clean Wave", tema terang)
+# Real Clean Design System v4 ("Clean Wave", tema terang)
 
 
 Status: **spesifikasi desain, diterapkan di landing page**. Menggantikan v3 (Medical Teal): sekarang satu tema terang netral dengan satu aksen hijau. Tema gelap dihapus.
@@ -206,7 +206,7 @@ Alur pelanggan: **1 Layanan → 2 Jadwal → 3 Detail → 4 Bayar**.
 | Bentuk | Bar di dalam kartu membulat `--radius-xl` (mockup 1), atau sticky penuh lebar dengan border bawah 1px `--border` |
 | Tinggi | 64px (desktop), 56px (mobile) |
 | Latar | `--surface` (boleh 90% opak + blur ringan saat sticky) |
-| Kiri | Logo (ikon 32px + "GoClean" 18/700) |
+| Kiri | Logo (ikon 32px + "Real Clean" 18/700) |
 | Tengah (≥ 768px) | Tautan: Layanan, Cara Kerja, Booking Saya. 15/500, jarak 32px |
 | Kanan | Belum login → `outline` "Masuk" + `primary` "Daftar". Sudah login → avatar/inisial + menu Akun |
 | Aktif | Tautan aktif: latar `--primary-soft`, teks `--on-primary-soft`, `aria-current="page"`. Radius pil, tinggi 40px |

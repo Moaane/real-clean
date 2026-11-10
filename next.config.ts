@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
   },
-  allowedDevOrigins: ["https://virtual-buses-seasons-slim.trycloudflare.com"],
+  allowedDevOrigins: ["https://linux-places-attributes-tuner.trycloudflare.com"],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

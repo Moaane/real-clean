@@ -24,7 +24,7 @@ export function RailLink({ item }: { item: RailItem }) {
       aria-label={item.label}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex size-11 items-center justify-center rounded-md border transition duration-200 hover:scale-105 active:scale-95",
+        "group relative z-50 flex size-11 items-center justify-center rounded-md border transition duration-200 hover:scale-105 active:scale-95",
         active
           ? "border-primary bg-primary-soft text-primary-ink"
           : "border-transparent text-muted hover:bg-surface-2 hover:text-foreground",

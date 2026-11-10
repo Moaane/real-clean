@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import type { Role } from "@/generated/prisma/enums";
 
-export const SESSION_COOKIE = "goclean_session";
+export const SESSION_COOKIE = "realclean_session";
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days, in seconds
 
 export type SessionPayload = { userId: number; role: Role };

@@ -17,6 +17,13 @@ export function nowWib() {
   return { date, time };
 }
 
+/** True once the slot's start (jam_mulai on its date, WIB) has been reached. Slot dates are UTC-midnight @db.Date. */
+export function slotSudahMulai(tanggal: Date, jamMulai: string) {
+  const now = nowWib();
+  const date = tanggal.toISOString().slice(0, 10);
+  return date < now.date || (date === now.date && jamMulai <= now.time);
+}
+
 /** Parses "YYYY-MM-DD" to a UTC-midnight Date (how Prisma stores @db.Date). */
 export function parseDate(value: string | undefined): Date | null {
   if (!value || !DATE_RE.test(value)) return null;

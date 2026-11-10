@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
-import { Chip } from "@/components/ui";
 import { IconBuilding, IconChevronLeft, IconChevronRight, IconHome } from "@/components/icons";
 
 export type PaketTile = {
@@ -16,44 +16,60 @@ export type PaketTile = {
   adaFoto: boolean;
 };
 
-const FILTERS = [
-  { key: "rumah", label: "Rumah" },
-  { key: "kos", label: "Kos" },
-] as const;
-
-/** Mockup 2: chip kategori + panah, lalu baris kartu foto yang bisa digeser. */
-export function PaketCarousel({ items }: { items: PaketTile[] }) {
-  const ada = FILTERS.filter((f) => items.some((i) => i.jenis === f.key));
-  const [jenis, setJenis] = useState<"rumah" | "kos">(ada[0]?.key ?? "rumah");
+/** Satu carousel berisi semua paket (rumah dan kos). Panah di kiri, `aksi` di kanan. */
+export function PaketCarousel({ items, aksi }: { items: PaketTile[]; aksi?: ReactNode }) {
   const scroller = useRef<HTMLUListElement>(null);
-  const shown = items.filter((i) => i.jenis === jenis);
 
-  const scroll = (dir: 1 | -1) =>
-    scroller.current?.scrollBy({ left: dir * Math.round(scroller.current.clientWidth * 0.8), behavior: "smooth" });
+  const [ujung, setUjung] = useState({ start: true, end: true });
+
+  const perbaruiUjung = useCallback(() => {
+    const el = scroller.current;
+    if (!el) return;
+    setUjung({
+      start: el.scrollLeft <= 4,
+      end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4,
+    });
+  }, []);
+
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    perbaruiUjung();
+    el.addEventListener("scroll", perbaruiUjung, { passive: true });
+    const ro = new ResizeObserver(perbaruiUjung);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", perbaruiUjung);
+      ro.disconnect();
+    };
+  }, [perbaruiUjung]);
+
+  const bisaGeser = !(ujung.start && ujung.end);
+
+  const scroll = (dir: 1 | -1) => {
+    const el = scroller.current;
+    if (!el) return;
+    el.scrollTo({ left: el.scrollLeft + dir * Math.round(el.clientWidth * 0.8), behavior: "smooth" });
+  };
 
   return (
     <div className="mt-8 md:mt-10">
       <div className="flex items-center justify-between gap-4">
-        <div role="radiogroup" aria-label="Jenis properti" className="flex flex-wrap gap-2">
-          {ada.map((f) => (
-            <Chip key={f.key} active={jenis === f.key} onClick={() => setJenis(f.key)}>
-              {f.label}
-            </Chip>
-          ))}
-        </div>
-        <div className="hidden gap-2 md:flex">
+        <div className={cn("gap-2", bisaGeser ? "flex" : "invisible flex")} aria-hidden={!bisaGeser}>
           {([-1, 1] as const).map((d) => (
             <button
               key={d}
               type="button"
               onClick={() => scroll(d)}
+              disabled={d === -1 ? ujung.start : ujung.end}
               aria-label={d === -1 ? "Geser ke kiri" : "Geser ke kanan"}
-              className="flex size-11 cursor-pointer items-center justify-center rounded-pill border border-border-strong transition duration-150 hover:bg-surface-2"
+              className="flex size-11 cursor-pointer items-center justify-center rounded-pill border border-border-strong transition duration-150 hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
             >
               {d === -1 ? <IconChevronLeft /> : <IconChevronRight />}
             </button>
           ))}
         </div>
+        {aksi}
       </div>
 
       <ul
@@ -62,7 +78,7 @@ export function PaketCarousel({ items }: { items: PaketTile[] }) {
         aria-label="Daftar paket"
         className="mt-6 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto pb-4 [scrollbar-width:none] md:gap-6 [&::-webkit-scrollbar]:hidden"
       >
-        {shown.map((p, i) => {
+        {items.map((p, i) => {
           const Icon = p.jenis === "kos" ? IconBuilding : IconHome;
           return (
             <li key={p.id} className="w-[72%] shrink-0 snap-start sm:w-[44%] lg:w-[30%]">

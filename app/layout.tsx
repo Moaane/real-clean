@@ -11,13 +11,13 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: { default: "GoClean", template: "%s | GoClean" },
+  title: { default: "Real Clean", template: "%s | Real Clean" },
   description: "Jasa kebersihan rumah dan kos. Pilih paket, jadwal, lalu bayar secara online.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={jakarta.variable}>
+    <html lang="id" className={jakarta.variable} data-scroll-behavior="smooth">
       <body className="min-h-dvh">
         <a href="#konten" className="skip-link">
           Lewati ke konten

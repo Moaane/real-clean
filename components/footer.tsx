@@ -9,7 +9,7 @@ export function Footer() {
         <div className="flex flex-col gap-3">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold">
             <LogoMark size={32} />
-            GoClean
+            Real Clean
           </Link>
           <p className="max-w-xs text-sm text-muted">
             Jasa kebersihan rumah dan kos dengan jadwal yang bisa Anda pilih sendiri.
@@ -39,7 +39,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-border py-4 text-center text-xs font-medium text-muted">
-        © 2026 GoClean. Seluruh hak cipta dilindungi.
+        © 2026 Real Clean. Seluruh hak cipta dilindungi.
       </div>
     </footer>
   );

@@ -1,12 +1,26 @@
-import { Photo } from "@/components/ui/photo";
-import { ButtonLink } from "@/components/ui";
-import { IconArrowRight, IconCalendar, IconShield, IconTag, IconSparkle } from "@/components/icons";
+import { Photo } from "@/components/ui/photo"
+import { ButtonLink } from "@/components/ui"
+import {
+  IconArrowRight,
+  IconCalendar,
+  IconShield,
+  IconTag,
+  IconSparkle,
+} from "@/components/icons"
 
 const TRUST = [
-  { icon: IconShield, label: "Petugas terverifikasi", pos: "md:right-0 md:top-16" },
+  {
+    icon: IconShield,
+    label: "Petugas terverifikasi",
+    pos: "md:right-0 md:top-16",
+  },
   { icon: IconTag, label: "Harga transparan", pos: "md:right-10 md:top-36" },
-  { icon: IconCalendar, label: "Jadwal fleksibel", pos: "md:right-2 md:top-56" },
-];
+  {
+    icon: IconCalendar,
+    label: "Jadwal fleksibel",
+    pos: "md:right-2 md:top-56",
+  },
+]
 
 /** Mockup 6: judul di tengah, foto berbingkai lengkung di atas lingkaran, chip melayang, tombol di bawah foto. */
 export function Hero() {
@@ -15,35 +29,36 @@ export function Hero() {
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-b from-primary-soft via-primary-soft/50 to-surface px-4 pt-12 md:px-10 md:pt-16">
         <div className="anim-rise mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
           <h1 className="title-display text-[38px] md:text-[60px]">
-            Ciptakan kenyamanan lewat <span className="text-primary">kebersihan</span>
+            Ciptakan kenyamanan lewat{" "}
+            <span className="text-primary">kebersihan</span>
           </h1>
           <p className="max-w-xl text-[15px] text-muted md:text-base">
-            Dari rumah hingga kos, kami hadirkan hunian yang bersih dan nyaman dengan petugas terverifikasi, peralatan
-            lengkap, dan harga yang jelas sejak awal.
+            Dari rumah hingga kos, kami hadirkan hunian yang bersih dan nyaman
+            dengan petugas terverifikasi, peralatan lengkap, dan harga yang
+            jelas sejak awal.
           </p>
         </div>
 
-        <div className="relative mx-auto mt-10 max-w-4xl md:mt-14">
-          {/* Lingkaran + cincin tipis di belakang foto */}
-          <span aria-hidden="true" className="absolute bottom-0 left-1/2 aspect-square w-[88%] max-w-[500px] -translate-x-1/2 translate-y-1/3 rounded-pill bg-primary md:w-[80%]" />
-          <span aria-hidden="true" className="absolute bottom-0 left-1/2 aspect-square w-[104%] max-w-[600px] -translate-x-1/2 translate-y-[38%] rounded-pill border border-primary/30" />
+        <div className="relative mx-auto mt-10 max-w-3xl md:mt-14">
+          {/* Panggung: setengah lingkaran hanya latar, foto setengah badan di atasnya, rata dasar */}
+          <div className="anim-fade relative mx-auto flex justify-center overflow-hidden">
+            <span
+              aria-hidden="true"
+              className="absolute bottom-0 left-1/2 aspect-square w-[min(96%,680px)] -translate-x-1/2 translate-y-1/2 rounded-pill bg-primary"
+            />
+            <span
+              aria-hidden="true"
+              className="absolute bottom-0 left-1/2 aspect-square w-[min(112%,780px)] -translate-x-1/2 translate-y-1/2 rounded-pill border border-primary/30"
+            />
 
-          <div className="anim-fade relative mx-auto w-[78%] max-w-[360px]">
             <Photo
               name="hero"
-              alt="Petugas GoClean membawa peralatan pembersih"
+              alt="Petugas Real Clean membawa peralatan pembersih"
               priority
-              sizes="360px"
-              className="aspect-[4/5] rounded-t-[999px] bg-surface"
+              sizes="400px"
+              className="relative aspect-[2/3] w-[min(80%,400px)] bg-transparent!"
+              imageClassName="object-bottom"
             />
-            <ButtonLink
-              href="/pesan"
-              size="md"
-              className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-foreground! text-background! hover:bg-foreground/85!"
-            >
-              <IconArrowRight size={16} className="-rotate-45" />
-              Pesan sekarang
-            </ButtonLink>
           </div>
 
           {/* Chip: baris biasa di mobile, melayang di desktop */}
@@ -75,5 +90,5 @@ export function Hero() {
         </div>
       </div>
     </section>
-  );
+  )
 }

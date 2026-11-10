@@ -21,10 +21,10 @@ async function main() {
   const hash = await bcrypt.hash(process.env.SEED_PASSWORD ?? "password123", 10);
 
   const users = [
-    { nama: "Admin GoClean", email: "admin@goclean.test", no_hp: "081200000001", role: "admin" },
-    { nama: "Budi Karyawan", email: "budi@goclean.test", no_hp: "081200000002", role: "karyawan" },
-    { nama: "Sari Karyawan", email: "sari@goclean.test", no_hp: "081200000003", role: "karyawan" },
-    { nama: "Pelanggan Demo", email: "pelanggan@goclean.test", no_hp: "081200000004", role: "pelanggan" },
+    { nama: "Admin Real Clean", email: "admin@realclean.test", no_hp: "081200000001", role: "admin" },
+    { nama: "Budi Karyawan", email: "budi@realclean.test", no_hp: "081200000002", role: "karyawan" },
+    { nama: "Sari Karyawan", email: "sari@realclean.test", no_hp: "081200000003", role: "karyawan" },
+    { nama: "Pelanggan Demo", email: "pelanggan@realclean.test", no_hp: "081200000004", role: "pelanggan" },
   ] as const;
 
   for (const u of users) {

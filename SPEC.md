@@ -1,4 +1,4 @@
-# SPEC: Jasa Kebersihan & Kos-kosan (GoClean clone)
+# SPEC: Jasa Kebersihan & Kos-kosan Real Clean
 
 Sumber: diagram di `docs/` (flowchart utama/admin/karyawan, status booking, ERD, LRS) ditambah keputusan hasil interview. Bila ada perbedaan, **dokumen ini yang berlaku**. Daftar perbedaannya ada di bagian akhir.
 

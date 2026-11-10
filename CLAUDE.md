@@ -4,7 +4,7 @@
 
 ## Project
 
-Booking system for a home and boarding-house (kos) cleaning service, similar to GoClean. Full spec: @SPEC.md. Build order: @ROADMAP.md.
+Booking system for a home and boarding-house (kos) cleaning service, similar to Real Clean. Full spec: @SPEC.md. Build order: @ROADMAP.md.
 
 - Three roles, one `users` table: **admin**, **karyawan** (staff), and **pelanggan** (customer). Customers can browse without logging in but must log in to check out.
 - Booking works like an appointment: the customer picks a service, date, and time slot, then pays.

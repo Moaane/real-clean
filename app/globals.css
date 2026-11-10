@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* GoClean Design System v4 ("Clean Wave", tema terang), lihat docs/DESIGN.md */
+/* Real Clean Design System v4 ("Clean Wave", tema terang), lihat docs/DESIGN.md */
 :root {
   --background: #f0f2f4;
   --surface: #ffffff;
@@ -83,6 +83,7 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
 
   body {

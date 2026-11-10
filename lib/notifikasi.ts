@@ -79,3 +79,35 @@ export async function kirimEmailTugasBaru(idPenugasan: number): Promise<void> {
     console.error("[email] gagal menyiapkan tugas baru", idPenugasan, e instanceof Error ? e.message : e);
   }
 }
+
+/** Job-complete email to the customer after admin approval (SPEC 8). Never throws. */
+export async function kirimEmailSelesai(idBooking: number): Promise<void> {
+  try {
+    const b = await prisma.booking.findUnique({
+      where: { id_booking: idBooking },
+      include: { layanan: true, slot: true, pelanggan: true },
+    });
+    if (!b || b.status !== "SELESAI") return;
+    const rows: [string, string][] = [
+      ["Kode booking", b.kode_booking],
+      ["Paket", `${b.layanan.nama_layanan} (${b.jumlah_kamar} kamar)`],
+      ["Jadwal", `${tanggalId(b.slot.tanggal)}, ${b.slot.jam_mulai}–${b.slot.jam_selesai} WIB`],
+      ["Alamat", b.alamat_layanan],
+    ];
+    await kirimEmail({
+      to: b.pelanggan.email,
+      subject: `Layanan selesai, kode booking ${b.kode_booking}`,
+      text: [`Halo ${b.pelanggan.nama},`, "", "Layanan kebersihan Anda sudah selesai dan terverifikasi.", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Terima kasih telah memakai layanan kami."].join("\n"),
+      html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
+  <h2 style="margin:0 0 8px">Layanan selesai</h2>
+  <p>Halo ${esc(b.pelanggan.nama)}, layanan kebersihan Anda sudah selesai dan terverifikasi.</p>
+  <table style="width:100%;border-collapse:collapse">${rows
+    .map(([k, v]) => `<tr><td style="padding:6px 0;color:#666;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;text-align:right;font-weight:600">${esc(v)}</td></tr>`)
+    .join("")}</table>
+  <p style="color:#666">Terima kasih telah memakai layanan kami.</p>
+</div>`,
+    });
+  } catch (e) {
+    console.error("[email] gagal menyiapkan email selesai", idBooking, e instanceof Error ? e.message : e);
+  }
+}

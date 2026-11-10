@@ -5,10 +5,12 @@ import { dynamic, Dyn } from "@/components/admin/ui";
 import { prisma } from "@/lib/prisma";
 import { kedaluwarsakanLewatBatas } from "@/lib/kedaluwarsa";
 import { karyawanKosong } from "@/lib/penugasan";
-import { tugaskan } from "@/lib/actions/booking-admin";
+import { mintaRevisi, setujuiHasil, tugaskan } from "@/lib/actions/booking-admin";
 import { durasiLabel } from "@/lib/katalog";
 import { rp, tanggalId, waktuId } from "@/lib/booking-status";
 import { Alert, Card, StatusBadge } from "@/components/ui";
+import Image from "next/image";
+import { VerifikasiPanel } from "@/components/admin/verifikasi-panel";
 import { TugaskanForm } from "@/components/admin/tugaskan-form";
 import { PageHeader } from "@/components/dash/page-header";
 import { IconArrowRight } from "@/components/icons";
@@ -35,7 +37,7 @@ async function Isi({ params }: { params: Promise<{ kode: string }> }) {
       slot: true,
       pelanggan: { select: { nama: true, email: true, no_hp: true } },
       pembayaran: true,
-      penugasan: { include: { karyawan: { select: { nama: true, no_hp: true } } }, orderBy: { ditugaskan_at: "desc" }, take: 1 },
+      penugasan: { include: { karyawan: { select: { nama: true, no_hp: true } }, bukti: { orderBy: { uploaded_at: "asc" } } }, orderBy: { ditugaskan_at: "desc" }, take: 1 },
     },
   });
   if (!b) notFound();
@@ -110,7 +112,32 @@ async function Isi({ params }: { params: Promise<{ kode: string }> }) {
           ) : (
             !tugas && <p className="text-sm text-muted">Booking ini belum bisa ditugaskan (status bukan Dibayar).</p>
           )}
+          {tugas?.status_tugas === "revisi" && tugas.catatan_revisi && (
+            <Alert tone="warn" title="Revisi diminta">
+              {tugas.catatan_revisi}
+            </Alert>
+          )}
         </Card>
+
+        {tugas && tugas.bukti.length > 0 && (
+          <Card className="lg:col-span-2">
+            <h3 className="mb-4 text-lg font-semibold">Foto bukti kerja</h3>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {tugas.bukti.map((f) => (
+                <a key={f.id_bukti} href={`/api/bukti/${f.id_bukti}`} target="_blank" rel="noreferrer" className="relative aspect-square overflow-hidden rounded-md bg-surface-2">
+                  <Image src={`/api/bukti/${f.id_bukti}`} alt="Foto bukti kerja" fill unoptimized sizes="240px" className="object-cover" />
+                </a>
+              ))}
+            </div>
+            {tugas.bukti.some((f) => f.keterangan) && <p className="mt-3 text-sm text-muted">Keterangan karyawan: {tugas.bukti.findLast((f) => f.keterangan)?.keterangan}</p>}
+            {b.status === "MENUNGGU_VERIFIKASI" && (
+              <div className="mt-6 border-t border-border pt-6">
+                <h4 className="mb-3 font-semibold">Verifikasi hasil</h4>
+                <VerifikasiPanel setujui={setujuiHasil.bind(null, b.id_booking)} revisi={mintaRevisi.bind(null, b.id_booking)} />
+              </div>
+            )}
+          </Card>
+        )}
       </div>
 
       <Link href="/admin/booking" className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-primary-ink hover:underline">

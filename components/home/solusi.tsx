@@ -17,7 +17,7 @@ export function Solusi() {
             Solusi kebersihan <span className="text-primary">kami</span>
           </h2>
           <p className="max-w-md text-[15px] text-foreground">
-            Di GoClean kami memakai peralatan dan cairan pembersih yang efektif sekaligus aman bagi keluarga dan
+            Di Real Clean kami memakai peralatan dan cairan pembersih yang efektif sekaligus aman bagi keluarga dan
             lingkungan. Setiap pekerjaan diperiksa sebelum dinyatakan selesai.
           </p>
         </div>
@@ -25,7 +25,7 @@ export function Solusi() {
           <div className="absolute inset-0">
             <Photo
               name="solusi"
-              alt="Petugas GoClean membawa peralatan pembersih"
+              alt="Petugas Real Clean membawa peralatan pembersih"
               sizes="(min-width: 768px) 40vw, 100vw"
               className="h-full w-full bg-transparent"
             />

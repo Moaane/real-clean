@@ -12,7 +12,7 @@ async function Content({ searchParams }: { searchParams: Promise<{ next?: string
   const [user, { next }] = await Promise.all([getCurrentUser(), searchParams]);
   if (user) redirect(ROLE_HOME[user.role]);
   return (
-    <AuthShell title="Masuk ke" accent="GoClean" description="Masuk untuk membuat dan memantau booking Anda.">
+    <AuthShell title="Masuk ke" accent="Real Clean" description="Masuk untuk membuat dan memantau booking Anda.">
       <LoginForm next={next} />
     </AuthShell>
   );

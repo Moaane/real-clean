@@ -18,7 +18,9 @@ export function Photo({
   sizes = "(min-width: 1024px) 50vw, 100vw",
   priority,
   icon: Icon = IconSparkle,
+  imageClassName,
 }: {
+  imageClassName?: string;
   name: string;
   alt?: string;
   /** Wajib memuat rasio, mis. `aspect-[4/3]`, dan radius. */
@@ -31,7 +33,7 @@ export function Photo({
   return (
     <div className={cn("relative overflow-hidden bg-surface-2", className)}>
       {exists ? (
-        <Image src={`/images/${name}.webp`} alt={alt} fill sizes={sizes} priority={priority} className="object-cover" />
+        <Image src={`/images/${name}.webp`} alt={alt} fill sizes={sizes} priority={priority} className={cn("object-contain", imageClassName)} />
       ) : (
         <div
           role={alt ? "img" : undefined}

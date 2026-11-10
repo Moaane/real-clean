@@ -27,9 +27,9 @@ async function Gate({ role, items, children }: { role: Role; items: RailItem[]; 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[72px_1fr] md:gap-4 md:p-4">
       {/* Rail ikon (desktop), mengikuti referensi dashboard */}
-      <aside className="sticky top-4 hidden h-[calc(100dvh-2rem)] flex-col items-center justify-between rounded-xl border border-border bg-surface py-4 md:flex">
+      <aside className="sticky top-4 z-40 hidden h-[calc(100dvh-2rem)] flex-col items-center justify-between rounded-xl border border-border bg-surface py-4 md:flex">
         <div className="flex flex-col items-center gap-2">
-          <Link href="/" aria-label="GoClean, ke beranda" className="mb-3 transition duration-300 hover:rotate-12 hover:scale-110">
+          <Link href="/" aria-label="Real Clean, ke beranda" className="mb-3 transition duration-300 hover:rotate-12 hover:scale-110">
             <LogoMark size={40} />
           </Link>
           <nav aria-label="Navigasi dashboard" className="flex flex-col items-center gap-2">
@@ -45,7 +45,7 @@ async function Gate({ role, items, children }: { role: Role; items: RailItem[]; 
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur md:hidden">
         <Link href="/" className="flex items-center gap-2 font-bold">
           <LogoMark size={28} />
-          GoClean
+          Real Clean
         </Link>
         {profile(false, "right")}
       </header>

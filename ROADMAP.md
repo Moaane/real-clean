@@ -72,23 +72,23 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 - [x] SPEC diperbarui (bagian 1, 3.1, 6, 9, 12): satu paket per jenis properti + tingkat detail, jumlah kamar dipilih pelanggan
 - [x] Skema: `layanan` (harga_dasar, harga_per_kamar, durasi_dasar_menit, durasi_per_kamar_menit, min_kamar, max_kamar, unik per jenis + tingkat), `booking` (jumlah_kamar + snapshot harga/durasi). Migrasi mempertahankan data lama
 - [x] Seed: 6 paket (rumah/kos × reguler/detail/deep), aman dijalankan dua kali
-- [ ] Admin CRUD paket: field baru + validasi (harga tidak negatif, min_kamar >= 1, max_kamar >= min_kamar)
-- [ ] Katalog menampilkan "mulai Rp X" (harga untuk min_kamar)
-- [ ] Form booking: pilih paket lalu jumlah kamar, total dan estimasi durasi tampil, dihitung ulang di server
+- [x] Admin CRUD paket: field baru + validasi (harga tidak negatif, min_kamar >= 1, max_kamar >= min_kamar)
+- [x] Katalog menampilkan "mulai Rp X" (harga untuk min_kamar)
+- [x] Form booking: pilih paket lalu jumlah kamar, total dan estimasi durasi tampil, dihitung ulang di server
 - [x] Server: validasi min..max kamar, tolak bila durasi melebihi panjang slot, simpan snapshot
 - [x] Midtrans: `item_details` = biaya dasar (qty 1) + per kamar (qty jumlah_kamar), jumlahnya sama dengan `gross_amount`
-- [ ] Detail booking (pelanggan, admin) menampilkan jumlah kamar
+- [x] Detail booking (pelanggan, admin) menampilkan jumlah kamar
 - [x] Kapasitas efektif slot = min(kuota jam operasional, karyawan aktif), dipakai di ketersediaan dan checkout
-- [ ] Form booking: slot yang tidak muat (penuh atau kurang panjang) nonaktif beserta alasannya, tanggal terdekat bila satu tanggal tidak punya slot, teks "Lebih dari X kamar? Hubungi admin" di batas atas
-- [ ] Form paket admin menolak durasi pada `max_kamar` yang melebihi slot aktif terpanjang
+- [x] Form booking: slot yang tidak muat (penuh atau kurang panjang) nonaktif beserta alasannya, tanggal terdekat bila satu tanggal tidak punya slot, teks "Lebih dari X kamar? Hubungi admin" di batas atas
+- [x] Form paket admin menolak durasi pada `max_kamar` yang melebihi slot aktif terpanjang
 
 **Cara tes**: migrasi jalan dan seed dua kali tanpa duplikat. Mengubah jumlah kamar atau harga di request klien tidak memengaruhi total. Jumlah kamar di luar min..max ditolak, durasi melebihi slot ditolak. Admin menaikkan harga paket, booking lama tetap memakai snapshot. Popup Snap menampilkan nominal yang sama dengan total di database.
 
 ## M8. Admin: kelola booking dan penugasan
-- [ ] Daftar booking dengan filter status dan tanggal, plus detail
+- [x] Daftar booking dengan filter status dan tanggal, plus detail
 - [x] Daftar karyawan kosong untuk jadwal booking (SPEC 5.2)
 - [x] Tugaskan karyawan: `DIBAYAR` menjadi `DITUGASKAN`, baris `penugasan` dibuat
-- [ ] Email tugas baru ke karyawan
+- [x] Email tugas baru ke karyawan
 
 **Cara tes**: karyawan yang bentrok jam tidak muncul di daftar, menugaskan booking yang bukan `DIBAYAR` ditolak, status dan penugasan tersimpan benar.
 
@@ -96,7 +96,7 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 - [ ] Daftar tugas dan jadwal hari ini (hanya milik sendiri)
 - [ ] Detail tugas (alamat, paket, jam, catatan)
 - [ ] Transisi status: `DITUGASKAN`, `DALAM_PERJALANAN`, `DIKERJAKAN`
-- [ ] Setujui `@vercel/blob` dan buat Blob store di dashboard Vercel
+- [x] Setujui `@vercel/blob` dan buat Blob store di dashboard Vercel
       (`BLOB_READ_WRITE_TOKEN` di `.env`)
 - [ ] Unggah foto bukti ke Vercel Blob (client upload, akses private).
       Token upload hanya untuk karyawan pemilik tugas

@@ -33,14 +33,14 @@ export async function LayananSection() {
           title="Paket layanan belum tersedia. Silakan kembali lagi nanti."
         />
       ) : (
-        <>
-          <PaketCarousel items={items} />
-          <div className="mt-4">
+        <PaketCarousel
+          items={items}
+          aksi={
             <ButtonLink href="/layanan" variant="outline" arrow>
               Lihat semua paket
             </ButtonLink>
-          </div>
-        </>
+          }
+        />
       )}
     </section>
   );

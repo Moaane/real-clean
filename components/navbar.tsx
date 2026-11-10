@@ -1,22 +1,24 @@
-import Link from "next/link";
-import { Suspense } from "react";
-import { getCurrentUser } from "@/lib/auth";
-import { logout } from "@/lib/actions/auth";
-import { LogoMark } from "@/components/icons";
-import { Button, ButtonLink } from "@/components/ui";
-import { NavLink } from "./nav-link";
-import { NavbarMobile } from "./navbar-mobile";
-import { ProfileMenu } from "./profile-menu";
-import { ROLE_LABEL, navLinks, profileItems } from "./nav-links";
-
+import Link from "next/link"
+import { Suspense } from "react"
+import { getCurrentUser } from "@/lib/auth"
+import { logout } from "@/lib/actions/auth"
+import { LogoMark } from "@/components/icons"
+import { Button, ButtonLink } from "@/components/ui"
+import { NavLink } from "./nav-link"
+import { NavbarMobile } from "./navbar-mobile"
+import { ProfileMenu } from "./profile-menu"
+import { ROLE_LABEL, navLinks, profileItems } from "./nav-links"
 
 /** Tautan menu + aksi auth (desktop). Tamu: Masuk/Daftar. Login: dropdown profil. */
 async function DesktopNav() {
-  const user = await getCurrentUser();
-  const links = navLinks(user?.role);
+  const user = await getCurrentUser()
+  const links = navLinks(user?.role)
   return (
     <>
-      <nav aria-label="Menu utama" className="hidden items-center gap-1 md:flex">
+      <nav
+        aria-label="Menu utama"
+        className="hidden items-center gap-1 md:flex"
+      >
         {links.map((l) => (
           <NavLink key={l.href} href={l.href}>
             {l.label}
@@ -42,11 +44,11 @@ async function DesktopNav() {
         )}
       </div>
     </>
-  );
+  )
 }
 
 async function MobileMenu() {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser()
   return (
     <NavbarMobile links={navLinks(user?.role)}>
       {user ? (
@@ -77,27 +79,30 @@ async function MobileMenu() {
         </>
       )}
     </NavbarMobile>
-  );
+  )
 }
 
 /** Bar navigasi dalam kartu membulat (mockup 1). */
 export function Navbar() {
-  const publik = navLinks(null);
+  const publik = navLinks(null)
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 md:px-6">
       <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 rounded-xl border border-border bg-surface/90 px-4 backdrop-blur md:h-16 md:px-6">
-        <Link href="/" className="group flex shrink-0 items-center gap-2 rounded-pill text-lg font-bold">
-          <span className="transition duration-300 group-hover:rotate-[20deg] group-hover:scale-110">
-            <LogoMark size={32} />
-          </span>
-          GoClean
+        <Link
+          href="/"
+          className="group flex shrink-0 items-center gap-2 rounded-pill text-lg font-bold"
+        >
+          Real Clean
         </Link>
 
         {/* Menu bergantung pada sesi dan pathname (client), jadi dibungkus Suspense; fallback = tautan tamu statis. */}
         <Suspense
           fallback={
             <>
-              <nav aria-label="Menu utama" className="hidden items-center gap-1 md:flex">
+              <nav
+                aria-label="Menu utama"
+                className="hidden items-center gap-1 md:flex"
+              >
                 {publik.map((l) => (
                   <Link
                     key={l.href}
@@ -108,17 +113,22 @@ export function Navbar() {
                   </Link>
                 ))}
               </nav>
-              <div aria-hidden="true" className="hidden h-11 w-40 rounded-pill bg-surface-2 md:block" />
+              <div
+                aria-hidden="true"
+                className="hidden h-11 w-40 rounded-pill bg-surface-2 md:block"
+              />
             </>
           }
         >
           <DesktopNav />
         </Suspense>
 
-        <Suspense fallback={<span aria-hidden="true" className="size-11 md:hidden" />}>
+        <Suspense
+          fallback={<span aria-hidden="true" className="size-11 md:hidden" />}
+        >
           <MobileMenu />
         </Suspense>
       </div>
     </header>
-  );
+  )
 }
