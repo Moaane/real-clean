@@ -228,3 +228,10 @@ export function LogoMark({ size = 32, ...props }: IconProps) {
   );
 }
 export const IconMinus = make(<path d="M5 12h14" />);
+
+export const IconChart = make(
+  <>
+    <path d="M4 20V4M4 20h16" />
+    <path d="M8 16v-4M12 16V8M16 16v-6" />
+  </>,
+);

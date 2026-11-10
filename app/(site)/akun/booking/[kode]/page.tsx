@@ -10,6 +10,9 @@ import { durasiLabel } from "@/lib/katalog";
 import { rp, tampilStatus, tanggalId, waktuId } from "@/lib/booking-status";
 import { Alert, Card, Skeleton, Stepper, StatusBadge } from "@/components/ui";
 import { BayarButton } from "@/components/pesan/bayar-button";
+import { AjukanBatalForm } from "@/components/akun/ajukan-batal-form";
+import { ajukanPembatalan } from "@/lib/actions/pembatalan";
+import { STATUS_BISA_BATAL } from "@/lib/pembatalan";
 import { clientKey, SNAP_JS_URL } from "@/lib/midtrans";
 import { Timeline } from "@/components/ui/timeline";
 import { IconArrowRight, IconMapPin, IconUser } from "@/components/icons";
@@ -46,7 +49,7 @@ async function Detail({ params }: { params: Promise<{ kode: string }> }) {
     include: {
       layanan: true,
       slot: true,
-      pembayaran: { select: { status_bayar: true } },
+      pembayaran: { select: { status_bayar: true, refund: { select: { status_refund: true }, orderBy: { created_at: "desc" }, take: 1 } } },
       penugasan: { include: { karyawan: { select: { nama: true } } }, orderBy: { ditugaskan_at: "desc" }, take: 1 },
     },
   });
@@ -56,6 +59,8 @@ async function Detail({ params }: { params: Promise<{ kode: string }> }) {
   const idx = ALUR.findIndex((a) => a.status === status);
   const menunggu = status === "MENUNGGU_PEMBAYARAN";
   const petugas = b.penugasan[0]?.karyawan.nama;
+  const bisaBatal = (STATUS_BISA_BATAL as readonly string[]).includes(status);
+  const statusRefund = b.pembayaran?.refund[0]?.status_refund;
 
   return (
     <>
@@ -77,6 +82,9 @@ async function Detail({ params }: { params: Promise<{ kode: string }> }) {
       {(status === "DIBATALKAN" || status === "DIREFUND") && (
         <Alert tone="danger" title="Booking dibatalkan" className="mt-6">
           {b.alasan_batal ?? "Booking ini sudah dibatalkan."}
+          {status === "DIREFUND" || statusRefund === "sukses"
+            ? " Dana sudah dikembalikan."
+            : " Refund sedang diproses admin."}
         </Alert>
       )}
 
@@ -139,6 +147,35 @@ async function Detail({ params }: { params: Promise<{ kode: string }> }) {
                   Status booking diperbarui setelah pembayaran Anda dikonfirmasi. Halaman ini hanya menampilkan status
                   terkini.
                 </Alert>
+              )}
+            </Card>
+          )}
+
+          {!bisaBatal && b.batal_diajukan_at && !b.batal_ditolak && !["DIBATALKAN", "DIREFUND"].includes(status) && (
+            <Alert tone="warn" title="Pembatalan tidak dapat diproses">
+              Petugas sudah berangkat atau pekerjaan sudah berjalan, jadi booking tidak bisa dibatalkan.
+            </Alert>
+          )}
+
+          {bisaBatal && (
+            <Card className="flex flex-col gap-3">
+              <h2 className="text-lg font-semibold">Pembatalan</h2>
+              {b.batal_diajukan_at && !b.batal_ditolak ? (
+                <Alert tone="info" title="Pengajuan pembatalan menunggu keputusan admin">
+                  Alasan Anda: {b.alasan_batal}
+                </Alert>
+              ) : b.batal_ditolak ? (
+                <Alert tone="warn" title="Pengajuan pembatalan ditolak">
+                  Booking tetap berjalan sesuai jadwal.
+                </Alert>
+              ) : (
+                <>
+                  <p className="text-sm text-muted">
+                    Refund penuh jika diajukan minimal 24 jam sebelum jadwal. Pengajuan yang lebih mepet biasanya
+                    ditolak.
+                  </p>
+                  <AjukanBatalForm action={ajukanPembatalan.bind(null, b.kode_booking)} />
+                </>
               )}
             </Card>
           )}

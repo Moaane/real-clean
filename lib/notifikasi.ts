@@ -111,3 +111,65 @@ export async function kirimEmailSelesai(idBooking: number): Promise<void> {
     console.error("[email] gagal menyiapkan email selesai", idBooking, e instanceof Error ? e.message : e);
   }
 }
+
+function tabelHtml(rows: [string, string][]) {
+  return `<table style="width:100%;border-collapse:collapse">${rows
+    .map(([k, v]) => `<tr><td style="padding:6px 0;color:#666;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;text-align:right;font-weight:600">${esc(v)}</td></tr>`)
+    .join("")}</table>`;
+}
+
+/** Tells the customer their cancellation request was rejected (SPEC 8). Never throws. */
+export async function kirimEmailBatalDitolak(idBooking: number): Promise<void> {
+  try {
+    const b = await prisma.booking.findUnique({ where: { id_booking: idBooking }, include: { layanan: true, slot: true, pelanggan: true } });
+    if (!b || !b.batal_ditolak) return;
+    const rows: [string, string][] = [
+      ["Kode booking", b.kode_booking],
+      ["Paket", `${b.layanan.nama_layanan} (${b.jumlah_kamar} kamar)`],
+      ["Jadwal", `${tanggalId(b.slot.tanggal)}, ${b.slot.jam_mulai}–${b.slot.jam_selesai} WIB`],
+    ];
+    await kirimEmail({
+      to: b.pelanggan.email,
+      subject: `Pengajuan pembatalan ditolak, kode booking ${b.kode_booking}`,
+      text: [`Halo ${b.pelanggan.nama},`, "", "Pengajuan pembatalan Anda tidak dapat kami setujui. Booking tetap berjalan sesuai jadwal.", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Hubungi admin bila ada pertanyaan."].join("\n"),
+      html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
+  <h2 style="margin:0 0 8px">Pembatalan ditolak</h2>
+  <p>Halo ${esc(b.pelanggan.nama)}, pengajuan pembatalan Anda tidak dapat kami setujui. Booking tetap berjalan sesuai jadwal.</p>
+  ${tabelHtml(rows)}
+  <p style="color:#666">Hubungi admin bila ada pertanyaan.</p>
+</div>`,
+    });
+  } catch (e) {
+    console.error("[email] gagal menyiapkan email batal ditolak", idBooking, e instanceof Error ? e.message : e);
+  }
+}
+
+/** Refund-succeeded email to the customer (SPEC 8). Never throws. */
+export async function kirimEmailRefund(idRefund: number): Promise<void> {
+  try {
+    const r = await prisma.refund.findUnique({
+      where: { id_refund: idRefund },
+      include: { pembayaran: { include: { booking: { include: { layanan: true, pelanggan: true } } } } },
+    });
+    if (!r || r.status_refund !== "sukses") return;
+    const b = r.pembayaran.booking;
+    const rows: [string, string][] = [
+      ["Kode booking", b.kode_booking],
+      ["Paket", `${b.layanan.nama_layanan} (${b.jumlah_kamar} kamar)`],
+      ["Jumlah refund", rp(r.jumlah)],
+    ];
+    await kirimEmail({
+      to: b.pelanggan.email,
+      subject: `Refund diproses, kode booking ${b.kode_booking}`,
+      text: [`Halo ${b.pelanggan.nama},`, "", "Pembatalan Anda disetujui dan refund sudah diproses.", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Dana dikembalikan ke metode pembayaran Anda, waktu masuk bergantung pada bank/penyedia pembayaran."].join("\n"),
+      html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
+  <h2 style="margin:0 0 8px">Refund diproses</h2>
+  <p>Halo ${esc(b.pelanggan.nama)}, pembatalan Anda disetujui dan refund sudah diproses.</p>
+  ${tabelHtml(rows)}
+  <p style="color:#666">Dana dikembalikan ke metode pembayaran Anda, waktu masuk bergantung pada bank/penyedia pembayaran.</p>
+</div>`,
+    });
+  } catch (e) {
+    console.error("[email] gagal menyiapkan email refund", idRefund, e instanceof Error ? e.message : e);
+  }
+}

@@ -93,3 +93,28 @@ export async function createSnapToken(input: SnapInput): Promise<string> {
     throw new Error("Gagal membuat transaksi pembayaran")
   }
 }
+
+export type HasilRefundGateway = { ok: true } | { ok: false; pesan: string }
+
+/**
+ * Refund via the Midtrans Core API (sandbox). `refundKey` makes a retried call
+ * for the same refund row idempotent on Midtrans' side. Never throws: a gateway
+ * rejection (e.g. a payment method that cannot be refunded via API) is returned
+ * so the caller can record it (SPEC 7).
+ */
+export async function refundTransaksi(input: { orderId: string; refundKey: string; amount: number; reason: string }): Promise<HasilRefundGateway> {
+  try {
+    const core = new midtransClient.CoreApi({ isProduction: false, serverKey: serverKey() })
+    const res = await core.transaction.refund(input.orderId, {
+      refund_key: input.refundKey,
+      amount: input.amount,
+      reason: input.reason.slice(0, 180),
+    })
+    if (res.status_code === "200") return { ok: true }
+    return { ok: false, pesan: res.status_message ?? `Midtrans menolak refund (kode ${res.status_code})` }
+  } catch (e) {
+    const err = e as { httpStatusCode?: number | string; ApiResponse?: { status_message?: string }; message?: string }
+    console.error("[midtrans] refund gagal", input.orderId, err.httpStatusCode, err.ApiResponse)
+    return { ok: false, pesan: err.ApiResponse?.status_message ?? err.message ?? "Gagal menghubungi Midtrans" }
+  }
+}

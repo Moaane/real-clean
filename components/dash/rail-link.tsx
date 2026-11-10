@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
-import { IconCalendar, IconGrid, IconReceipt, IconTag, IconUsers } from "@/components/icons";
+import { IconCalendar, IconChart, IconGrid, IconReceipt, IconTag, IconUsers } from "@/components/icons";
 
 // Fungsi tidak bisa dilewatkan dari Server ke Client Component, jadi ikon dipilih lewat nama.
-const ICONS = { grid: IconGrid, tag: IconTag, calendar: IconCalendar, users: IconUsers, receipt: IconReceipt };
+const ICONS = { grid: IconGrid, tag: IconTag, calendar: IconCalendar, users: IconUsers, receipt: IconReceipt, chart: IconChart };
 export type RailItem = { href: string; label: string; icon: keyof typeof ICONS; exact?: boolean };
 
 function useActive(item: RailItem) {

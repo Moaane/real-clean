@@ -58,6 +58,7 @@ enum StatusTugas {
   menunggu_verifikasi
   revisi
   selesai
+  dibatalkan
 }
 
 model User {
@@ -214,6 +215,8 @@ model Refund {
   jumlah        Int
   alasan        String?
   status_refund StatusRefund @default(diproses)
+  // Pesan dari gateway saat refund gagal (ditampilkan ke admin).
+  pesan_gagal   String?
   created_at    DateTime     @default(now())
 
   pembayaran Pembayaran @relation(fields: [id_pembayaran], references: [id_pembayaran])

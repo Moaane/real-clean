@@ -11,10 +11,13 @@ import {
   tugaskan,
 } from "@/lib/actions/booking-admin"
 import { durasiLabel } from "@/lib/katalog"
-import { rp, tanggalId, waktuId } from "@/lib/booking-status"
+import { rp, STATUS_LABEL, tanggalId, waktuId } from "@/lib/booking-status"
 import { Alert, Card, StatusBadge } from "@/components/ui"
 import Image from "next/image"
 import { VerifikasiPanel } from "@/components/admin/verifikasi-panel"
+import { PembatalanPanel } from "@/components/admin/pembatalan-panel"
+import { setujuiPembatalan, tolakPembatalan } from "@/lib/actions/pembatalan"
+import { memenuhiSyaratRefund, STATUS_BISA_BATAL } from "@/lib/pembatalan"
 import { TugaskanForm } from "@/components/admin/tugaskan-form"
 import { PageHeader } from "@/components/dash/page-header"
 import { IconArrowRight } from "@/components/icons"
@@ -46,7 +49,7 @@ async function Isi({ params }: { params: Promise<{ kode: string }> }) {
       layanan: true,
       slot: true,
       pelanggan: { select: { nama: true, email: true, no_hp: true } },
-      pembayaran: true,
+      pembayaran: { include: { refund: { orderBy: { created_at: "desc" }, take: 1 } } },
       penugasan: {
         include: {
           karyawan: { select: { nama: true } },
@@ -70,6 +73,14 @@ async function Isi({ params }: { params: Promise<{ kode: string }> }) {
         })
       : []
   const tugas = b.penugasan[0]
+  const refund = b.pembayaran?.refund[0]
+  const batalMenunggu =
+    b.batal_diajukan_at !== null &&
+    !b.batal_ditolak &&
+    (STATUS_BISA_BATAL as readonly string[]).includes(b.status)
+  const syaratRefund = b.batal_diajukan_at
+    ? memenuhiSyaratRefund(b.slot.tanggal, b.slot.jam_mulai, b.batal_diajukan_at)
+    : false
 
   return (
     <>
@@ -148,6 +159,59 @@ async function Isi({ params }: { params: Promise<{ kode: string }> }) {
             </Alert>
           )}
         </Card>
+
+        {b.batal_diajukan_at && (
+          <Card className="lg:col-span-2">
+            <h3 className="mb-4 text-lg font-semibold">Pembatalan dan refund</h3>
+            <dl className="divide-y divide-border">
+              <Baris label="Diajukan">{waktuId(b.batal_diajukan_at)} WIB</Baris>
+              <Baris label="Alasan pelanggan">{b.alasan_batal}</Baris>
+              <Baris label="Syarat refund (≥ 24 jam sebelum jadwal)">
+                {syaratRefund ? "Memenuhi syarat" : "Tidak memenuhi syarat"}
+              </Baris>
+              {b.batal_ditolak && <Baris label="Keputusan">Ditolak</Baris>}
+              {refund && (
+                <>
+                  <Baris label="Refund">
+                    {rp(refund.jumlah)}, {refund.status_refund}
+                  </Baris>
+                  {refund.pesan_gagal && (
+                    <Baris label="Alasan gagal">{refund.pesan_gagal}</Baris>
+                  )}
+                </>
+              )}
+            </dl>
+            {batalMenunggu && (
+              <div className="mt-6 border-t border-border pt-6">
+                {!syaratRefund && (
+                  <Alert tone="warn" title="Tidak memenuhi syarat" className="mb-4">
+                    Pengajuan dibuat kurang dari 24 jam sebelum jadwal.
+                  </Alert>
+                )}
+                <PembatalanPanel
+                  setujui={setujuiPembatalan.bind(null, b.id_booking)}
+                  tolak={tolakPembatalan.bind(null, b.id_booking)}
+                />
+              </div>
+            )}
+            {b.batal_diajukan_at &&
+              !b.batal_ditolak &&
+              !batalMenunggu &&
+              !refund && (
+                <Alert tone="warn" title="Tidak bisa dibatalkan lagi" className="mt-4">
+                  Petugas sudah berangkat atau pekerjaan sudah berjalan (
+                  {STATUS_LABEL[b.status]}), jadi pengajuan batal tidak bisa
+                  disetujui.
+                </Alert>
+              )}
+            {refund?.status_refund === "gagal" && (
+              <Alert tone="danger" title="Refund gagal" className="mt-4">
+                Booking tetap Dibatalkan. Proses pengembalian dana secara manual
+                lewat dashboard Midtrans.
+              </Alert>
+            )}
+          </Card>
+        )}
 
         {tugas && tugas.bukti.length > 0 && (
           <Card className="lg:col-span-2">

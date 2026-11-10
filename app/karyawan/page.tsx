@@ -22,6 +22,7 @@ async function Tugas() {
   const rows = await prisma.penugasan.findMany({
     where: {
       id_karyawan: user.id_user,
+      status_tugas: { not: "dibatalkan" },
       OR: [{ booking: { slot: { tanggal: { gte: today } } } }, { booking: { status: { in: [...AKTIF] } } }],
     },
     orderBy: [{ booking: { slot: { tanggal: "asc" } } }, { booking: { slot: { jam_mulai: "asc" } } }],

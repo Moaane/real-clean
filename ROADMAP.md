@@ -63,7 +63,7 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 ## M7. Notifikasi email
 - [x] Setujui `nodemailer` dan konfigurasi SMTP (Mailtrap) di `.env`
 - [x] Email invoice + kode booking saat `DIBAYAR`
-- [ ] Email saat `SELESAI`, pembatalan ditolak, dan refund sukses (dipasang bertahap pada milestone terkait)
+- [x] Email saat `SELESAI`, pembatalan ditolak, dan refund sukses (dipasang bertahap pada milestone terkait)
 - [x] Gagal kirim hanya dicatat di log
 
 **Cara tes**: pembayaran sandbox sukses menghasilkan satu email di Mailtrap berisi kode booking dan total yang benar. Dengan SMTP dimatikan, status booking tetap berubah.
@@ -93,17 +93,17 @@ Urutan pengerjaan berdasarkan [SPEC.md](SPEC.md). Kerjakan **satu milestone seka
 **Cara tes**: karyawan yang bentrok jam tidak muncul di daftar, menugaskan booking yang bukan `DIBAYAR` ditolak, status dan penugasan tersimpan benar.
 
 ## M9. Dashboard karyawan
-- [ ] Daftar tugas dan jadwal hari ini (hanya milik sendiri)
-- [ ] Detail tugas (alamat, paket, jam, catatan)
-- [ ] Transisi status: `DITUGASKAN`, `DALAM_PERJALANAN`, `DIKERJAKAN`
+- [x] Daftar tugas dan jadwal hari ini (hanya milik sendiri)
+- [x] Detail tugas (alamat, paket, jam, catatan)
+- [x] Transisi status: `DITUGASKAN`, `DALAM_PERJALANAN`, `DIKERJAKAN`
 - [x] Setujui `@vercel/blob` dan buat Blob store di dashboard Vercel
       (`BLOB_READ_WRITE_TOKEN` di `.env`)
-- [ ] Unggah foto bukti ke Vercel Blob (client upload, akses private).
+- [x] Unggah foto bukti ke Vercel Blob (client upload, akses private).
       Token upload hanya untuk karyawan pemilik tugas
       (cek di `onBeforeGenerateToken`). JPG/PNG/WebP, maks 5 MB
-- [ ] Simpan URL/pathname blob di `bukti_kerja.foto_url`, lalu tandai
+- [x] Simpan URL/pathname blob di `bukti_kerja.foto_url`, lalu tandai
       `MENUNGGU_VERIFIKASI`
-- [ ] Foto hanya bisa dibuka lewat route yang memeriksa session
+- [x] Foto hanya bisa dibuka lewat route yang memeriksa session
 
 **Cara tes**: transisi yang melompat atau salah jenis ditolak, tidak bisa
 ke `MENUNGGU_VERIFIKASI` tanpa foto, file bukan gambar atau lebih dari
@@ -112,24 +112,24 @@ dan tidak bisa membuka tugas/foto ini, tidak ada file yang tertulis ke
 folder project.
 
 ## M10. Admin: verifikasi hasil kerja
-- [ ] Lihat foto bukti pada booking `MENUNGGU_VERIFIKASI`
-- [ ] Setujui: `SELESAI` + email ke pelanggan
-- [ ] Minta revisi (catatan wajib): kembali `DIKERJAKAN`, karyawan melihat catatan lalu unggah bukti lagi
+- [x] Lihat foto bukti pada booking `MENUNGGU_VERIFIKASI`
+- [x] Setujui: `SELESAI` + email ke pelanggan
+- [x] Minta revisi (catatan wajib): kembali `DIKERJAKAN`, karyawan melihat catatan lalu unggah bukti lagi
 
 **Cara tes**: satu siklus revisi penuh sampai `SELESAI` berjalan. Revisi tanpa catatan ditolak. Email selesai masuk ke Mailtrap.
 
 ## M11. Pembatalan dan refund
-- [ ] Pelanggan ajukan batal dari "Booking Saya" (alasan, hanya saat `DIBAYAR`/`DITUGASKAN`)
-- [ ] Admin melihat apakah memenuhi syarat ≥24 jam sebelum jadwal, lalu setuju atau tolak
-- [ ] Setuju: `DIBATALKAN`, slot dilepas, penugasan dibatalkan, refund lewat API Midtrans sandbox
-- [ ] Sukses menjadi `DIREFUND`. Gagal dicatat `status_refund = gagal` dan ditampilkan ke admin
-- [ ] Email saat ditolak dan saat refund sukses
+- [x] Pelanggan ajukan batal dari "Booking Saya" (alasan, hanya saat `DIBAYAR`/`DITUGASKAN`)
+- [x] Admin melihat apakah memenuhi syarat ≥24 jam sebelum jadwal, lalu setuju atau tolak
+- [x] Setuju: `DIBATALKAN`, slot dilepas, penugasan dibatalkan, refund lewat API Midtrans sandbox
+- [x] Sukses menjadi `DIREFUND`. Gagal dicatat `status_refund = gagal` dan ditampilkan ke admin
+- [x] Email saat ditolak dan saat refund sukses
 
 **Cara tes**: tombol batal tidak muncul di status lain, penolakan tidak mengubah status, kuota kembali setelah disetujui, refund pada metode yang tidak didukung berakhir `gagal` tanpa merusak status booking.
 
 ## M12. Dashboard dan laporan admin
-- [ ] Ringkasan booking hari ini per status
-- [ ] Laporan transaksi dan pendapatan per rentang tanggal (hanya `settlement`, refund dikurangkan)
+- [x] Ringkasan booking hari ini per status
+- [x] Laporan transaksi dan pendapatan per rentang tanggal (hanya `settlement`, refund dikurangkan)
 
 **Cara tes**: angka dashboard dan laporan cocok dengan penghitungan manual dari data database, rentang tanggal kosong menampilkan nol.
 

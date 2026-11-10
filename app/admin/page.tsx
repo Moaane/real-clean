@@ -124,6 +124,27 @@ function Content({ d }: { d: Dashboard }) {
 
   return (
     <div className="grid grid-cols-1 gap-4">
+      {/* Booking hari ini per status */}
+      <Card className="md:p-6">
+        <Label>Booking hari ini</Label>
+        <p className="mt-1 text-sm text-muted">Booking dengan jadwal hari ini, per status.</p>
+        {d.hariIni.length === 0 ? (
+          <p className="mt-4 text-sm text-muted">Tidak ada booking terjadwal hari ini.</p>
+        ) : (
+          <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {d.hariIni.map((s) => (
+              <li key={s.status} className="rounded-lg border border-border bg-surface p-4">
+                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                  <span className={cn("size-2 rounded-pill", STATUS_DOT[s.status])} />
+                  {STATUS_LABEL[s.status]}
+                </p>
+                <p className="mt-2 text-2xl font-bold tabular-nums">{s.count}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
       {/* KPI */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Kpi label="Booking masuk" value={String(d.booking.total)} delta={deltaPct(d.booking.total, d.booking.prev)} hint="dari periode sebelumnya" />
@@ -177,7 +198,7 @@ function Content({ d }: { d: Dashboard }) {
           <Metric label="Paket aktif" value={String(d.ringkas.paketAktif)} dot="bg-primary" />
           <Metric label="Karyawan aktif" value={String(d.ringkas.karyawanAktif)} dot="bg-info" />
           <Metric label="Pelanggan" value={String(d.ringkas.pelanggan)} dot="bg-warn" />
-          <Metric label="Pendapatan terbayar" value={rp(d.pendapatan)} dot="bg-ok" />
+          <Metric label="Pendapatan bersih" value={rp(d.pendapatan)} dot="bg-ok" />
         </div>
       </Card>
 

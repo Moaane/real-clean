@@ -40,6 +40,7 @@ async function Isi({ params }: { params: Promise<{ kode: string }> }) {
   const t = await prisma.penugasan.findFirst({
     where: {
       id_karyawan: user.id_user,
+      status_tugas: { not: "dibatalkan" },
       booking: { kode_booking: kode.toUpperCase() },
     },
     orderBy: { ditugaskan_at: "desc" },

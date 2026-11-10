@@ -1,6 +1,7 @@
 import type { StatusBooking } from "@/generated/prisma/enums";
 import { prisma } from "./prisma";
 import { nowWib } from "./availability";
+import { getBookingHariIni } from "./laporan";
 
 export type Range = "day" | "week" | "month" | "quarter" | "year";
 export const RANGES: Range[] = ["day", "week", "month", "quarter", "year"];
@@ -78,7 +79,9 @@ export type Dashboard = {
   updatedAt: string;
   booking: { total: number; prev: number; series: Point[] };
   nilai: { total: number; prev: number; series: Point[] };
+  /** Pendapatan bersih: pembayaran lunas dalam rentang dikurangi refund sukses (sama dengan halaman Laporan). */
   pendapatan: number;
+  hariIni: { status: StatusBooking; count: number }[];
   status: { status: StatusBooking; count: number }[];
   topLayanan: { nama: string; count: number }[];
   perluTindakan: { belumDitugaskan: number; menungguVerifikasi: number; menungguBayar: number };
@@ -102,7 +105,7 @@ export async function getDashboard(range: Range): Promise<Dashboard> {
   const today = nowWib();
   const todayDate = new Date(`${today.date}T00:00:00.000Z`);
 
-  const [rows, settled, paketAktif, karyawanAktif, pelanggan, belumDitugaskan, menungguVerifikasi, menungguBayar, slotHariIni, jamAktif, jadwal] =
+  const [rows, settled, refunded, hariIni, paketAktif, karyawanAktif, pelanggan, belumDitugaskan, menungguVerifikasi, menungguBayar, slotHariIni, jamAktif, jadwal] =
     await Promise.all([
       prisma.booking.findMany({
         where: { created_at: { gte: new Date(prevStart), lt: new Date(end) } },
@@ -110,8 +113,13 @@ export async function getDashboard(range: Range): Promise<Dashboard> {
       }),
       prisma.pembayaran.aggregate({
         _sum: { jumlah: true },
-        where: { status_bayar: "settlement", waktu_bayar: { gte: new Date(start), lt: new Date(end) } },
+        where: { status_bayar: { in: ["settlement", "refund"] }, waktu_bayar: { gte: new Date(start), lt: new Date(end) } },
       }),
+      prisma.refund.aggregate({
+        _sum: { jumlah: true },
+        where: { status_refund: "sukses", created_at: { gte: new Date(start), lt: new Date(end) } },
+      }),
+      getBookingHariIni(),
       prisma.layanan.count({ where: { status_aktif: true } }),
       prisma.user.count({ where: { role: "karyawan", status_aktif: true } }),
       prisma.user.count({ where: { role: "pelanggan" } }),
@@ -164,7 +172,8 @@ export async function getDashboard(range: Range): Promise<Dashboard> {
     updatedAt: today.time,
     booking: { total: sum(bookingSeries), prev: bookingPrev, series: bookingSeries },
     nilai: { total: sum(nilaiSeries), prev: nilaiPrev, series: nilaiSeries },
-    pendapatan: settled._sum.jumlah ?? 0,
+    pendapatan: (settled._sum.jumlah ?? 0) - (refunded._sum.jumlah ?? 0),
+    hariIni,
     status: [...statusMap].map(([status, count]) => ({ status, count })).sort((a, b) => b.count - a.count),
     topLayanan: [...layananMap].map(([nama, count]) => ({ nama, count })).sort((a, b) => b.count - a.count).slice(0, 5),
     perluTindakan: { belumDitugaskan, menungguVerifikasi, menungguBayar },

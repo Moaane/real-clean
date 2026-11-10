@@ -84,6 +84,9 @@ async function Daftar({ searchParams }: { searchParams: Params }) {
                   <td className="py-3 pr-4 tabular-nums">{rp(b.total_harga)}</td>
                   <td className="py-3 pr-4">
                     <StatusBadge status={b.status} />
+                    {b.batal_diajukan_at && !b.batal_ditolak && (b.status === "DIBAYAR" || b.status === "DITUGASKAN") && (
+                      <p className="mt-1 text-xs font-semibold text-warn">Minta batal</p>
+                    )}
                   </td>
                   <td className="py-3 text-right">
                     <Link href={`/admin/booking/${b.kode_booking}`} className={buttonClass(b.status === "DIBAYAR" ? "primary" : "outline", "sm")}>
