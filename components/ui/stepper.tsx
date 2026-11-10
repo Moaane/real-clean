@@ -11,7 +11,7 @@ export const BOOKING_STEPS: Step[] = [
   { label: "Bayar" },
 ];
 
-/** `current` berbasis 1. Langkah sebelum `current` dianggap selesai (klik jika punya href). */
+/** `current` is 1-based. Steps before `current` count as done (clickable if they have an href). */
 export function Stepper({
   steps = BOOKING_STEPS,
   current,

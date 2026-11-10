@@ -33,7 +33,7 @@ export async function verifySession(
     const role = payload.role;
     if (
       !Number.isInteger(userId) ||
-      (role !== "admin" && role !== "karyawan" && role !== "pelanggan")
+      (role !== "admin" && role !== "staff" && role !== "customer")
     ) {
       return null;
     }

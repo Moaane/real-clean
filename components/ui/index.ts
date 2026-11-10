@@ -7,7 +7,7 @@ export { Card } from "./card";
 export { Badge, StatusBadge, Chip } from "./badge";
 export { Stepper, BOOKING_STEPS } from "./stepper";
 export { ToastProvider, useToast } from "./toast";
-// Photo memakai node:fs (server-only), impor langsung dari "@/components/ui/photo".
+// Photo uses node:fs (server-only), import it directly from "@/components/ui/photo".
 export { Alert } from "./alert";
 export { EmptyState } from "./empty-state";
 export { Skeleton } from "./skeleton";

@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Real Clean Design System v4 ("Clean Wave", tema terang), lihat docs/DESIGN.md */
+/* Real Clean Design System v4 ("Clean Wave", light theme), see docs/DESIGN.md */
 :root {
   --background: #f0f2f4;
   --surface: #ffffff;
@@ -16,7 +16,7 @@
   --on-primary: #111111;
   --primary-soft: #ddf3e4;
   --on-primary-soft: #1e6b38;
-  /* Hijau gelap untuk teks kecil dan tautan (kontras >= 4.5:1). */
+  /* Dark green for small text and links (contrast >= 4.5:1). */
   --primary-ink: #1f7a3d;
   --ring: #1f7a3d;
 

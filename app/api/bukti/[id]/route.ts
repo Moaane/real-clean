@@ -7,18 +7,18 @@ import { prisma } from "@/lib/prisma";
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
-  if (user.role !== "admin" && user.role !== "karyawan") return new Response("Forbidden", { status: 403 });
+  if (user.role !== "admin" && user.role !== "staff") return new Response("Forbidden", { status: 403 });
 
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id < 1) return new Response("Not found", { status: 404 });
 
-  const bukti = await prisma.buktiKerja.findUnique({
-    where: { id_bukti: id },
-    select: { foto_url: true, penugasan: { select: { id_karyawan: true } } },
+  const proof = await prisma.workProof.findUnique({
+    where: { id_proof: id },
+    select: { photo_url: true, assignment: { select: { id_staff: true } } },
   });
-  if (!bukti || (user.role === "karyawan" && bukti.penugasan.id_karyawan !== user.id_user)) return new Response("Not found", { status: 404 });
+  if (!proof || (user.role === "staff" && proof.assignment.id_staff !== user.id_user)) return new Response("Not found", { status: 404 });
 
-  const blob = await get(bukti.foto_url, { access: "private" });
+  const blob = await get(proof.photo_url, { access: "private" });
   if (!blob || blob.statusCode !== 200) return new Response("Not found", { status: 404 });
 
   return new Response(blob.stream, {

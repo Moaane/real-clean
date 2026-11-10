@@ -1,4 +1,4 @@
-import { KONTAK } from "@/lib/kontak";
+import { CONTACT } from "@/lib/kontak";
 import { Accordion, ButtonLink, Card, SectionHeading } from "@/components/ui";
 import { IconPhone } from "@/components/icons";
 
@@ -25,7 +25,7 @@ const FAQ = [
   },
 ];
 
-/** Mockup 5: kiri judul + kartu kontak, kanan accordion. */
+/** Mockup 5: title + contact card on the left, accordion on the right. */
 export function Faq() {
   return (
     <section className="mx-auto max-w-6xl px-4 pt-16 md:px-6 md:pt-24">
@@ -35,7 +35,7 @@ export function Faq() {
           <Card className="flex flex-col gap-4 bg-primary-soft">
             <p className="text-lg font-semibold text-on-primary-soft">Masih ada pertanyaan? Hubungi kami sekarang.</p>
             <div>
-              <ButtonLink href={KONTAK.waHref} variant="outline" className="bg-surface">
+              <ButtonLink href={CONTACT.waHref} variant="outline" className="bg-surface">
                 <IconPhone size={18} />
                 Hubungi kami
               </ButtonLink>

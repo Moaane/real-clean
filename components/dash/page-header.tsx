@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Judul halaman dashboard + slot aksi di kanan. */
+/** Dashboard page title + action slot on the right. */
 export function PageHeader({
   title,
   accent,
@@ -25,7 +25,7 @@ export function PageHeader({
   );
 }
 
-/** Label kecil kapital untuk kartu statistik (gaya referensi). */
+/** Small uppercase label for stat cards (reference style). */
 export function Label({ children }: { children: ReactNode }) {
   return <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">{children}</p>;
 }

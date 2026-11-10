@@ -4,11 +4,11 @@ import type { Role } from "@/generated/prisma/enums";
 import { Skeleton } from "@/components/ui";
 
 async function Guard({ role, children }: { role: Role; children: ReactNode }) {
-  await requireRole(role); // pemeriksaan ulang di server (proxy hanya optimistik)
+  await requireRole(role); // re-checked on the server (the proxy is optimistic only)
   return children;
 }
 
-/** Membungkus area berlogin: cookie dibaca di dalam Suspense agar shell tetap bisa diprerender. */
+/** Wraps the logged-in area: the cookie is read inside Suspense so the shell can still be prerendered. */
 export function RoleGuard({ role, children }: { role: Role; children: ReactNode }) {
   return (
     <Suspense

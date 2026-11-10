@@ -4,31 +4,31 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { IconMinus, IconPlus } from "@/components/icons";
-import { KONTAK } from "@/lib/kontak";
+import { CONTACT } from "@/lib/kontak";
 
 type Props = {
   min: number;
   max: number;
   value: number;
-  /** Parameter URL lain yang dipertahankan (paket, tanggal, alamat, ...). Jam dipilih ulang karena ketersediaan bergantung pada durasi. */
+  /** Other URL parameters that are kept (pkg, date, address, ...). The time is re-selected because availability depends on the duration. */
   base: Record<string, string>;
 };
 
 const btn =
   "flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-pill border border-border-strong bg-surface transition duration-150 hover:bg-surface-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40";
 
-/** Memilih jumlah kamar. Nilai disimpan di URL (?kamar=) supaya server menghitung total dan slot yang muat. */
-export function KamarStepper({ min, max, value, base }: Props) {
+/** Picks the room count. The value is stored in the URL (?room=) so the server computes the total and the slots that fit. */
+export function RoomStepper({ min, max, value, base }: Props) {
   const router = useRouter();
-  // Isian yang sedang diketik; null berarti tampilkan nilai dari URL.
+  // The text currently being typed; null means show the value from the URL.
   const [draft, setDraft] = useState<string | null>(null);
   const text = draft ?? String(value);
 
   function go(n: number) {
-    const kamar = Math.min(max, Math.max(min, Math.round(n)));
+    const room = Math.min(max, Math.max(min, Math.round(n)));
     setDraft(null);
-    if (kamar === value) return;
-    const q = new URLSearchParams({ ...base, kamar: String(kamar) });
+    if (room === value) return;
+    const q = new URLSearchParams({ ...base, room: String(room) });
     router.replace(`/pesan?${q.toString()}`, { scroll: false });
   }
 
@@ -62,7 +62,7 @@ export function KamarStepper({ min, max, value, base }: Props) {
       {value >= max && (
         <p className="text-sm text-muted">
           Lebih dari {max} kamar?{" "}
-          <a href={KONTAK.waHref} target="_blank" rel="noreferrer" className="font-semibold text-primary-ink underline underline-offset-2">
+          <a href={CONTACT.waHref} target="_blank" rel="noreferrer" className="font-semibold text-primary-ink underline underline-offset-2">
             Hubungi admin
           </a>{" "}
           untuk penawaran khusus.

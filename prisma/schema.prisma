@@ -10,217 +10,217 @@ datasource db {
 
 enum Role {
   admin
-  karyawan
-  pelanggan
+  staff
+  customer
 }
 
-enum JenisProperti {
-  rumah
-  kos
+enum PropertyType {
+  house
+  boarding_house
 }
 
-enum TingkatDetail {
-  reguler
-  detail
+enum DetailLevel {
+  regular
+  detailed
   deep
 }
 
-enum StatusBooking {
-  MENUNGGU_PEMBAYARAN
-  KEDALUWARSA
-  DIBAYAR
-  DITUGASKAN
-  DALAM_PERJALANAN
-  DIKERJAKAN
-  MENUNGGU_VERIFIKASI
-  SELESAI
-  DIBATALKAN
-  DIREFUND
+enum BookingStatus {
+  PENDING_PAYMENT
+  EXPIRED
+  PAID
+  ASSIGNED
+  ON_THE_WAY
+  IN_PROGRESS
+  AWAITING_VERIFICATION
+  COMPLETED
+  CANCELLED
+  REFUNDED
 }
 
-enum StatusBayar {
+enum PaymentStatus {
   pending
   settlement
   expire
   refund
 }
 
-enum StatusRefund {
-  diproses
-  sukses
-  gagal
+enum RefundStatus {
+  processing
+  success
+  failed
 }
 
-enum StatusTugas {
-  ditugaskan
-  dalam_perjalanan
-  dikerjakan
-  menunggu_verifikasi
-  revisi
-  selesai
-  dibatalkan
+enum TaskStatus {
+  assigned
+  on_the_way
+  in_progress
+  awaiting_verification
+  revision
+  completed
+  cancelled
 }
 
 model User {
-  id_user      Int      @id @default(autoincrement())
-  nama         String   @db.VarChar(100)
-  email        String   @unique @db.VarChar(100)
-  password     String   @db.VarChar(255)
-  no_hp        String?  @db.VarChar(20)
-  role         Role
-  status_aktif Boolean  @default(true)
-  created_at   DateTime @default(now())
+  id_user    Int      @id @default(autoincrement())
+  name       String   @db.VarChar(100)
+  email      String   @unique @db.VarChar(100)
+  password   String   @db.VarChar(255)
+  phone      String?  @db.VarChar(20)
+  role       Role
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
 
-  booking            Booking[]
-  penugasan_karyawan Penugasan[] @relation("PenugasanKaryawan")
-  penugasan_admin    Penugasan[] @relation("PenugasanAdmin")
-  refund             Refund[]
+  booking           Booking[]
+  staff_assignments Assignment[] @relation("AssignmentStaff")
+  admin_assignments Assignment[] @relation("AssignmentAdmin")
+  refund            Refund[]
 
   @@map("users")
 }
 
-model Layanan {
-  id_layanan             Int           @id @default(autoincrement())
-  nama_layanan           String        @db.VarChar(100)
-  deskripsi              String?
-  jenis_properti         JenisProperti
-  tingkat_detail         TingkatDetail
-  harga_dasar            Int
-  harga_per_kamar        Int
-  durasi_dasar_menit     Int
-  durasi_per_kamar_menit Int
-  min_kamar              Int           @default(1)
-  max_kamar              Int
-  status_aktif           Boolean       @default(true)
+model Service {
+  id_service                Int          @id @default(autoincrement())
+  service_name              String       @db.VarChar(100)
+  description               String?
+  property_type             PropertyType
+  detail_level              DetailLevel
+  base_price                Int
+  price_per_room            Int
+  base_duration_minutes     Int
+  duration_per_room_minutes Int
+  min_rooms                 Int          @default(1)
+  max_rooms                 Int
+  is_active                 Boolean      @default(true)
 
   booking Booking[]
 
-  @@unique([jenis_properti, tingkat_detail])
-  @@map("layanan")
+  @@unique([property_type, detail_level])
+  @@map("service")
 }
 
-model JamOperasional {
-  id          Int     @id @default(autoincrement())
-  jam_mulai   String  @db.VarChar(5) // "HH:mm"
-  jam_selesai String  @db.VarChar(5) // "HH:mm"
-  kuota       Int
-  aktif       Boolean @default(true)
+model OperatingHour {
+  id         Int     @id @default(autoincrement())
+  start_time String  @db.VarChar(5) // "HH:mm"
+  end_time   String  @db.VarChar(5) // "HH:mm"
+  quota      Int
+  active     Boolean @default(true)
 
-  @@unique([jam_mulai, jam_selesai])
-  @@map("jam_operasional")
+  @@unique([start_time, end_time])
+  @@map("operating_hour")
 }
 
-model JadwalSlot {
-  id_slot     Int      @id @default(autoincrement())
-  tanggal     DateTime @db.Date
-  jam_mulai   String   @db.VarChar(5) // "HH:mm"
-  jam_selesai String   @db.VarChar(5) // "HH:mm"
-  kuota       Int
-  terisi      Int      @default(0)
+model ScheduleSlot {
+  id_slot    Int      @id @default(autoincrement())
+  date       DateTime @db.Date
+  start_time String   @db.VarChar(5) // "HH:mm"
+  end_time   String   @db.VarChar(5) // "HH:mm"
+  quota      Int
+  filled     Int      @default(0)
 
   booking Booking[]
 
-  @@unique([tanggal, jam_mulai])
-  @@map("jadwal_slot")
+  @@unique([date, start_time])
+  @@map("schedule_slot")
 }
 
 model Booking {
-  id_booking        Int           @id @default(autoincrement())
-  kode_booking      String        @unique @db.VarChar(12)
-  id_pelanggan      Int
-  id_layanan        Int
-  id_slot           Int
-  alamat_layanan    String
-  jumlah_kamar      Int
-  // Snapshot saat booking dibuat: perubahan harga paket tidak memengaruhi booking lama.
-  harga_dasar       Int
-  harga_per_kamar   Int
-  durasi_menit      Int
-  total_harga       Int
-  status            StatusBooking @default(MENUNGGU_PEMBAYARAN)
-  batas_bayar       DateTime
-  catatan           String?
-  alasan_batal      String?
-  batal_diajukan_at DateTime?
-  batal_ditolak     Boolean       @default(false)
-  created_at        DateTime      @default(now())
+  id_booking          Int           @id @default(autoincrement())
+  booking_code        String        @unique @db.VarChar(12)
+  id_customer         Int
+  id_service          Int
+  id_slot             Int
+  service_address     String
+  room_count          Int
+  // Snapshot taken when the booking is created: later price changes to a package do not affect old bookings.
+  base_price          Int
+  price_per_room      Int
+  duration_minutes    Int
+  total_price         Int
+  status              BookingStatus @default(PENDING_PAYMENT)
+  payment_deadline    DateTime
+  notes               String?
+  cancel_reason       String?
+  cancel_requested_at DateTime?
+  cancel_rejected     Boolean       @default(false)
+  created_at          DateTime      @default(now())
 
-  pelanggan  User        @relation(fields: [id_pelanggan], references: [id_user])
-  layanan    Layanan     @relation(fields: [id_layanan], references: [id_layanan])
-  slot       JadwalSlot  @relation(fields: [id_slot], references: [id_slot])
-  pembayaran Pembayaran?
-  penugasan  Penugasan[]
+  customer   User         @relation(fields: [id_customer], references: [id_user])
+  service    Service      @relation(fields: [id_service], references: [id_service])
+  slot       ScheduleSlot @relation(fields: [id_slot], references: [id_slot])
+  payment    Payment?
+  assignment Assignment[]
 
-  @@index([id_pelanggan])
+  @@index([id_customer])
   @@index([status])
   @@map("booking")
 }
 
-model Pembayaran {
-  id_pembayaran   Int         @id @default(autoincrement())
-  id_booking      Int         @unique
-  order_id        String      @unique @db.VarChar(50)
-  metode_bayar    String?     @db.VarChar(30)
-  jumlah          Int
-  status_bayar    StatusBayar @default(pending)
+model Payment {
+  id_payment      Int           @id @default(autoincrement())
+  id_booking      Int           @unique
+  order_id        String        @unique @db.VarChar(50)
+  payment_method  String?       @db.VarChar(30)
+  amount          Int
+  payment_status  PaymentStatus @default(pending)
   payment_url     String?
-  waktu_bayar     DateTime?
-  payload_webhook Json?
-  created_at      DateTime    @default(now())
+  paid_at         DateTime?
+  webhook_payload Json?
+  created_at      DateTime      @default(now())
 
   booking Booking  @relation(fields: [id_booking], references: [id_booking])
   refund  Refund[]
 
-  @@map("pembayaran")
+  @@map("payment")
 }
 
-model Penugasan {
-  id_penugasan   Int         @id @default(autoincrement())
+model Assignment {
+  id_assignment  Int        @id @default(autoincrement())
   id_booking     Int
-  id_karyawan    Int
+  id_staff       Int
   id_admin       Int
-  status_tugas   StatusTugas @default(ditugaskan)
-  catatan_revisi String?
-  ditugaskan_at  DateTime    @default(now())
-  mulai_at       DateTime?
-  selesai_at     DateTime?
+  task_status    TaskStatus @default(assigned)
+  revision_notes String?
+  assigned_at    DateTime   @default(now())
+  started_at     DateTime?
+  completed_at   DateTime?
 
-  booking  Booking      @relation(fields: [id_booking], references: [id_booking])
-  karyawan User         @relation("PenugasanKaryawan", fields: [id_karyawan], references: [id_user])
-  admin    User         @relation("PenugasanAdmin", fields: [id_admin], references: [id_user])
-  bukti    BuktiKerja[]
+  booking Booking     @relation(fields: [id_booking], references: [id_booking])
+  staff   User        @relation("AssignmentStaff", fields: [id_staff], references: [id_user])
+  admin   User        @relation("AssignmentAdmin", fields: [id_admin], references: [id_user])
+  proof   WorkProof[]
 
   @@index([id_booking])
-  @@index([id_karyawan])
-  @@map("penugasan")
+  @@index([id_staff])
+  @@map("assignment")
 }
 
-model BuktiKerja {
-  id_bukti     Int      @id @default(autoincrement())
-  id_penugasan Int
-  foto_url     String   @db.VarChar(255)
-  keterangan   String?
-  uploaded_at  DateTime @default(now())
+model WorkProof {
+  id_proof      Int      @id @default(autoincrement())
+  id_assignment Int
+  photo_url     String   @db.VarChar(255)
+  remarks       String?
+  uploaded_at   DateTime @default(now())
 
-  penugasan Penugasan @relation(fields: [id_penugasan], references: [id_penugasan])
+  assignment Assignment @relation(fields: [id_assignment], references: [id_assignment])
 
-  @@index([id_penugasan])
-  @@map("bukti_kerja")
+  @@index([id_assignment])
+  @@map("work_proof")
 }
 
 model Refund {
-  id_refund     Int          @id @default(autoincrement())
-  id_pembayaran Int
-  id_admin      Int
-  jumlah        Int
-  alasan        String?
-  status_refund StatusRefund @default(diproses)
-  // Pesan dari gateway saat refund gagal (ditampilkan ke admin).
-  pesan_gagal   String?
-  created_at    DateTime     @default(now())
+  id_refund       Int          @id @default(autoincrement())
+  id_payment      Int
+  id_admin        Int
+  amount          Int
+  reason          String?
+  refund_status   RefundStatus @default(processing)
+  // Message from the gateway when the refund fails (shown to the admin).
+  failure_message String?
+  created_at      DateTime     @default(now())
 
-  pembayaran Pembayaran @relation(fields: [id_pembayaran], references: [id_pembayaran])
-  admin      User       @relation(fields: [id_admin], references: [id_user])
+  payment Payment @relation(fields: [id_payment], references: [id_payment])
+  admin   User    @relation(fields: [id_admin], references: [id_user])
 
   @@map("refund")
 }

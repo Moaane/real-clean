@@ -10,11 +10,11 @@ import { Skeleton } from "@/components/ui";
 import { BottomTab, RailLink, type RailItem } from "./rail-link";
 
 async function Gate({ role, items, children }: { role: Role; items: RailItem[]; children: ReactNode }) {
-  const user = await requireRole(role); // pemeriksaan ulang di server (proxy hanya optimistik)
+  const user = await requireRole(role); // re-checked on the server (the proxy is optimistic only)
   const menu = [{ href: "/", label: "Lihat situs" }];
   const profile = (dropUp: boolean, align: "left" | "right") => (
     <ProfileMenu
-      nama={user.nama}
+      name={user.name}
       email={user.email}
       roleLabel={ROLE_LABEL[user.role]}
       items={menu}
@@ -26,7 +26,7 @@ async function Gate({ role, items, children }: { role: Role; items: RailItem[]; 
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[72px_1fr] md:gap-4 md:p-4">
-      {/* Rail ikon (desktop), mengikuti referensi dashboard */}
+      {/* Icon rail (desktop), following the dashboard reference */}
       <aside className="sticky top-4 z-40 hidden h-[calc(100dvh-2rem)] flex-col items-center justify-between rounded-xl border border-border bg-surface py-4 md:flex">
         <div className="flex flex-col items-center gap-2">
           <Link href="/" aria-label="Real Clean, ke beranda" className="mb-3 transition duration-300 hover:rotate-12 hover:scale-110">
@@ -41,7 +41,7 @@ async function Gate({ role, items, children }: { role: Role; items: RailItem[]; 
         {profile(true, "left")}
       </aside>
 
-      {/* Bar atas (mobile) */}
+      {/* Top bar (mobile) */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-surface/95 px-4 backdrop-blur md:hidden">
         <Link href="/" className="flex items-center gap-2 font-bold">
           <LogoMark size={28} />
@@ -66,7 +66,7 @@ async function Gate({ role, items, children }: { role: Role; items: RailItem[]; 
   );
 }
 
-/** Shell dashboard (admin/karyawan). Sesi dibaca di dalam Suspense agar kerangka bisa diprerender. */
+/** Dashboard shell (admin/staff). The session is read inside Suspense so the shell can be prerendered. */
 export function DashShell({ role, items, children }: { role: Role; items: RailItem[]; children: ReactNode }) {
   return (
     <Suspense

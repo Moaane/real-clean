@@ -18,7 +18,7 @@ async function Content({ searchParams }: { searchParams: Promise<{ next?: string
   );
 }
 
-export default function DaftarPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+export default function RegisterPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   return (
     <Suspense fallback={<AuthSkeleton />}>
       <Content searchParams={searchParams} />

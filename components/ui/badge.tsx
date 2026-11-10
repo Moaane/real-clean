@@ -1,5 +1,5 @@
 import type { ComponentType, ButtonHTMLAttributes, ReactNode } from "react";
-import type { StatusBooking } from "@/generated/prisma/enums";
+import type { BookingStatus } from "@/generated/prisma/enums";
 import { cn } from "@/lib/cn";
 import { STATUS_LABEL, STATUS_TONE } from "@/lib/booking-status";
 import {
@@ -53,21 +53,21 @@ export function Badge({
   );
 }
 
-const STATUS_ICON: Record<StatusBooking, ComponentType<IconProps>> = {
-  MENUNGGU_PEMBAYARAN: IconClock,
-  DIBAYAR: IconCheck,
-  DITUGASKAN: IconUser,
-  DALAM_PERJALANAN: IconRoute,
-  DIKERJAKAN: IconSparkle,
-  MENUNGGU_VERIFIKASI: IconShield,
-  SELESAI: IconCheckDouble,
-  KEDALUWARSA: IconClockOff,
-  DIBATALKAN: IconX,
-  DIREFUND: IconUndo,
+const STATUS_ICON: Record<BookingStatus, ComponentType<IconProps>> = {
+  PENDING_PAYMENT: IconClock,
+  PAID: IconCheck,
+  ASSIGNED: IconUser,
+  ON_THE_WAY: IconRoute,
+  IN_PROGRESS: IconSparkle,
+  AWAITING_VERIFICATION: IconShield,
+  COMPLETED: IconCheckDouble,
+  EXPIRED: IconClockOff,
+  CANCELLED: IconX,
+  REFUNDED: IconUndo,
 };
 
-/** Badge status booking: selalu ikon + label, warna bukan satu-satunya pembeda. */
-export function StatusBadge({ status, className }: { status: StatusBooking; className?: string }) {
+/** Booking status badge: always icon + label, color is never the only differentiator. */
+export function StatusBadge({ status, className }: { status: BookingStatus; className?: string }) {
   return (
     <Badge tone={STATUS_TONE[status]} icon={STATUS_ICON[status]} className={className}>
       {STATUS_LABEL[status]}
@@ -75,7 +75,7 @@ export function StatusBadge({ status, className }: { status: StatusBooking; clas
   );
 }
 
-/** Chip filter. Kelompokkan di dalam role="radiogroup" dan beri role="radio" + aria-checked. */
+/** Filter chip. Group inside role="radiogroup" and give each role="radio" + aria-checked. */
 export function Chip({
   active,
   className,

@@ -4,8 +4,8 @@ import { useId, useRef, useState, type ReactNode } from "react";
 import { Button, type ButtonVariant } from "./button";
 
 /**
- * Tombol pemicu + dialog konfirmasi. `action` adalah server action (FormData).
- * Fokus dikembalikan ke pemicu oleh <dialog> bawaan saat ditutup.
+ * Trigger button + confirmation dialog. `action` is a server action (FormData).
+ * Focus returns to the trigger through the native <dialog> when it closes.
  */
 export function ConfirmDialog({
   trigger,

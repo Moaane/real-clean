@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function BookingBaruPage() {
+export default function NewBookingPage() {
   redirect("/pesan");
 }

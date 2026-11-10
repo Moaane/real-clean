@@ -2,7 +2,7 @@ import { useId, type ReactNode } from "react";
 import { IconAlert } from "@/components/icons";
 import { cn } from "@/lib/cn";
 
-/** Kelas dasar untuk input, select, textarea (tinggi 48, font 16 agar iOS tidak zoom). */
+/** Base classes for input, select, textarea (height 48, font 16 so iOS does not zoom). */
 export const controlClass =
   "block w-full rounded-md border border-border-strong bg-surface px-4 text-base text-foreground transition duration-150 placeholder:text-muted/70 hover:border-foreground/40 focus:border-primary focus:outline-2 focus:outline-offset-0 focus:outline-ring aria-[invalid=true]:border-danger aria-[invalid=true]:focus:outline-danger disabled:cursor-not-allowed disabled:bg-surface-2 disabled:opacity-60";
 
@@ -11,11 +11,11 @@ export type FieldProps = {
   required?: boolean;
   hint?: string;
   error?: string;
-  /** Wajib bila ingin id stabil (mis. untuk `htmlFor`); default dari `useId`. */
+  /** Required when a stable id is needed (e.g. for `htmlFor`); defaults to `useId`. */
   id?: string;
 };
 
-/** Menghasilkan id dan atribut aria untuk control di dalam Field. */
+/** Produces the id and aria attributes for a control inside a Field. */
 export function useFieldIds({ id, hint, error }: Pick<FieldProps, "id" | "hint" | "error">) {
   const auto = useId();
   const fieldId = id ?? auto;

@@ -1,40 +1,40 @@
-import { rp, tanggalId, waktuId } from "./booking-status";
-import { esc, kirimEmail } from "./email";
+import { rp, dateId, timeId } from "./booking-status";
+import { esc, sendEmail } from "./email";
 import { prisma } from "./prisma";
 
 /**
- * Invoice + booking code for a booking that just became DIBAYAR (SPEC 8).
+ * Invoice + booking code for a booking that just became PAID (SPEC 8).
  * Everything shown comes from the database. Never throws.
  */
-export async function kirimEmailInvoice(orderId: string): Promise<void> {
+export async function sendInvoiceEmail(orderId: string): Promise<void> {
   try {
-    const p = await prisma.pembayaran.findUnique({
+    const p = await prisma.payment.findUnique({
       where: { order_id: orderId },
-      include: { booking: { include: { layanan: true, slot: true, pelanggan: true } } },
+      include: { booking: { include: { service: true, slot: true, customer: true } } },
     });
-    if (!p || p.booking.status !== "DIBAYAR") return;
+    if (!p || p.booking.status !== "PAID") return;
     const b = p.booking;
 
-    const jadwal = `${tanggalId(b.slot.tanggal)}, ${b.slot.jam_mulai}–${b.slot.jam_selesai} WIB`;
-    const dibayar = p.waktu_bayar ? waktuId(p.waktu_bayar) + " WIB" : "-";
+    const schedule = `${dateId(b.slot.date)}, ${b.slot.start_time}–${b.slot.end_time} WIB`;
+    const paid = p.paid_at ? timeId(p.paid_at) + " WIB" : "-";
     const rows: [string, string][] = [
-      ["Kode booking", b.kode_booking],
-      ["Paket", b.layanan.nama_layanan],
-      ["Jumlah kamar", `${b.jumlah_kamar} kamar`],
-      ["Jadwal", jadwal],
-      ["Alamat", b.alamat_layanan],
-      ["Metode bayar", p.metode_bayar ?? "-"],
-      ["Waktu bayar", dibayar],
-      ["Total dibayar", rp(p.jumlah)],
+      ["Kode booking", b.booking_code],
+      ["Paket", b.service.service_name],
+      ["Jumlah kamar", `${b.room_count} kamar`],
+      ["Jadwal", schedule],
+      ["Alamat", b.service_address],
+      ["Metode bayar", p.payment_method ?? "-"],
+      ["Waktu bayar", paid],
+      ["Total dibayar", rp(p.amount)],
     ];
 
-    await kirimEmail({
-      to: b.pelanggan.email,
-      subject: `Pembayaran diterima, kode booking ${b.kode_booking}`,
-      text: [`Halo ${b.pelanggan.nama},`, "", "Pembayaran Anda sudah kami terima. Berikut invoice Anda:", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Petugas akan segera ditugaskan. Pantau statusnya di Booking Saya.", "Terima kasih."].join("\n"),
+    await sendEmail({
+      to: b.customer.email,
+      subject: `Pembayaran diterima, kode booking ${b.booking_code}`,
+      text: [`Halo ${b.customer.name},`, "", "Pembayaran Anda sudah kami terima. Berikut invoice Anda:", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Petugas akan segera ditugaskan. Pantau statusnya di Booking Saya.", "Terima kasih."].join("\n"),
       html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
   <h2 style="margin:0 0 8px">Pembayaran diterima</h2>
-  <p>Halo ${esc(b.pelanggan.nama)}, pembayaran Anda sudah kami terima. Berikut invoice Anda.</p>
+  <p>Halo ${esc(b.customer.name)}, pembayaran Anda sudah kami terima. Berikut invoice Anda.</p>
   <table style="width:100%;border-collapse:collapse">${rows
     .map(([k, v]) => `<tr><td style="padding:6px 0;color:#666;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;text-align:right;font-weight:600">${esc(v)}</td></tr>`)
     .join("")}</table>
@@ -47,28 +47,28 @@ export async function kirimEmailInvoice(orderId: string): Promise<void> {
 }
 
 /** New-task email to the employee who was just assigned (SPEC 8). Never throws. */
-export async function kirimEmailTugasBaru(idPenugasan: number): Promise<void> {
+export async function sendNewTaskEmail(idAssignment: number): Promise<void> {
   try {
-    const t = await prisma.penugasan.findUnique({
-      where: { id_penugasan: idPenugasan },
-      include: { karyawan: true, booking: { include: { layanan: true, slot: true } } },
+    const t = await prisma.assignment.findUnique({
+      where: { id_assignment: idAssignment },
+      include: { staff: true, booking: { include: { service: true, slot: true } } },
     });
     if (!t) return;
     const b = t.booking;
     const rows: [string, string][] = [
-      ["Kode booking", b.kode_booking],
-      ["Paket", `${b.layanan.nama_layanan} (${b.jumlah_kamar} kamar)`],
-      ["Jadwal", `${tanggalId(b.slot.tanggal)}, ${b.slot.jam_mulai}–${b.slot.jam_selesai} WIB`],
-      ["Alamat", b.alamat_layanan],
-      ...(b.catatan ? ([["Catatan", b.catatan]] as [string, string][]) : []),
+      ["Kode booking", b.booking_code],
+      ["Paket", `${b.service.service_name} (${b.room_count} kamar)`],
+      ["Jadwal", `${dateId(b.slot.date)}, ${b.slot.start_time}–${b.slot.end_time} WIB`],
+      ["Alamat", b.service_address],
+      ...(b.notes ? ([["Catatan", b.notes]] as [string, string][]) : []),
     ];
-    await kirimEmail({
-      to: t.karyawan.email,
-      subject: `Tugas baru: ${b.kode_booking}`,
-      text: [`Halo ${t.karyawan.nama},`, "", "Anda mendapat tugas baru:", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Buka dashboard karyawan untuk detailnya."].join("\n"),
+    await sendEmail({
+      to: t.staff.email,
+      subject: `Tugas baru: ${b.booking_code}`,
+      text: [`Halo ${t.staff.name},`, "", "Anda mendapat tugas baru:", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Buka dashboard karyawan untuk detailnya."].join("\n"),
       html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
   <h2 style="margin:0 0 8px">Tugas baru</h2>
-  <p>Halo ${esc(t.karyawan.nama)}, Anda mendapat tugas baru.</p>
+  <p>Halo ${esc(t.staff.name)}, Anda mendapat tugas baru.</p>
   <table style="width:100%;border-collapse:collapse">${rows
     .map(([k, v]) => `<tr><td style="padding:6px 0;color:#666;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;text-align:right;font-weight:600">${esc(v)}</td></tr>`)
     .join("")}</table>
@@ -76,31 +76,31 @@ export async function kirimEmailTugasBaru(idPenugasan: number): Promise<void> {
 </div>`,
     });
   } catch (e) {
-    console.error("[email] gagal menyiapkan tugas baru", idPenugasan, e instanceof Error ? e.message : e);
+    console.error("[email] gagal menyiapkan tugas baru", idAssignment, e instanceof Error ? e.message : e);
   }
 }
 
 /** Job-complete email to the customer after admin approval (SPEC 8). Never throws. */
-export async function kirimEmailSelesai(idBooking: number): Promise<void> {
+export async function sendCompletedEmail(idBooking: number): Promise<void> {
   try {
     const b = await prisma.booking.findUnique({
       where: { id_booking: idBooking },
-      include: { layanan: true, slot: true, pelanggan: true },
+      include: { service: true, slot: true, customer: true },
     });
-    if (!b || b.status !== "SELESAI") return;
+    if (!b || b.status !== "COMPLETED") return;
     const rows: [string, string][] = [
-      ["Kode booking", b.kode_booking],
-      ["Paket", `${b.layanan.nama_layanan} (${b.jumlah_kamar} kamar)`],
-      ["Jadwal", `${tanggalId(b.slot.tanggal)}, ${b.slot.jam_mulai}–${b.slot.jam_selesai} WIB`],
-      ["Alamat", b.alamat_layanan],
+      ["Kode booking", b.booking_code],
+      ["Paket", `${b.service.service_name} (${b.room_count} kamar)`],
+      ["Jadwal", `${dateId(b.slot.date)}, ${b.slot.start_time}–${b.slot.end_time} WIB`],
+      ["Alamat", b.service_address],
     ];
-    await kirimEmail({
-      to: b.pelanggan.email,
-      subject: `Layanan selesai, kode booking ${b.kode_booking}`,
-      text: [`Halo ${b.pelanggan.nama},`, "", "Layanan kebersihan Anda sudah selesai dan terverifikasi.", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Terima kasih telah memakai layanan kami."].join("\n"),
+    await sendEmail({
+      to: b.customer.email,
+      subject: `Layanan selesai, kode booking ${b.booking_code}`,
+      text: [`Halo ${b.customer.name},`, "", "Layanan kebersihan Anda sudah selesai dan terverifikasi.", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Terima kasih telah memakai layanan kami."].join("\n"),
       html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
   <h2 style="margin:0 0 8px">Layanan selesai</h2>
-  <p>Halo ${esc(b.pelanggan.nama)}, layanan kebersihan Anda sudah selesai dan terverifikasi.</p>
+  <p>Halo ${esc(b.customer.name)}, layanan kebersihan Anda sudah selesai dan terverifikasi.</p>
   <table style="width:100%;border-collapse:collapse">${rows
     .map(([k, v]) => `<tr><td style="padding:6px 0;color:#666;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;text-align:right;font-weight:600">${esc(v)}</td></tr>`)
     .join("")}</table>
@@ -112,30 +112,30 @@ export async function kirimEmailSelesai(idBooking: number): Promise<void> {
   }
 }
 
-function tabelHtml(rows: [string, string][]) {
+function tableHtml(rows: [string, string][]) {
   return `<table style="width:100%;border-collapse:collapse">${rows
     .map(([k, v]) => `<tr><td style="padding:6px 0;color:#666;vertical-align:top">${esc(k)}</td><td style="padding:6px 0;text-align:right;font-weight:600">${esc(v)}</td></tr>`)
     .join("")}</table>`;
 }
 
 /** Tells the customer their cancellation request was rejected (SPEC 8). Never throws. */
-export async function kirimEmailBatalDitolak(idBooking: number): Promise<void> {
+export async function sendCancelRejectedEmail(idBooking: number): Promise<void> {
   try {
-    const b = await prisma.booking.findUnique({ where: { id_booking: idBooking }, include: { layanan: true, slot: true, pelanggan: true } });
-    if (!b || !b.batal_ditolak) return;
+    const b = await prisma.booking.findUnique({ where: { id_booking: idBooking }, include: { service: true, slot: true, customer: true } });
+    if (!b || !b.cancel_rejected) return;
     const rows: [string, string][] = [
-      ["Kode booking", b.kode_booking],
-      ["Paket", `${b.layanan.nama_layanan} (${b.jumlah_kamar} kamar)`],
-      ["Jadwal", `${tanggalId(b.slot.tanggal)}, ${b.slot.jam_mulai}–${b.slot.jam_selesai} WIB`],
+      ["Kode booking", b.booking_code],
+      ["Paket", `${b.service.service_name} (${b.room_count} kamar)`],
+      ["Jadwal", `${dateId(b.slot.date)}, ${b.slot.start_time}–${b.slot.end_time} WIB`],
     ];
-    await kirimEmail({
-      to: b.pelanggan.email,
-      subject: `Pengajuan pembatalan ditolak, kode booking ${b.kode_booking}`,
-      text: [`Halo ${b.pelanggan.nama},`, "", "Pengajuan pembatalan Anda tidak dapat kami setujui. Booking tetap berjalan sesuai jadwal.", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Hubungi admin bila ada pertanyaan."].join("\n"),
+    await sendEmail({
+      to: b.customer.email,
+      subject: `Pengajuan pembatalan ditolak, kode booking ${b.booking_code}`,
+      text: [`Halo ${b.customer.name},`, "", "Pengajuan pembatalan Anda tidak dapat kami setujui. Booking tetap berjalan sesuai jadwal.", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Hubungi admin bila ada pertanyaan."].join("\n"),
       html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
   <h2 style="margin:0 0 8px">Pembatalan ditolak</h2>
-  <p>Halo ${esc(b.pelanggan.nama)}, pengajuan pembatalan Anda tidak dapat kami setujui. Booking tetap berjalan sesuai jadwal.</p>
-  ${tabelHtml(rows)}
+  <p>Halo ${esc(b.customer.name)}, pengajuan pembatalan Anda tidak dapat kami setujui. Booking tetap berjalan sesuai jadwal.</p>
+  ${tableHtml(rows)}
   <p style="color:#666">Hubungi admin bila ada pertanyaan.</p>
 </div>`,
     });
@@ -145,27 +145,27 @@ export async function kirimEmailBatalDitolak(idBooking: number): Promise<void> {
 }
 
 /** Refund-succeeded email to the customer (SPEC 8). Never throws. */
-export async function kirimEmailRefund(idRefund: number): Promise<void> {
+export async function sendRefundEmail(idRefund: number): Promise<void> {
   try {
     const r = await prisma.refund.findUnique({
       where: { id_refund: idRefund },
-      include: { pembayaran: { include: { booking: { include: { layanan: true, pelanggan: true } } } } },
+      include: { payment: { include: { booking: { include: { service: true, customer: true } } } } },
     });
-    if (!r || r.status_refund !== "sukses") return;
-    const b = r.pembayaran.booking;
+    if (!r || r.refund_status !== "success") return;
+    const b = r.payment.booking;
     const rows: [string, string][] = [
-      ["Kode booking", b.kode_booking],
-      ["Paket", `${b.layanan.nama_layanan} (${b.jumlah_kamar} kamar)`],
-      ["Jumlah refund", rp(r.jumlah)],
+      ["Kode booking", b.booking_code],
+      ["Paket", `${b.service.service_name} (${b.room_count} kamar)`],
+      ["Jumlah refund", rp(r.amount)],
     ];
-    await kirimEmail({
-      to: b.pelanggan.email,
-      subject: `Refund diproses, kode booking ${b.kode_booking}`,
-      text: [`Halo ${b.pelanggan.nama},`, "", "Pembatalan Anda disetujui dan refund sudah diproses.", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Dana dikembalikan ke metode pembayaran Anda, waktu masuk bergantung pada bank/penyedia pembayaran."].join("\n"),
+    await sendEmail({
+      to: b.customer.email,
+      subject: `Refund diproses, kode booking ${b.booking_code}`,
+      text: [`Halo ${b.customer.name},`, "", "Pembatalan Anda disetujui dan refund sudah diproses.", "", ...rows.map(([k, v]) => `${k}: ${v}`), "", "Dana dikembalikan ke metode pembayaran Anda, waktu masuk bergantung pada bank/penyedia pembayaran."].join("\n"),
       html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
   <h2 style="margin:0 0 8px">Refund diproses</h2>
-  <p>Halo ${esc(b.pelanggan.nama)}, pembatalan Anda disetujui dan refund sudah diproses.</p>
-  ${tabelHtml(rows)}
+  <p>Halo ${esc(b.customer.name)}, pembatalan Anda disetujui dan refund sudah diproses.</p>
+  ${tableHtml(rows)}
   <p style="color:#666">Dana dikembalikan ke metode pembayaran Anda, waktu masuk bergantung pada bank/penyedia pembayaran.</p>
 </div>`,
     });

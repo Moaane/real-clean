@@ -1,7 +1,5 @@
 import { Photo } from "@/components/ui/photo"
-import { ButtonLink } from "@/components/ui"
 import {
-  IconArrowRight,
   IconCalendar,
   IconShield,
   IconTag,
@@ -22,7 +20,7 @@ const TRUST = [
   },
 ]
 
-/** Mockup 6: judul di tengah, foto berbingkai lengkung di atas lingkaran, chip melayang, tombol di bawah foto. */
+/** Mockup 6: centered title, arch-framed photo above a circle, floating chips, button below the photo. */
 export function Hero() {
   return (
     <section className="mx-auto max-w-6xl px-4 pt-6 md:px-6 md:pt-8">
@@ -40,7 +38,7 @@ export function Hero() {
         </div>
 
         <div className="relative mx-auto mt-10 max-w-3xl md:mt-14">
-          {/* Panggung: setengah lingkaran hanya latar, foto setengah badan di atasnya, rata dasar */}
+          {/* Stage: half circle as background only, half-body photo on top, flush with the base */}
           <div className="anim-fade relative mx-auto flex justify-center overflow-hidden">
             <span
               aria-hidden="true"
@@ -56,12 +54,12 @@ export function Hero() {
               alt="Petugas Real Clean membawa peralatan pembersih"
               priority
               sizes="400px"
-              className="relative aspect-[2/3] w-[min(80%,400px)] bg-transparent!"
+              className="relative aspect-2/3 w-[min(80%,400px)] bg-transparent!"
               imageClassName="object-bottom"
             />
           </div>
 
-          {/* Chip: baris biasa di mobile, melayang di desktop */}
+          {/* Chip: a regular row on mobile, floating on desktop */}
           <ul className="mt-6 flex flex-wrap justify-center gap-2 pb-8 md:mt-0 md:pb-0">
             {TRUST.map(({ icon: Icon, label, pos }) => (
               <li
@@ -77,7 +75,7 @@ export function Hero() {
             ))}
           </ul>
 
-          {/* Kartu kiri (desktop) */}
+          {/* Left card (desktop) */}
           <div className="anim-rise absolute left-0 top-32 hidden items-center gap-3 rounded-lg border border-border bg-surface p-3 pr-5 shadow-sm md:flex">
             <span className="flex size-10 items-center justify-center rounded-pill bg-primary-soft text-primary-ink">
               <IconSparkle size={20} />

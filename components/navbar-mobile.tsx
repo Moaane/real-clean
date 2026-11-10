@@ -5,7 +5,7 @@ import { IconX, IconMenu } from "@/components/icons";
 import { NavLink } from "./nav-link";
 import type { NavItem } from "./nav-links";
 
-/** Hamburger + sheet dari atas untuk < 768px. `children` = blok aksi auth. */
+/** Hamburger + top sheet for < 768px. `children` = the auth action block. */
 export function NavbarMobile({ links, children }: { links: NavItem[]; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);

@@ -7,8 +7,8 @@ const BUBBLES = [
   { icon: IconBroom, label: "Peralatan lengkap" },
 ];
 
-/** Mockup 4 (atas): panel lembut, judul kiri atas, paragraf kiri bawah, foto kanan, tiga gelembung ikon. */
-export function Solusi() {
+/** Mockup 4 (top): soft panel, title top left, paragraph bottom left, photo on the right, three icon bubbles. */
+export function Solutions() {
   return (
     <section className="mx-auto max-w-6xl px-4 pt-16 md:px-6 md:pt-24">
       <div className="relative grid overflow-hidden rounded-xl bg-primary-soft md:min-h-[480px] md:grid-cols-[1.2fr_1fr]">

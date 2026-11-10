@@ -4,7 +4,7 @@ import { IconArrowRight } from "@/components/icons";
 
 export type ChartPoint = { label: string; value: number };
 
-/** Batas atas sumbu yang "rapi": 1, 2, 5 × 10^n. */
+/** A "nice" axis upper bound: 1, 2, 5 × 10^n. */
 export function niceMax(max: number): number {
   if (max <= 0) return 4;
   const pow = 10 ** Math.floor(Math.log10(max));
@@ -62,7 +62,7 @@ export function BarChart({
   unit?: string;
 }) {
   const max = niceMax(Math.max(...data.map((d) => d.value), 0));
-  const kosong = data.every((d) => d.value === 0);
+  const empty = data.every((d) => d.value === 0);
   return (
     <figure>
       <div className="relative" style={{ height }} role="img" aria-label={`Grafik batang, ${data.length} periode`}>
@@ -89,7 +89,7 @@ export function BarChart({
         </div>
       </div>
       <XLabels data={data} every={labelEvery} />
-      {kosong && <figcaption className="mt-3 text-center text-sm text-muted">Belum ada data pada periode ini.</figcaption>}
+      {empty && <figcaption className="mt-3 text-center text-sm text-muted">Belum ada data pada periode ini.</figcaption>}
     </figure>
   );
 }
@@ -124,7 +124,7 @@ export function AreaChart({
     line += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${xs[i + 1]} ${ys[i + 1]}`;
   }
   const area = `${line} L ${xs[n - 1]} 100 L ${xs[0]} 100 Z`;
-  const kosong = data.every((d) => d.value === 0);
+  const empty = data.every((d) => d.value === 0);
 
   return (
     <figure>
@@ -169,7 +169,7 @@ export function AreaChart({
         </div>
       </div>
       <XLabels data={data} every={labelEvery} />
-      {kosong && <figcaption className="mt-3 text-center text-sm text-muted">Belum ada data pada periode ini.</figcaption>}
+      {empty && <figcaption className="mt-3 text-center text-sm text-muted">Belum ada data pada periode ini.</figcaption>}
     </figure>
   );
 }

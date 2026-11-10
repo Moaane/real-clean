@@ -4,8 +4,8 @@ import type { ComponentType } from "react";
 import { cn } from "@/lib/cn";
 import { IconSparkle, type IconProps } from "@/components/icons";
 
-/** Cek berkas di public/images (path relatif terhadap root proyek, tempat server dijalankan). */
-export const fotoAda = (name: string) => existsSync(`public/images/${name}.webp`);
+/** Checks for a file in public/images (path relative to the project root, where the server runs). */
+export const hasPhoto = (name: string) => existsSync(`public/images/${name}.webp`);
 
 /**
  * Foto dari `public/images/<name>.webp`. Bila berkas belum ada, tampil bingkai
@@ -29,7 +29,7 @@ export function Photo({
   priority?: boolean;
   icon?: ComponentType<IconProps>;
 }) {
-  const exists = fotoAda(name);
+  const exists = hasPhoto(name);
   return (
     <div className={cn("relative overflow-hidden bg-surface-2", className)}>
       {exists ? (

@@ -4,7 +4,7 @@ import { useId, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { IconPlus } from "@/components/icons";
 
-/** Accordion eksklusif: hanya satu item terbuka. Animasi tinggi lewat grid-rows 0fr→1fr. */
+/** Exclusive accordion: only one item is open. Height animation via grid-rows 0fr→1fr. */
 export function Accordion({ items }: { items: { q: string; a: ReactNode }[] }) {
   const [open, setOpen] = useState<number | null>(null);
   const base = useId();

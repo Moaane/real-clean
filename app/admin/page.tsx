@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { connection } from "next/server";
 import { cn } from "@/lib/cn";
-import { deltaPct, getDashboard, parseRange, RANGES, RANGE_HINT, RANGE_LABEL, rpRingkas, type Dashboard } from "@/lib/dashboard";
+import { deltaPct, getDashboard, parseRange, RANGES, RANGE_HINT, RANGE_LABEL, compactRp, type Dashboard } from "@/lib/dashboard";
 import { rp, STATUS_LABEL } from "@/lib/booking-status";
 import { Card, EmptyState, Skeleton, StatusBadge } from "@/components/ui";
 import { AreaChart, BarChart, Delta, Donut, type DonutSegment } from "@/components/dash/charts";
@@ -15,28 +15,28 @@ export const metadata: Metadata = { title: "Ringkasan" };
 type Params = Promise<{ range?: string }>;
 
 const STATUS_STROKE: Record<string, string> = {
-  SELESAI: "stroke-primary",
-  DIBAYAR: "stroke-info",
-  DITUGASKAN: "stroke-info",
-  DALAM_PERJALANAN: "stroke-info",
-  DIKERJAKAN: "stroke-info",
-  MENUNGGU_VERIFIKASI: "stroke-warn",
-  MENUNGGU_PEMBAYARAN: "stroke-warn",
-  KEDALUWARSA: "stroke-neutral",
-  DIBATALKAN: "stroke-danger",
-  DIREFUND: "stroke-danger",
+  COMPLETED: "stroke-primary",
+  PAID: "stroke-info",
+  ASSIGNED: "stroke-info",
+  ON_THE_WAY: "stroke-info",
+  IN_PROGRESS: "stroke-info",
+  AWAITING_VERIFICATION: "stroke-warn",
+  PENDING_PAYMENT: "stroke-warn",
+  EXPIRED: "stroke-neutral",
+  CANCELLED: "stroke-danger",
+  REFUNDED: "stroke-danger",
 };
 const STATUS_DOT: Record<string, string> = {
-  SELESAI: "bg-primary",
-  DIBAYAR: "bg-info",
-  DITUGASKAN: "bg-info",
-  DALAM_PERJALANAN: "bg-info",
-  DIKERJAKAN: "bg-info",
-  MENUNGGU_VERIFIKASI: "bg-warn",
-  MENUNGGU_PEMBAYARAN: "bg-warn",
-  KEDALUWARSA: "bg-neutral",
-  DIBATALKAN: "bg-danger",
-  DIREFUND: "bg-danger",
+  COMPLETED: "bg-primary",
+  PAID: "bg-info",
+  ASSIGNED: "bg-info",
+  ON_THE_WAY: "bg-info",
+  IN_PROGRESS: "bg-info",
+  AWAITING_VERIFICATION: "bg-warn",
+  PENDING_PAYMENT: "bg-warn",
+  EXPIRED: "bg-neutral",
+  CANCELLED: "bg-danger",
+  REFUNDED: "bg-danger",
 };
 
 function RangeTabs({ active }: { active: string }) {
@@ -119,8 +119,8 @@ function Content({ d }: { d: Dashboard }) {
     value: s.count,
     className: STATUS_STROKE[s.status],
   }));
-  const okup = d.okupansi.kuota > 0 ? Math.min(100, Math.round((d.okupansi.terisi / d.okupansi.kuota) * 100)) : 0;
-  const maxLayanan = Math.max(...d.topLayanan.map((l) => l.count), 1);
+  const occupied = d.occupancy.quota > 0 ? Math.min(100, Math.round((d.occupancy.filled / d.occupancy.quota) * 100)) : 0;
+  const maxServices = Math.max(...d.topServices.map((l) => l.count), 1);
 
   return (
     <div className="grid grid-cols-1 gap-4">
@@ -128,11 +128,11 @@ function Content({ d }: { d: Dashboard }) {
       <Card className="md:p-6">
         <Label>Booking hari ini</Label>
         <p className="mt-1 text-sm text-muted">Booking dengan jadwal hari ini, per status.</p>
-        {d.hariIni.length === 0 ? (
+        {d.today.length === 0 ? (
           <p className="mt-4 text-sm text-muted">Tidak ada booking terjadwal hari ini.</p>
         ) : (
           <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {d.hariIni.map((s) => (
+            {d.today.map((s) => (
               <li key={s.status} className="rounded-lg border border-border bg-surface p-4">
                 <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
                   <span className={cn("size-2 rounded-pill", STATUS_DOT[s.status])} />
@@ -148,17 +148,17 @@ function Content({ d }: { d: Dashboard }) {
       {/* KPI */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Kpi label="Booking masuk" value={String(d.booking.total)} delta={deltaPct(d.booking.total, d.booking.prev)} hint="dari periode sebelumnya" />
-        <Kpi label="Nilai terkonfirmasi" value={rp(d.nilai.total)} delta={deltaPct(d.nilai.total, d.nilai.prev)} hint="dari periode sebelumnya" />
+        <Kpi label="Nilai terkonfirmasi" value={rp(d.value.total)} delta={deltaPct(d.value.total, d.value.prev)} hint="dari periode sebelumnya" />
         <Card className="sm:col-span-2 md:p-6 xl:col-span-1">
           <Label>Okupansi hari ini</Label>
           <div className="mt-2 flex items-center gap-4">
-            <Donut size={84} segments={[{ label: "Terisi", value: d.okupansi.terisi, className: "stroke-primary" }, { label: "Sisa", value: Math.max(d.okupansi.kuota - d.okupansi.terisi, 0), className: "stroke-transparent" }]}>
-              <span className="text-lg font-bold tabular-nums">{okup}%</span>
+            <Donut size={84} segments={[{ label: "Terisi", value: d.occupancy.filled, className: "stroke-primary" }, { label: "Sisa", value: Math.max(d.occupancy.quota - d.occupancy.filled, 0), className: "stroke-transparent" }]}>
+              <span className="text-lg font-bold tabular-nums">{occupied}%</span>
             </Donut>
             <div>
               <p className="text-[32px] font-bold leading-none tabular-nums">
-                {d.okupansi.terisi}
-                <span className="text-lg font-semibold text-muted"> / {d.okupansi.kuota}</span>
+                {d.occupancy.filled}
+                <span className="text-lg font-semibold text-muted"> / {d.occupancy.quota}</span>
               </p>
               <p className="mt-2 text-xs text-muted">slot terisi dari kuota jam aktif</p>
             </div>
@@ -172,7 +172,7 @@ function Content({ d }: { d: Dashboard }) {
           <BarChart data={d.booking.series} labelEvery={every} unit=" booking" />
         </ChartCard>
         <ChartCard title="Nilai terkonfirmasi" sub={RANGE_HINT[d.range]}>
-          <AreaChart data={d.nilai.series} format={rpRingkas} labelEvery={every} />
+          <AreaChart data={d.value.series} format={compactRp} labelEvery={every} />
         </ChartCard>
       </div>
 
@@ -185,9 +185,9 @@ function Content({ d }: { d: Dashboard }) {
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <ActionCard label="Belum ditugaskan" value={d.perluTindakan.belumDitugaskan} desc="Sudah dibayar, menunggu karyawan ditugaskan." tone="warn" />
-          <ActionCard label="Menunggu verifikasi" value={d.perluTindakan.menungguVerifikasi} desc="Bukti kerja diunggah, tinggal diverifikasi." tone="info" />
-          <ActionCard label="Menunggu pembayaran" value={d.perluTindakan.menungguBayar} desc="Belum melewati batas bayar." tone="ok" />
+          <ActionCard label="Belum ditugaskan" value={d.needsAction.unassigned} desc="Sudah dibayar, menunggu karyawan ditugaskan." tone="warn" />
+          <ActionCard label="Menunggu verifikasi" value={d.needsAction.awaitingVerification} desc="Bukti kerja diunggah, tinggal diverifikasi." tone="info" />
+          <ActionCard label="Menunggu pembayaran" value={d.needsAction.awaitingPayment} desc="Belum melewati batas bayar." tone="ok" />
         </div>
 
         <div className="my-6 flex items-center gap-4">
@@ -195,10 +195,10 @@ function Content({ d }: { d: Dashboard }) {
           <span className="h-px flex-1 bg-border" />
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label="Paket aktif" value={String(d.ringkas.paketAktif)} dot="bg-primary" />
-          <Metric label="Karyawan aktif" value={String(d.ringkas.karyawanAktif)} dot="bg-info" />
-          <Metric label="Pelanggan" value={String(d.ringkas.pelanggan)} dot="bg-warn" />
-          <Metric label="Pendapatan bersih" value={rp(d.pendapatan)} dot="bg-ok" />
+          <Metric label="Paket aktif" value={String(d.compact.activePkg)} dot="bg-primary" />
+          <Metric label="Karyawan aktif" value={String(d.compact.activeStaff)} dot="bg-info" />
+          <Metric label="Pelanggan" value={String(d.compact.customer)} dot="bg-warn" />
+          <Metric label="Pendapatan bersih" value={rp(d.revenue)} dot="bg-ok" />
         </div>
       </Card>
 
@@ -232,21 +232,21 @@ function Content({ d }: { d: Dashboard }) {
         </Card>
         <Card className="md:p-6">
           <Label>Paket terlaris</Label>
-          {d.topLayanan.length === 0 ? (
+          {d.topServices.length === 0 ? (
             <p className="mt-4 text-sm text-muted">Belum ada booking pada periode ini.</p>
           ) : (
             <ol className="mt-4 grid gap-4">
-              {d.topLayanan.map((l, i) => (
-                <li key={l.nama}>
+              {d.topServices.map((l, i) => (
+                <li key={l.name}>
                   <div className="flex items-baseline justify-between gap-3 text-sm">
                     <span className="min-w-0 truncate font-semibold">
                       <span className="mr-2 text-muted tabular-nums">{i + 1}</span>
-                      {l.nama}
+                      {l.name}
                     </span>
                     <span className="font-bold tabular-nums">{l.count}</span>
                   </div>
                   <div className="mt-2 h-2 rounded-pill bg-surface-2">
-                    <div className="anim-grow-x h-full rounded-pill bg-linear-to-r from-primary to-primary-soft" style={{ width: `${(l.count / maxLayanan) * 100}%` }} />
+                    <div className="anim-grow-x h-full rounded-pill bg-linear-to-r from-primary to-primary-soft" style={{ width: `${(l.count / maxServices) * 100}%` }} />
                   </div>
                 </li>
               ))}
@@ -258,7 +258,7 @@ function Content({ d }: { d: Dashboard }) {
       {/* Jadwal hari ini */}
       <Card className="md:p-6">
         <Label>Jadwal hari ini</Label>
-        {d.jadwalHariIni.length === 0 ? (
+        {d.todaySchedule.length === 0 ? (
           <EmptyState icon={IconCalendar} title="Tidak ada pekerjaan terjadwal hari ini." className="mt-4 border-0 bg-surface-2/50 py-8" />
         ) : (
           <div className="mt-4 overflow-x-auto">
@@ -273,12 +273,12 @@ function Content({ d }: { d: Dashboard }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {d.jadwalHariIni.map((j) => (
+                {d.todaySchedule.map((j) => (
                   <tr key={j.id} className="transition duration-150 hover:bg-surface-2/60">
-                    <td className="py-3 pr-4 font-semibold tabular-nums">{j.jam}</td>
-                    <td className="py-3 pr-4 font-mono text-xs">{j.kode}</td>
-                    <td className="py-3 pr-4">{j.paket}</td>
-                    <td className="py-3 pr-4">{j.pelanggan}</td>
+                    <td className="py-3 pr-4 font-semibold tabular-nums">{j.timeSlot}</td>
+                    <td className="py-3 pr-4 font-mono text-xs">{j.code}</td>
+                    <td className="py-3 pr-4">{j.pkg}</td>
+                    <td className="py-3 pr-4">{j.customer}</td>
                     <td className="py-3">
                       <StatusBadge status={j.status} />
                     </td>

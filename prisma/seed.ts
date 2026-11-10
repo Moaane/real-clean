@@ -21,10 +21,10 @@ async function main() {
   const hash = await bcrypt.hash(process.env.SEED_PASSWORD ?? "password123", 10);
 
   const users = [
-    { nama: "Admin Real Clean", email: "admin@realclean.test", no_hp: "081200000001", role: "admin" },
-    { nama: "Budi Karyawan", email: "budi@realclean.test", no_hp: "081200000002", role: "karyawan" },
-    { nama: "Sari Karyawan", email: "sari@realclean.test", no_hp: "081200000003", role: "karyawan" },
-    { nama: "Pelanggan Demo", email: "pelanggan@realclean.test", no_hp: "081200000004", role: "pelanggan" },
+    { name: "Admin Real Clean", email: "admin@realclean.test", phone: "081200000001", role: "admin" },
+    { name: "Budi Karyawan", email: "budi@realclean.test", phone: "081200000002", role: "staff" },
+    { name: "Sari Karyawan", email: "sari@realclean.test", phone: "081200000003", role: "staff" },
+    { name: "Pelanggan Demo", email: "pelanggan@realclean.test", phone: "081200000004", role: "customer" },
   ] as const;
 
   for (const u of users) {
@@ -35,35 +35,35 @@ async function main() {
     });
   }
 
-  // Satu paket per (jenis_properti, tingkat_detail). Harga/durasi: dasar + per kamar × jumlah kamar.
-  // Nilai sama dengan migrasi 20261110090000_harga_per_kamar. Durasi maksimum (max_kamar) muat di slot 2 jam.
-  const layanan = [
-    { nama_layanan: "Rumah - Reguler", deskripsi: "Sapu, pel, kamar mandi, dapur.", jenis_properti: "rumah", tingkat_detail: "reguler", harga_dasar: 50000, harga_per_kamar: 40000, durasi_dasar_menit: 30, durasi_per_kamar_menit: 15, min_kamar: 1, max_kamar: 6 },
-    { nama_layanan: "Rumah - Detail", deskripsi: "Termasuk kaca, sudut, dan perabot.", jenis_properti: "rumah", tingkat_detail: "detail", harga_dasar: 75000, harga_per_kamar: 60000, durasi_dasar_menit: 30, durasi_per_kamar_menit: 20, min_kamar: 1, max_kamar: 4 },
-    { nama_layanan: "Rumah - Deep Cleaning", deskripsi: "Pembersihan menyeluruh, noda membandel, dan kerak.", jenis_properti: "rumah", tingkat_detail: "deep", harga_dasar: 100000, harga_per_kamar: 90000, durasi_dasar_menit: 40, durasi_per_kamar_menit: 20, min_kamar: 1, max_kamar: 4 },
-    { nama_layanan: "Kos - Reguler", deskripsi: "Kamar, lorong, dan kamar mandi bersama.", jenis_properti: "kos", tingkat_detail: "reguler", harga_dasar: 50000, harga_per_kamar: 25000, durasi_dasar_menit: 20, durasi_per_kamar_menit: 8, min_kamar: 1, max_kamar: 12 },
-    { nama_layanan: "Kos - Detail", deskripsi: "Semua kamar, lorong, dapur, dan area umum secara detail.", jenis_properti: "kos", tingkat_detail: "detail", harga_dasar: 75000, harga_per_kamar: 40000, durasi_dasar_menit: 20, durasi_per_kamar_menit: 12, min_kamar: 1, max_kamar: 8 },
-    { nama_layanan: "Kos - Deep Cleaning", deskripsi: "Pembersihan menyeluruh semua kamar dan area bersama, termasuk noda membandel.", jenis_properti: "kos", tingkat_detail: "deep", harga_dasar: 100000, harga_per_kamar: 60000, durasi_dasar_menit: 24, durasi_per_kamar_menit: 16, min_kamar: 1, max_kamar: 6 },
+  // One package per (property_type, detail_level). Price/duration: base + per room × room count.
+  // Same values as migration 20261110090000_harga_per_kamar. The maximum duration (max_rooms) fits in a 2-hour slot.
+  const service = [
+    { service_name: "Rumah - Reguler", description: "Sapu, pel, kamar mandi, dapur.", property_type: "house", detail_level: "regular", base_price: 50000, price_per_room: 40000, base_duration_minutes: 30, duration_per_room_minutes: 15, min_rooms: 1, max_rooms: 6 },
+    { service_name: "Rumah - Detail", description: "Termasuk kaca, sudut, dan perabot.", property_type: "house", detail_level: "detailed", base_price: 75000, price_per_room: 60000, base_duration_minutes: 30, duration_per_room_minutes: 20, min_rooms: 1, max_rooms: 4 },
+    { service_name: "Rumah - Deep Cleaning", description: "Pembersihan menyeluruh, noda membandel, dan kerak.", property_type: "house", detail_level: "deep", base_price: 100000, price_per_room: 90000, base_duration_minutes: 40, duration_per_room_minutes: 20, min_rooms: 1, max_rooms: 4 },
+    { service_name: "Kos - Reguler", description: "Kamar, lorong, dan kamar mandi bersama.", property_type: "boarding_house", detail_level: "regular", base_price: 50000, price_per_room: 25000, base_duration_minutes: 20, duration_per_room_minutes: 8, min_rooms: 1, max_rooms: 12 },
+    { service_name: "Kos - Detail", description: "Semua kamar, lorong, dapur, dan area umum secara detail.", property_type: "boarding_house", detail_level: "detailed", base_price: 75000, price_per_room: 40000, base_duration_minutes: 20, duration_per_room_minutes: 12, min_rooms: 1, max_rooms: 8 },
+    { service_name: "Kos - Deep Cleaning", description: "Pembersihan menyeluruh semua kamar dan area bersama, termasuk noda membandel.", property_type: "boarding_house", detail_level: "deep", base_price: 100000, price_per_room: 60000, base_duration_minutes: 24, duration_per_room_minutes: 16, min_rooms: 1, max_rooms: 6 },
   ] as const;
 
-  // update kosong: menjalankan seed ulang tidak menimpa perubahan harga dari admin.
-  for (const l of layanan) {
-    await prisma.layanan.upsert({
-      where: { jenis_properti_tingkat_detail: { jenis_properti: l.jenis_properti, tingkat_detail: l.tingkat_detail } },
+  // empty update: re-running the seed does not overwrite price changes made by the admin.
+  for (const l of service) {
+    await prisma.service.upsert({
+      where: { property_type_detail_level: { property_type: l.property_type, detail_level: l.detail_level } },
       update: {},
       create: l,
     });
   }
 
-  const jam = [
-    { jam_mulai: "08:00", jam_selesai: "10:00", kuota: 2 },
-    { jam_mulai: "10:00", jam_selesai: "12:00", kuota: 2 },
-    { jam_mulai: "13:00", jam_selesai: "15:00", kuota: 2 },
+  const timeSlot = [
+    { start_time: "08:00", end_time: "10:00", quota: 2 },
+    { start_time: "10:00", end_time: "12:00", quota: 2 },
+    { start_time: "13:00", end_time: "15:00", quota: 2 },
   ];
 
-  for (const j of jam) {
-    await prisma.jamOperasional.upsert({
-      where: { jam_mulai_jam_selesai: { jam_mulai: j.jam_mulai, jam_selesai: j.jam_selesai } },
+  for (const j of timeSlot) {
+    await prisma.operatingHour.upsert({
+      where: { start_time_end_time: { start_time: j.start_time, end_time: j.end_time } },
       update: {},
       create: j,
     });

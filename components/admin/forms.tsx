@@ -37,7 +37,7 @@ function Shell({
   );
 }
 
-/** Nilai field: isian terakhir bila validasi gagal, kalau tidak nilai awal. */
+/** Field value: the last input if validation failed, otherwise the initial value. */
 const val = (s: FormState, k: string, fallback: string | number | undefined) => s.values?.[k] ?? (fallback === undefined ? "" : String(fallback));
 const checked = (s: FormState, k: string, fallback: boolean) => (s.values ? s.values[k] === "on" : fallback);
 
@@ -50,36 +50,36 @@ function Toggle({ name, label, defaultChecked }: { name: string; label: string; 
   );
 }
 
-export type LayananValues = {
-  nama_layanan: string;
-  deskripsi: string | null;
-  jenis_properti: string;
-  tingkat_detail: string;
-  harga_dasar: number;
-  harga_per_kamar: number;
-  durasi_dasar_menit: number;
-  durasi_per_kamar_menit: number;
-  min_kamar: number;
-  max_kamar: number;
-  status_aktif: boolean;
+export type ServiceValues = {
+  service_name: string;
+  description: string | null;
+  property_type: string;
+  detail_level: string;
+  base_price: number;
+  price_per_room: number;
+  base_duration_minutes: number;
+  duration_per_room_minutes: number;
+  min_rooms: number;
+  max_rooms: number;
+  is_active: boolean;
 };
 
-export function LayananForm({ action, initial: v, submitLabel }: { action: Action; initial?: LayananValues; submitLabel: string }) {
+export function ServiceForm({ action, initial: v, submitLabel }: { action: Action; initial?: ServiceValues; submitLabel: string }) {
   return (
     <Shell action={action} backHref="/admin/layanan" submitLabel={submitLabel}>
       {(s) => {
         const fe = s.fieldErrors ?? {};
         return (
           <>
-            <Input name="nama_layanan" label="Nama paket" required defaultValue={val(s, "nama_layanan", v?.nama_layanan)} error={fe.nama_layanan?.[0]} />
+            <Input name="service_name" label="Nama paket" required defaultValue={val(s, "service_name", v?.service_name)} error={fe.service_name?.[0]} />
             <div className="grid gap-5 sm:grid-cols-2">
-              <Select name="jenis_properti" label="Jenis properti" required defaultValue={val(s, "jenis_properti", v?.jenis_properti ?? "rumah")} error={fe.jenis_properti?.[0]}>
-                <option value="rumah">Rumah</option>
-                <option value="kos">Kos-kosan</option>
+              <Select name="property_type" label="Jenis properti" required defaultValue={val(s, "property_type", v?.property_type ?? "house")} error={fe.property_type?.[0]}>
+                <option value="house">Rumah</option>
+                <option value="boarding_house">Kos-kosan</option>
               </Select>
-              <Select name="tingkat_detail" label="Tingkat detail" required defaultValue={val(s, "tingkat_detail", v?.tingkat_detail ?? "reguler")} error={fe.tingkat_detail?.[0]}>
-                <option value="reguler">Reguler</option>
-                <option value="detail">Detail</option>
+              <Select name="detail_level" label="Tingkat detail" required defaultValue={val(s, "detail_level", v?.detail_level ?? "regular")} error={fe.detail_level?.[0]}>
+                <option value="regular">Reguler</option>
+                <option value="detailed">Detail</option>
                 <option value="deep">Deep cleaning</option>
               </Select>
             </div>
@@ -87,15 +87,15 @@ export function LayananForm({ action, initial: v, submitLabel }: { action: Actio
               Hanya satu paket per kombinasi jenis properti dan tingkat detail. Total = harga dasar + harga per kamar × jumlah kamar, dihitung ulang di server saat checkout.
             </p>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Input name="harga_dasar" type="number" inputMode="numeric" min={0} label="Harga dasar (Rp)" required defaultValue={val(s, "harga_dasar", v?.harga_dasar ?? 0)} error={fe.harga_dasar?.[0]} />
-              <Input name="harga_per_kamar" type="number" inputMode="numeric" min={0} label="Harga per kamar (Rp)" required defaultValue={val(s, "harga_per_kamar", v?.harga_per_kamar)} error={fe.harga_per_kamar?.[0]} />
-              <Input name="durasi_dasar_menit" type="number" inputMode="numeric" min={0} label="Durasi dasar (menit)" required defaultValue={val(s, "durasi_dasar_menit", v?.durasi_dasar_menit ?? 30)} error={fe.durasi_dasar_menit?.[0]} />
-              <Input name="durasi_per_kamar_menit" type="number" inputMode="numeric" min={0} label="Durasi per kamar (menit)" required defaultValue={val(s, "durasi_per_kamar_menit", v?.durasi_per_kamar_menit)} error={fe.durasi_per_kamar_menit?.[0]} />
-              <Input name="min_kamar" type="number" inputMode="numeric" min={1} max={200} label="Kamar minimal" required defaultValue={val(s, "min_kamar", v?.min_kamar ?? 1)} error={fe.min_kamar?.[0]} />
-              <Input name="max_kamar" type="number" inputMode="numeric" min={1} max={200} label="Kamar maksimal" required hint="Durasi total harus muat di slot jam operasional." defaultValue={val(s, "max_kamar", v?.max_kamar)} error={fe.max_kamar?.[0]} />
+              <Input name="base_price" type="number" inputMode="numeric" min={0} label="Harga dasar (Rp)" required defaultValue={val(s, "base_price", v?.base_price ?? 0)} error={fe.base_price?.[0]} />
+              <Input name="price_per_room" type="number" inputMode="numeric" min={0} label="Harga per kamar (Rp)" required defaultValue={val(s, "price_per_room", v?.price_per_room)} error={fe.price_per_room?.[0]} />
+              <Input name="base_duration_minutes" type="number" inputMode="numeric" min={0} label="Durasi dasar (menit)" required defaultValue={val(s, "base_duration_minutes", v?.base_duration_minutes ?? 30)} error={fe.base_duration_minutes?.[0]} />
+              <Input name="duration_per_room_minutes" type="number" inputMode="numeric" min={0} label="Durasi per kamar (menit)" required defaultValue={val(s, "duration_per_room_minutes", v?.duration_per_room_minutes)} error={fe.duration_per_room_minutes?.[0]} />
+              <Input name="min_rooms" type="number" inputMode="numeric" min={1} max={200} label="Kamar minimal" required defaultValue={val(s, "min_rooms", v?.min_rooms ?? 1)} error={fe.min_rooms?.[0]} />
+              <Input name="max_rooms" type="number" inputMode="numeric" min={1} max={200} label="Kamar maksimal" required hint="Durasi total harus muat di slot jam operasional." defaultValue={val(s, "max_rooms", v?.max_rooms)} error={fe.max_rooms?.[0]} />
             </div>
-            <Textarea name="deskripsi" label="Deskripsi" defaultValue={val(s, "deskripsi", v?.deskripsi ?? "")} error={fe.deskripsi?.[0]} />
-            <Toggle name="status_aktif" label="Tampilkan di katalog (aktif)" defaultChecked={checked(s, "status_aktif", v?.status_aktif ?? true)} />
+            <Textarea name="description" label="Deskripsi" defaultValue={val(s, "description", v?.description ?? "")} error={fe.description?.[0]} />
+            <Toggle name="is_active" label="Tampilkan di katalog (aktif)" defaultChecked={checked(s, "is_active", v?.is_active ?? true)} />
           </>
         );
       }}
@@ -103,9 +103,9 @@ export function LayananForm({ action, initial: v, submitLabel }: { action: Actio
   );
 }
 
-export type JamValues = { jam_mulai: string; jam_selesai: string; kuota: number; aktif: boolean };
+export type OperatingHourValues = { start_time: string; end_time: string; quota: number; active: boolean };
 
-export function JamForm({ action, initial: v, submitLabel }: { action: Action; initial?: JamValues; submitLabel: string }) {
+export function OperatingHourForm({ action, initial: v, submitLabel }: { action: Action; initial?: OperatingHourValues; submitLabel: string }) {
   return (
     <Shell action={action} backHref="/admin/jam" submitLabel={submitLabel}>
       {(s) => {
@@ -113,11 +113,11 @@ export function JamForm({ action, initial: v, submitLabel }: { action: Action; i
         return (
           <>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Input name="jam_mulai" type="time" label="Jam mulai" required defaultValue={val(s, "jam_mulai", v?.jam_mulai ?? "08:00")} error={fe.jam_mulai?.[0]} />
-              <Input name="jam_selesai" type="time" label="Jam selesai" required defaultValue={val(s, "jam_selesai", v?.jam_selesai ?? "10:00")} error={fe.jam_selesai?.[0]} />
+              <Input name="start_time" type="time" label="Jam mulai" required defaultValue={val(s, "start_time", v?.start_time ?? "08:00")} error={fe.start_time?.[0]} />
+              <Input name="end_time" type="time" label="Jam selesai" required defaultValue={val(s, "end_time", v?.end_time ?? "10:00")} error={fe.end_time?.[0]} />
             </div>
-            <Input name="kuota" type="number" inputMode="numeric" min={1} max={100} label="Kuota per slot" required hint="Jumlah booking maksimal pada jam ini." defaultValue={val(s, "kuota", v?.kuota ?? 3)} error={fe.kuota?.[0]} />
-            <Toggle name="aktif" label="Aktif (bisa dipilih pelanggan)" defaultChecked={checked(s, "aktif", v?.aktif ?? true)} />
+            <Input name="quota" type="number" inputMode="numeric" min={1} max={100} label="Kuota per slot" required hint="Jumlah booking maksimal pada jam ini." defaultValue={val(s, "quota", v?.quota ?? 3)} error={fe.quota?.[0]} />
+            <Toggle name="active" label="Aktif (bisa dipilih pelanggan)" defaultChecked={checked(s, "active", v?.active ?? true)} />
           </>
         );
       }}
@@ -125,19 +125,19 @@ export function JamForm({ action, initial: v, submitLabel }: { action: Action; i
   );
 }
 
-export type KaryawanValues = { nama: string; email: string; no_hp: string | null; status_aktif: boolean };
+export type StaffValues = { name: string; email: string; phone: string | null; is_active: boolean };
 
-export function KaryawanForm({ action, initial: v, submitLabel, edit }: { action: Action; initial?: KaryawanValues; submitLabel: string; edit?: boolean }) {
+export function StaffForm({ action, initial: v, submitLabel, edit }: { action: Action; initial?: StaffValues; submitLabel: string; edit?: boolean }) {
   return (
     <Shell action={action} backHref="/admin/karyawan" submitLabel={submitLabel}>
       {(s) => {
         const fe = s.fieldErrors ?? {};
         return (
           <>
-            <Input name="nama" label="Nama lengkap" required autoComplete="off" defaultValue={val(s, "nama", v?.nama)} error={fe.nama?.[0]} />
+            <Input name="name" label="Nama lengkap" required autoComplete="off" defaultValue={val(s, "name", v?.name)} error={fe.name?.[0]} />
             <div className="grid gap-5 sm:grid-cols-2">
               <Input name="email" type="email" label="Email" required autoComplete="off" defaultValue={val(s, "email", v?.email)} error={fe.email?.[0]} />
-              <Input name="no_hp" type="tel" inputMode="tel" label="Nomor HP" required hint="Contoh: 08123456789" defaultValue={val(s, "no_hp", v?.no_hp ?? "")} error={fe.no_hp?.[0]} />
+              <Input name="phone" type="tel" inputMode="tel" label="Nomor HP" required hint="Contoh: 08123456789" defaultValue={val(s, "phone", v?.phone ?? "")} error={fe.phone?.[0]} />
             </div>
             <PasswordInput
               name="password"
@@ -147,7 +147,7 @@ export function KaryawanForm({ action, initial: v, submitLabel, edit }: { action
               hint={edit ? "Kosongkan bila tidak ingin mengubah." : "Minimal 8 karakter."}
               error={fe.password?.[0]}
             />
-            <Toggle name="status_aktif" label="Akun aktif" defaultChecked={checked(s, "status_aktif", v?.status_aktif ?? true)} />
+            <Toggle name="is_active" label="Akun aktif" defaultChecked={checked(s, "is_active", v?.is_active ?? true)} />
           </>
         );
       }}

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ubahStatus } from "@/lib/actions/tugas";
+import { changeStatus } from "@/lib/actions/tugas";
 import { Alert, Button } from "@/components/ui";
 
-export function AksiStatus({ idPenugasan, ke, label }: { idPenugasan: number; ke: "DALAM_PERJALANAN" | "DIKERJAKAN"; label: string }) {
+export function StatusActions({ idAssignment, toStatus, label }: { idAssignment: number; toStatus: "ON_THE_WAY" | "IN_PROGRESS"; label: string }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string>();
   return (
@@ -14,7 +14,7 @@ export function AksiStatus({ idPenugasan, ke, label }: { idPenugasan: number; ke
         loading={pending}
         onClick={() =>
           start(async () => {
-            const res = await ubahStatus(idPenugasan, ke);
+            const res = await changeStatus(idAssignment, toStatus);
             setError(res.error);
           })
         }

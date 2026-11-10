@@ -1,22 +1,22 @@
 import { connection } from "next/server";
-import { getPaketAktif } from "@/lib/katalog";
+import { getActivePackages } from "@/lib/katalog";
 import { rp } from "@/lib/booking-status";
-import { hargaMulai } from "@/lib/harga";
+import { startingPrice } from "@/lib/harga";
 import { ButtonLink, EmptyState, SectionHeading } from "@/components/ui";
 import { IconSparkle } from "@/components/icons";
-import { fotoAda } from "@/components/ui/photo";
-import { PaketCarousel, type PaketTile } from "./paket-carousel";
+import { hasPhoto } from "@/components/ui/photo";
+import { PackageCarousel, type PackageTile } from "./paket-carousel";
 
-/** Mockup 2: judul kiri, deskripsi kanan, chip + carousel kartu foto. */
-export async function LayananSection() {
+/** Mockup 2: title on the left, description on the right, chips + photo card carousel. */
+export async function ServicesSection() {
   await connection();
-  const paket = await getPaketAktif();
-  const items: PaketTile[] = paket.map((p) => ({
-    id: p.id_layanan,
-    nama: p.nama_layanan,
-    jenis: p.jenis_properti,
-    hargaLabel: rp(hargaMulai(p)),
-    adaFoto: fotoAda(`paket-${p.jenis_properti}`),
+  const pkg = await getActivePackages();
+  const items: PackageTile[] = pkg.map((p) => ({
+    id: p.id_service,
+    name: p.service_name,
+    type: p.property_type,
+    priceLabel: rp(startingPrice(p)),
+    hasPhoto: hasPhoto(`paket-${p.property_type}`),
   }));
 
   return (
@@ -33,9 +33,9 @@ export async function LayananSection() {
           title="Paket layanan belum tersedia. Silakan kembali lagi nanti."
         />
       ) : (
-        <PaketCarousel
+        <PackageCarousel
           items={items}
-          aksi={
+          outcome={
             <ButtonLink href="/layanan" variant="outline" arrow>
               Lihat semua paket
             </ButtonLink>

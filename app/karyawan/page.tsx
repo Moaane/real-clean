@@ -11,31 +11,31 @@ import { IconCalendar } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Tugas saya" };
 
-const AKTIF = ["DITUGASKAN", "DALAM_PERJALANAN", "DIKERJAKAN", "MENUNGGU_VERIFIKASI"] as const;
+const ACTIVE = ["ASSIGNED", "ON_THE_WAY", "IN_PROGRESS", "AWAITING_VERIFICATION"] as const;
 
-async function Tugas() {
+async function Task() {
   await connection();
-  const user = await requireRole("karyawan");
-  const hariIni = nowWib().date;
-  const today = new Date(`${hariIni}T00:00:00.000Z`);
+  const user = await requireRole("staff");
+  const today = nowWib().date;
+  const todayStart = new Date(`${today}T00:00:00.000Z`);
   // Own tasks only: today, upcoming, and unfinished ones from earlier days.
-  const rows = await prisma.penugasan.findMany({
+  const rows = await prisma.assignment.findMany({
     where: {
-      id_karyawan: user.id_user,
-      status_tugas: { not: "dibatalkan" },
-      OR: [{ booking: { slot: { tanggal: { gte: today } } } }, { booking: { status: { in: [...AKTIF] } } }],
+      id_staff: user.id_user,
+      task_status: { not: "cancelled" },
+      OR: [{ booking: { slot: { date: { gte: todayStart } } } }, { booking: { status: { in: [...ACTIVE] } } }],
     },
-    orderBy: [{ booking: { slot: { tanggal: "asc" } } }, { booking: { slot: { jam_mulai: "asc" } } }],
+    orderBy: [{ booking: { slot: { date: "asc" } } }, { booking: { slot: { start_time: "asc" } } }],
     select: {
-      id_penugasan: true,
-      status_tugas: true,
+      id_assignment: true,
+      task_status: true,
       booking: {
         select: {
-          kode_booking: true,
+          booking_code: true,
           status: true,
-          alamat_layanan: true,
-          layanan: { select: { nama_layanan: true } },
-          slot: { select: { tanggal: true, jam_mulai: true, jam_selesai: true } },
+          service_address: true,
+          service: { select: { service_name: true } },
+          slot: { select: { date: true, start_time: true, end_time: true } },
         },
       },
     },
@@ -44,33 +44,33 @@ async function Tugas() {
   if (rows.length === 0)
     return <EmptyState icon={IconCalendar} title="Belum ada tugas untuk hari ini maupun hari berikutnya." />;
 
-  const t = today.getTime();
+  const t = todayStart.getTime();
   const groups = [
-    { judul: "Jadwal hari ini", items: rows.filter((r) => r.booking.slot.tanggal.getTime() === t) },
-    { judul: "Belum selesai dari hari sebelumnya", items: rows.filter((r) => r.booking.slot.tanggal.getTime() < t) },
-    { judul: "Mendatang", items: rows.filter((r) => r.booking.slot.tanggal.getTime() > t) },
+    { title: "Jadwal hari ini", items: rows.filter((r) => r.booking.slot.date.getTime() === t) },
+    { title: "Belum selesai dari hari sebelumnya", items: rows.filter((r) => r.booking.slot.date.getTime() < t) },
+    { title: "Mendatang", items: rows.filter((r) => r.booking.slot.date.getTime() > t) },
   ];
 
   return (
     <div className="grid gap-8">
       {groups.map(
         (g) =>
-          (g.items.length > 0 || g.judul === "Jadwal hari ini") && (
-            <section key={g.judul} className="grid gap-3">
-              <h2 className="text-lg font-semibold">{g.judul}</h2>
+          (g.items.length > 0 || g.title === "Jadwal hari ini") && (
+            <section key={g.title} className="grid gap-3">
+              <h2 className="text-lg font-semibold">{g.title}</h2>
               {g.items.length === 0 && <p className="text-sm text-muted">Tidak ada tugas hari ini.</p>}
               {g.items.map((r) => (
-                <Link key={r.id_penugasan} href={`/karyawan/tugas/${r.booking.kode_booking}`} className="block">
+                <Link key={r.id_assignment} href={`/karyawan/tugas/${r.booking.booking_code}`} className="block">
                   <Card className="hover-lift transition duration-200 hover:-translate-y-0.5 md:p-6">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <Label>
-                          {r.booking.slot.tanggal.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })} ·{" "}
-                          {r.booking.slot.jam_mulai}–{r.booking.slot.jam_selesai}
+                          {r.booking.slot.date.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })} ·{" "}
+                          {r.booking.slot.start_time}–{r.booking.slot.end_time}
                         </Label>
-                        <p className="mt-1 text-lg font-bold">{r.booking.layanan.nama_layanan}</p>
-                        <p className="mt-1 text-sm text-muted">{r.booking.alamat_layanan}</p>
-                        <p className="mt-2 font-mono text-xs text-muted">{r.booking.kode_booking}</p>
+                        <p className="mt-1 text-lg font-bold">{r.booking.service.service_name}</p>
+                        <p className="mt-1 text-sm text-muted">{r.booking.service_address}</p>
+                        <p className="mt-2 font-mono text-xs text-muted">{r.booking.booking_code}</p>
                       </div>
                       <StatusBadge status={r.booking.status} />
                     </div>
@@ -89,7 +89,7 @@ export default function Page() {
     <>
       <PageHeader title="Tugas" accent="saya" description="Pekerjaan yang ditugaskan admin kepada Anda." />
       <Suspense fallback={<Skeleton className="h-32 rounded-lg" />}>
-        <Tugas />
+        <Task />
       </Suspense>
     </>
   );

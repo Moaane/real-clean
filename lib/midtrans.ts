@@ -39,7 +39,7 @@ export type SnapInput = {
   grossAmount: number // rupiah, always computed on the server
   /** Sum of price × quantity MUST equal grossAmount exactly. */
   items: SnapItem[]
-  customer: { nama: string; email: string; hp?: string | null }
+  customer: { name: string; email: string; phone?: string | null }
   expiryMinutes: number
   finishUrl: string
 }
@@ -71,9 +71,9 @@ export async function createSnapToken(input: SnapInput): Promise<string> {
       },
       item_details: input.items.map((i) => ({ ...i, name: i.name.slice(0, 50) })),
       customer_details: {
-        first_name: input.customer.nama,
+        first_name: input.customer.name,
         email: input.customer.email,
-        phone: input.customer.hp ?? undefined,
+        phone: input.customer.phone ?? undefined,
       },
       expiry: {
         start_time: startTime(new Date()),
@@ -94,7 +94,7 @@ export async function createSnapToken(input: SnapInput): Promise<string> {
   }
 }
 
-export type HasilRefundGateway = { ok: true } | { ok: false; pesan: string }
+export type GatewayRefundResult = { ok: true } | { ok: false; message: string }
 
 /**
  * Refund via the Midtrans Core API (sandbox). `refundKey` makes a retried call
@@ -102,7 +102,7 @@ export type HasilRefundGateway = { ok: true } | { ok: false; pesan: string }
  * rejection (e.g. a payment method that cannot be refunded via API) is returned
  * so the caller can record it (SPEC 7).
  */
-export async function refundTransaksi(input: { orderId: string; refundKey: string; amount: number; reason: string }): Promise<HasilRefundGateway> {
+export async function refundTransaction(input: { orderId: string; refundKey: string; amount: number; reason: string }): Promise<GatewayRefundResult> {
   try {
     const core = new midtransClient.CoreApi({ isProduction: false, serverKey: serverKey() })
     const res = await core.transaction.refund(input.orderId, {
@@ -111,10 +111,10 @@ export async function refundTransaksi(input: { orderId: string; refundKey: strin
       reason: input.reason.slice(0, 180),
     })
     if (res.status_code === "200") return { ok: true }
-    return { ok: false, pesan: res.status_message ?? `Midtrans menolak refund (kode ${res.status_code})` }
+    return { ok: false, message: res.status_message ?? `Midtrans menolak refund (kode ${res.status_code})` }
   } catch (e) {
     const err = e as { httpStatusCode?: number | string; ApiResponse?: { status_message?: string }; message?: string }
     console.error("[midtrans] refund gagal", input.orderId, err.httpStatusCode, err.ApiResponse)
-    return { ok: false, pesan: err.ApiResponse?.status_message ?? err.message ?? "Gagal menghubungi Midtrans" }
+    return { ok: false, message: err.ApiResponse?.status_message ?? err.message ?? "Gagal menghubungi Midtrans" }
   }
 }

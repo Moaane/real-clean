@@ -1,64 +1,64 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { getPaketAktif, JENIS_PROPERTI, TINGKAT_DETAIL } from "@/lib/katalog";
-import { PaketCard } from "@/components/paket-card";
+import { getActivePackages, PROPERTY_TYPES, DETAIL_LEVELS } from "@/lib/katalog";
+import { PackageCard } from "@/components/paket-card";
 import { ButtonLink, EmptyState, SectionHeading, Skeleton } from "@/components/ui";
 import { ChipLink } from "@/components/ui/chip-link";
 import { IconSparkle } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Layanan" };
 
-type Params = Promise<{ jenis?: string; tingkat?: string }>;
+type Params = Promise<{ type?: string; level?: string }>;
 
-const href = (jenis?: string, tingkat?: string) => {
+const href = (type?: string, level?: string) => {
   const q = new URLSearchParams();
-  if (jenis) q.set("jenis", jenis);
-  if (tingkat) q.set("tingkat", tingkat);
+  if (type) q.set("type", type);
+  if (level) q.set("level", level);
   const s = q.toString();
   return s ? `/layanan?${s}` : "/layanan";
 };
 
-async function Daftar({ searchParams }: { searchParams: Params }) {
+async function List({ searchParams }: { searchParams: Params }) {
   await connection();
   const sp = await searchParams;
-  const jenis = sp.jenis && sp.jenis in JENIS_PROPERTI ? sp.jenis : undefined;
-  const tingkat = sp.tingkat && sp.tingkat in TINGKAT_DETAIL ? sp.tingkat : undefined;
-  const semua = await getPaketAktif();
-  const paket = semua.filter(
-    (p) => (!jenis || p.jenis_properti === jenis) && (!tingkat || p.tingkat_detail === tingkat),
+  const type = sp.type && sp.type in PROPERTY_TYPES ? sp.type : undefined;
+  const level = sp.level && sp.level in DETAIL_LEVELS ? sp.level : undefined;
+  const allPkgs = await getActivePackages();
+  const pkg = allPkgs.filter(
+    (p) => (!type || p.property_type === type) && (!level || p.detail_level === level),
   );
 
   return (
     <>
       <div className="mt-8 flex flex-col gap-3 md:mt-10">
         <nav aria-label="Filter jenis properti" className="flex flex-wrap gap-2">
-          <ChipLink href={href(undefined, tingkat)} active={!jenis} scroll={false}>
+          <ChipLink href={href(undefined, level)} active={!type} scroll={false}>
             Semua
           </ChipLink>
-          {(Object.keys(JENIS_PROPERTI) as (keyof typeof JENIS_PROPERTI)[]).map((k) => (
-            <ChipLink key={k} href={href(k, tingkat)} active={jenis === k} scroll={false}>
-              {JENIS_PROPERTI[k].label}
+          {(Object.keys(PROPERTY_TYPES) as (keyof typeof PROPERTY_TYPES)[]).map((k) => (
+            <ChipLink key={k} href={href(k, level)} active={type === k} scroll={false}>
+              {PROPERTY_TYPES[k].label}
             </ChipLink>
           ))}
         </nav>
         <nav aria-label="Filter tingkat detail" className="flex flex-wrap gap-2">
-          <ChipLink href={href(jenis)} active={!tingkat} scroll={false}>
+          <ChipLink href={href(type)} active={!level} scroll={false}>
             Semua tingkat
           </ChipLink>
-          {(Object.keys(TINGKAT_DETAIL) as (keyof typeof TINGKAT_DETAIL)[]).map((k) => (
-            <ChipLink key={k} href={href(jenis, k)} active={tingkat === k} scroll={false}>
-              {TINGKAT_DETAIL[k]}
+          {(Object.keys(DETAIL_LEVELS) as (keyof typeof DETAIL_LEVELS)[]).map((k) => (
+            <ChipLink key={k} href={href(type, k)} active={level === k} scroll={false}>
+              {DETAIL_LEVELS[k]}
             </ChipLink>
           ))}
         </nav>
       </div>
 
       <p className="mt-6 text-sm text-muted" aria-live="polite">
-        {paket.length} paket ditemukan
+        {pkg.length} paket ditemukan
       </p>
 
-      {paket.length === 0 ? (
+      {pkg.length === 0 ? (
         <EmptyState
           className="mt-4"
           icon={IconSparkle}
@@ -71,9 +71,9 @@ async function Daftar({ searchParams }: { searchParams: Params }) {
         />
       ) : (
         <ul className="mt-4 grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-          {paket.map((p) => (
-            <li key={p.id_layanan}>
-              <PaketCard paket={p} />
+          {pkg.map((p) => (
+            <li key={p.id_service}>
+              <PackageCard pkg={p} />
             </li>
           ))}
         </ul>
@@ -82,7 +82,7 @@ async function Daftar({ searchParams }: { searchParams: Params }) {
   );
 }
 
-function DaftarSkeleton() {
+function RegisterSkeleton() {
   return (
     <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
       {[0, 1, 2].map((i) => (
@@ -92,7 +92,7 @@ function DaftarSkeleton() {
   );
 }
 
-export default function LayananPage({ searchParams }: { searchParams: Params }) {
+export default function ServicesPage({ searchParams }: { searchParams: Params }) {
   return (
     <div className="mx-auto max-w-6xl px-4 pt-12 md:px-6 md:pt-20">
       <SectionHeading
@@ -101,8 +101,8 @@ export default function LayananPage({ searchParams }: { searchParams: Params }) 
         after="kami"
         description="Pilih paket rumah atau kos sesuai jumlah kamar dan tingkat kebersihan yang Anda butuhkan."
       />
-      <Suspense fallback={<DaftarSkeleton />}>
-        <Daftar searchParams={searchParams} />
+      <Suspense fallback={<RegisterSkeleton />}>
+        <List searchParams={searchParams} />
       </Suspense>
     </div>
   );

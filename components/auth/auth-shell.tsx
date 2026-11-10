@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Card, Skeleton } from "@/components/ui";
 import { LogoMark } from "@/components/icons";
 
-/** Satu kolom terpusat untuk masuk dan daftar (DESIGN §7.6). */
+/** A single centered column for login and registration (DESIGN §7.6). */
 export function AuthShell({
   title,
   accent,

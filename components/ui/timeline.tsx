@@ -1,7 +1,7 @@
 import { cn } from "@/lib/cn";
 import { IconCheck } from "@/components/icons";
 
-/** Timeline vertikal: titik terisi = selesai, cincin = aktif, abu = berikutnya. `current` berbasis 0. */
+/** Vertical timeline: filled dot = done, ring = active, grey = upcoming. `current` is 0-based. */
 export function Timeline({ steps, current }: { steps: { label: string; note?: string }[]; current: number }) {
   return (
     <ol aria-label="Progres booking" className="flex flex-col">

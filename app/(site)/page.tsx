@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { Hero } from "@/components/home/hero";
-import { CaraKerja } from "@/components/home/cara-kerja";
-import { LayananSection } from "@/components/home/layanan-section";
-import { Solusi } from "@/components/home/solusi";
-import { Tingkat } from "@/components/home/tingkat";
+import { HowItWorks } from "@/components/home/cara-kerja";
+import { ServicesSection } from "@/components/home/layanan-section";
+import { Solutions } from "@/components/home/solusi";
+import { DetailLevels } from "@/components/home/tingkat";
 import { Faq } from "@/components/home/faq";
 import { Closing } from "@/components/home/closing";
 import { SectionSkeleton } from "@/components/home/skeletons";
@@ -14,19 +14,19 @@ export default function HomePage() {
     <>
       <Hero />
       <Reveal>
-        <CaraKerja />
+        <HowItWorks />
       </Reveal>
       <Reveal>
         <Suspense fallback={<SectionSkeleton />}>
-          <LayananSection />
+          <ServicesSection />
         </Suspense>
       </Reveal>
       <Reveal>
-        <Solusi />
+        <Solutions />
       </Reveal>
       <Reveal>
         <Suspense fallback={<SectionSkeleton />}>
-          <Tingkat />
+          <DetailLevels />
         </Suspense>
       </Reveal>
       <Reveal>

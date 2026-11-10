@@ -31,14 +31,14 @@ export function buttonClass(variant: ButtonVariant = "primary", size: ButtonSize
 type Common = {
   variant?: ButtonVariant;
   size?: ButtonSize;
-  /** Tampilkan panah di kanan (untuk CTA navigasi). */
+  /** Show an arrow on the right (for navigation CTAs). */
   arrow?: boolean;
   children?: ReactNode;
 };
 
 type ButtonProps = Common &
   ButtonHTMLAttributes<HTMLButtonElement> & {
-    /** Menampilkan spinner dan menonaktifkan tombol agar tidak double submit. */
+    /** Shows a spinner and disables the button to prevent a double submit. */
     loading?: boolean;
   };
 

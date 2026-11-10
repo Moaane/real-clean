@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import { IconCalendar, IconChart, IconGrid, IconReceipt, IconTag, IconUsers } from "@/components/icons";
 
-// Fungsi tidak bisa dilewatkan dari Server ke Client Component, jadi ikon dipilih lewat nama.
+// Functions cannot be passed from a Server to a Client Component, so icons are selected by name.
 const ICONS = { grid: IconGrid, tag: IconTag, calendar: IconCalendar, users: IconUsers, receipt: IconReceipt, chart: IconChart };
 export type RailItem = { href: string; label: string; icon: keyof typeof ICONS; exact?: boolean };
 
@@ -14,7 +14,7 @@ function useActive(item: RailItem) {
   return item.exact ? p === item.href : p === item.href || p.startsWith(item.href + "/");
 }
 
-/** Ikon rail (desktop) dengan tooltip. */
+/** Rail icon (desktop) with a tooltip. */
 export function RailLink({ item }: { item: RailItem }) {
   const active = useActive(item);
   const Icon = ICONS[item.icon];
@@ -41,7 +41,7 @@ export function RailLink({ item }: { item: RailItem }) {
   );
 }
 
-/** Tab bar bawah (mobile). */
+/** Bottom tab bar (mobile). */
 export function BottomTab({ item }: { item: RailItem }) {
   const active = useActive(item);
   const Icon = ICONS[item.icon];

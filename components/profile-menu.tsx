@@ -7,9 +7,9 @@ import { cn } from "@/lib/cn";
 
 type Item = { href: string; label: string };
 
-/** Dropdown profil (avatar inisial): info akun, tautan sesuai peran, dan Keluar. */
+/** Profile dropdown (initials avatar): account info, role-specific links, and Logout. */
 export function ProfileMenu({
-  nama,
+  name,
   email,
   roleLabel,
   items,
@@ -17,7 +17,7 @@ export function ProfileMenu({
   align = "right",
   dropUp = false,
 }: {
-  nama: string;
+  name: string;
   email: string;
   roleLabel: string;
   items: Item[];
@@ -48,7 +48,7 @@ export function ProfileMenu({
     };
   }, [open]);
 
-  const inisial = nama.trim().slice(0, 1).toUpperCase();
+  const initials = name.trim().slice(0, 1).toUpperCase();
 
   return (
     <div ref={root} className="relative">
@@ -57,12 +57,12 @@ export function ProfileMenu({
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Menu profil ${nama}`}
+        aria-label={`Menu profil ${name}`}
         onClick={() => setOpen((o) => !o)}
         className="group flex h-11 cursor-pointer items-center gap-1.5 rounded-pill pl-1 pr-2 transition duration-150 hover:bg-surface-2"
       >
         <span className="flex size-9 items-center justify-center rounded-pill bg-primary font-bold text-on-primary ring-2 ring-surface transition duration-200 group-hover:scale-105">
-          {inisial}
+          {initials}
         </span>
         <IconChevronDown
           size={16}
@@ -80,7 +80,7 @@ export function ProfileMenu({
           )}
         >
           <div className="px-3 py-2">
-            <p className="truncate font-semibold">{nama}</p>
+            <p className="truncate font-semibold">{name}</p>
             <p className="truncate text-sm text-muted">{email}</p>
             <p className="mt-1 inline-flex h-6 items-center rounded-pill bg-primary-soft px-2.5 text-xs font-semibold text-on-primary-soft">
               {roleLabel}

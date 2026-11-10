@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-/** Judul kapital besar dengan satu frasa kunci `primary` (pola mockup). */
+/** Large uppercase heading with one `primary` key phrase (mockup pattern). */
 export function SectionHeading({
   title,
   accent,
@@ -17,7 +17,7 @@ export function SectionHeading({
   description?: ReactNode;
   as?: "h1" | "h2";
   className?: string;
-  /** Konten kanan (mis. CTA) bila tidak ada deskripsi. */
+  /** Right-hand content (e.g. a CTA) when there is no description. */
   children?: ReactNode;
 }) {
   return (

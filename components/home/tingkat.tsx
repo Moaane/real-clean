@@ -1,30 +1,30 @@
 import { connection } from "next/server";
 import type { ReactNode } from "react";
-import { getPaketAktif, TINGKAT_DETAIL, durasiLabel } from "@/lib/katalog";
+import { getActivePackages, DETAIL_LEVELS, durationLabel } from "@/lib/katalog";
 import { rp } from "@/lib/booking-status";
-import { durasiMulai, hargaMulai } from "@/lib/harga";
+import { startDuration, startingPrice } from "@/lib/harga";
 import { Photo } from "@/components/ui/photo";
 import { ButtonLink, SectionHeading } from "@/components/ui";
 import { IconClock, IconTag, IconSparkle } from "@/components/icons";
 
-type Tingkat = keyof typeof TINGKAT_DETAIL;
-const ORDER: Tingkat[] = ["reguler", "detail", "deep"];
-function Kartu({ children }: { children: ReactNode }) {
+type DetailLevels = keyof typeof DETAIL_LEVELS;
+const ORDER: DetailLevels[] = ["regular", "detailed", "deep"];
+function LevelCard({ children }: { children: ReactNode }) {
   return <article className="rounded-lg border border-border bg-surface p-3">{children}</article>;
 }
 
-/** Mockup 3: grid tiga kolom (tengah sedikit turun), kartu putih dengan foto + meta ikon. */
-export async function Tingkat() {
+/** Mockup 3: three-column grid (middle one slightly lowered), white cards with a photo + icon meta. */
+export async function DetailLevels() {
   await connection();
-  const paket = await getPaketAktif();
+  const pkg = await getActivePackages();
   const data = ORDER.map((t) => {
-    const list = paket.filter((p) => p.tingkat_detail === t);
+    const list = pkg.filter((p) => p.detail_level === t);
     if (list.length === 0) return null;
     return {
       key: t,
-      jumlah: list.length,
-      durasi: Math.min(...list.map(durasiMulai)),
-      harga: Math.min(...list.map(hargaMulai)),
+      amount: list.length,
+      duration: Math.min(...list.map(startDuration)),
+      price: Math.min(...list.map(startingPrice)),
     };
   }).filter((x): x is NonNullable<typeof x> => x !== null);
 
@@ -32,29 +32,29 @@ export async function Tingkat() {
 
   const card = (d: (typeof data)[number]) => (
     <li key={d.key} className="md:[&:nth-child(2)]:mt-12">
-    <Kartu>
+    <LevelCard>
       <Photo
         name={`tingkat-${d.key}`}
         icon={IconSparkle}
         sizes="(min-width: 1152px) 370px, (min-width: 768px) 30vw, 100vw"
         className="aspect-[4/5] rounded-md"
       />
-      <h3 className="mt-3 px-1 text-lg font-semibold">{TINGKAT_DETAIL[d.key]}</h3>
+      <h3 className="mt-3 px-1 text-lg font-semibold">{DETAIL_LEVELS[d.key]}</h3>
       <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 px-1 pb-1 text-sm text-muted">
         <li className="flex items-center gap-1.5">
           <IconClock size={16} />
-          mulai {durasiLabel(d.durasi)}
+          mulai {durationLabel(d.duration)}
         </li>
         <li className="flex items-center gap-1.5 tabular-nums">
           <IconTag size={16} />
-          mulai {rp(d.harga)}
+          mulai {rp(d.price)}
         </li>
         <li className="flex items-center gap-1.5">
           <IconSparkle size={16} />
-          {d.jumlah} jenis properti
+          {d.amount} jenis properti
         </li>
       </ul>
-    </Kartu>
+    </LevelCard>
     </li>
   );
 

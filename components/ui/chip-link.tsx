@@ -3,7 +3,7 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 import { IconCheck } from "@/components/icons";
 
-/** Chip filter berbentuk tautan (jalan tanpa JS). `active` menandai pilihan saat ini. */
+/** Filter chip rendered as a link (works without JS). `active` marks the current selection. */
 export function ChipLink({
   active,
   className,

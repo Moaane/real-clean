@@ -24,7 +24,7 @@ function getTransporter() {
  * Sends an email and NEVER throws (SPEC 8): a failure is only logged and must
  * not undo or block the state change that triggered it. Returns whether it was sent.
  */
-export async function kirimEmail(mail: Mail): Promise<boolean> {
+export async function sendEmail(mail: Mail): Promise<boolean> {
   try {
     const t = getTransporter();
     if (!t) {

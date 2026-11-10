@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { KONTAK } from "@/lib/kontak";
+import { CONTACT } from "@/lib/kontak";
 import { IconMail, IconPhone, LogoMark } from "@/components/icons";
 
 export function Footer() {
@@ -28,13 +28,13 @@ export function Footer() {
 
         <div className="flex flex-col gap-1 text-[15px]">
           <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">Kontak</h2>
-          <a href={KONTAK.waHref} target="_blank" rel="noreferrer" className="flex h-11 items-center gap-2 hover:text-primary-ink">
+          <a href={CONTACT.waHref} target="_blank" rel="noreferrer" className="flex h-11 items-center gap-2 hover:text-primary-ink">
             <IconPhone size={18} />
             Hubungi kami
           </a>
-          <a href={`mailto:${KONTAK.email}`} className="flex h-11 items-center gap-2 hover:text-primary-ink">
+          <a href={`mailto:${CONTACT.email}`} className="flex h-11 items-center gap-2 hover:text-primary-ink">
             <IconMail size={18} />
-            {KONTAK.email}
+            {CONTACT.email}
           </a>
         </div>
       </div>

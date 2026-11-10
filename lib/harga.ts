@@ -1,61 +1,61 @@
-// Model harga per kamar (SPEC 1, 6). Murni (tanpa DB) supaya aman dipakai di server maupun klien.
-// Di klien hasilnya HANYA untuk tampilan: server selalu menghitung ulang dari data paket.
+// Per-room pricing model (SPEC 1, 6). Pure (no DB) so it is safe to use on both server and client.
+// On the client the result is for DISPLAY ONLY: the server always recomputes from the package data.
 
-export type PaketHarga = {
-  harga_dasar: number;
-  harga_per_kamar: number;
-  durasi_dasar_menit: number;
-  durasi_per_kamar_menit: number;
-  min_kamar: number;
-  max_kamar: number;
+export type PackagePricing = {
+  base_price: number;
+  price_per_room: number;
+  base_duration_minutes: number;
+  duration_per_room_minutes: number;
+  min_rooms: number;
+  max_rooms: number;
 };
 
-/** total = harga_dasar + harga_per_kamar × kamar; durasi = durasi_dasar + durasi_per_kamar × kamar. */
-export function hitungPaket(p: PaketHarga, kamar: number) {
+/** total = base_price + price_per_room × rooms; duration = base duration + duration per room × rooms. */
+export function computePackagePrice(p: PackagePricing, room: number) {
   return {
-    total: p.harga_dasar + p.harga_per_kamar * kamar,
-    durasi: p.durasi_dasar_menit + p.durasi_per_kamar_menit * kamar,
+    total: p.base_price + p.price_per_room * room,
+    duration: p.base_duration_minutes + p.duration_per_room_minutes * room,
   };
 }
 
-/** Pesan galat bila jumlah kamar tidak valid untuk paket, atau null bila boleh. */
-export function cekJumlahKamar(p: Pick<PaketHarga, "min_kamar" | "max_kamar">, kamar: number): string | null {
-  if (!Number.isInteger(kamar)) return "Jumlah kamar harus bilangan bulat";
-  if (kamar < p.min_kamar || kamar > p.max_kamar) {
-    return p.min_kamar === p.max_kamar
-      ? `Jumlah kamar untuk paket ini harus ${p.min_kamar}`
-      : `Jumlah kamar harus antara ${p.min_kamar} dan ${p.max_kamar}`;
+/** Error message when the room count is invalid for the package, or null when it is allowed. */
+export function checkRoomCount(p: Pick<PackagePricing, "min_rooms" | "max_rooms">, room: number): string | null {
+  if (!Number.isInteger(room)) return "Jumlah kamar harus bilangan bulat";
+  if (room < p.min_rooms || room > p.max_rooms) {
+    return p.min_rooms === p.max_rooms
+      ? `Jumlah kamar untuk paket ini harus ${p.min_rooms}`
+      : `Jumlah kamar harus antara ${p.min_rooms} dan ${p.max_rooms}`;
   }
   return null;
 }
 
 /** Jumlah kamar dari input mentah (URL), dijepit ke min..max; kosong/tidak valid jadi min_kamar. */
-export function kamarAwal(p: Pick<PaketHarga, "min_kamar" | "max_kamar">, raw: string | undefined): number {
+export function initialRooms(p: Pick<PackagePricing, "min_rooms" | "max_rooms">, raw: string | undefined): number {
   const n = Number(raw);
-  if (!raw || !Number.isInteger(n)) return p.min_kamar;
-  return Math.min(p.max_kamar, Math.max(p.min_kamar, n));
+  if (!raw || !Number.isInteger(n)) return p.min_rooms;
+  return Math.min(p.max_rooms, Math.max(p.min_rooms, n));
 }
 
 /** "HH:mm" → menit sejak 00:00. */
-export function menitDari(jam: string): number {
-  const [h, m] = jam.split(":").map(Number);
+export function minutesFrom(timeSlot: string): number {
+  const [h, m] = timeSlot.split(":").map(Number);
   return h * 60 + m;
 }
 
 /** Panjang slot dalam menit. */
-export const panjangSlotMenit = (mulai: string, selesai: string) => menitDari(selesai) - menitDari(mulai);
+export const slotLengthMinutes = (start: string, completed: string) => minutesFrom(completed) - minutesFrom(start);
 
 /** Harga "mulai dari" katalog: total untuk min_kamar. */
-export const hargaMulai = (p: PaketHarga) => hitungPaket(p, p.min_kamar).total;
-export const durasiMulai = (p: PaketHarga) => hitungPaket(p, p.min_kamar).durasi;
+export const startingPrice = (p: PackagePricing) => computePackagePrice(p, p.min_rooms).total;
+export const startDuration = (p: PackagePricing) => computePackagePrice(p, p.min_rooms).duration;
 
 /** Teks rentang kamar, mis. "1–6 kamar". */
-export const rentangKamar = (p: Pick<PaketHarga, "min_kamar" | "max_kamar">) =>
-  p.min_kamar === p.max_kamar ? `${p.min_kamar} kamar` : `${p.min_kamar}–${p.max_kamar} kamar`;
+export const roomRange = (p: Pick<PackagePricing, "min_rooms" | "max_rooms">) =>
+  p.min_rooms === p.max_rooms ? `${p.min_rooms} kamar` : `${p.min_rooms}–${p.max_rooms} kamar`;
 
 /** 150 -> "2 jam 30 menit". */
-export function durasiLabel(menit: number) {
-  const j = Math.floor(menit / 60);
-  const m = menit % 60;
+export function durationLabel(minutes: number) {
+  const j = Math.floor(minutes / 60);
+  const m = minutes % 60;
   return [j ? `${j} jam` : "", m ? `${m} menit` : ""].filter(Boolean).join(" ");
 }

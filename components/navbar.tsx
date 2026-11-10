@@ -2,14 +2,13 @@ import Link from "next/link"
 import { Suspense } from "react"
 import { getCurrentUser } from "@/lib/auth"
 import { logout } from "@/lib/actions/auth"
-import { LogoMark } from "@/components/icons"
 import { Button, ButtonLink } from "@/components/ui"
 import { NavLink } from "./nav-link"
 import { NavbarMobile } from "./navbar-mobile"
 import { ProfileMenu } from "./profile-menu"
 import { ROLE_LABEL, navLinks, profileItems } from "./nav-links"
 
-/** Tautan menu + aksi auth (desktop). Tamu: Masuk/Daftar. Login: dropdown profil. */
+/** Menu links + auth actions (desktop). Guest: Login/Register. Logged in: profile dropdown. */
 async function DesktopNav() {
   const user = await getCurrentUser()
   const links = navLinks(user?.role)
@@ -28,7 +27,7 @@ async function DesktopNav() {
       <div className="hidden items-center gap-2 md:flex">
         {user ? (
           <ProfileMenu
-            nama={user.nama}
+            name={user.name}
             email={user.email}
             roleLabel={ROLE_LABEL[user.role]}
             items={profileItems(user.role)}
@@ -55,10 +54,10 @@ async function MobileMenu() {
         <>
           <div className="flex items-center gap-3 px-1">
             <span className="flex size-10 items-center justify-center rounded-pill bg-primary font-bold text-on-primary">
-              {user.nama.trim().slice(0, 1).toUpperCase()}
+              {user.name.trim().slice(0, 1).toUpperCase()}
             </span>
             <div className="min-w-0">
-              <p className="truncate font-semibold">{user.nama}</p>
+              <p className="truncate font-semibold">{user.name}</p>
               <p className="truncate text-sm text-muted">{user.email}</p>
             </div>
           </div>
@@ -82,9 +81,9 @@ async function MobileMenu() {
   )
 }
 
-/** Bar navigasi dalam kartu membulat (mockup 1). */
+/** Navigation bar inside a rounded card (mockup 1). */
 export function Navbar() {
-  const publik = navLinks(null)
+  const isPublic = navLinks(null)
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 md:px-6">
       <div className="relative mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 rounded-xl border border-border bg-surface/90 px-4 backdrop-blur md:h-16 md:px-6">
@@ -95,7 +94,7 @@ export function Navbar() {
           Real Clean
         </Link>
 
-        {/* Menu bergantung pada sesi dan pathname (client), jadi dibungkus Suspense; fallback = tautan tamu statis. */}
+        {/* The menu depends on the session and pathname (client), so it is wrapped in Suspense; fallback = static guest links. */}
         <Suspense
           fallback={
             <>
@@ -103,7 +102,7 @@ export function Navbar() {
                 aria-label="Menu utama"
                 className="hidden items-center gap-1 md:flex"
               >
-                {publik.map((l) => (
+                {isPublic.map((l) => (
                   <Link
                     key={l.href}
                     href={l.href}

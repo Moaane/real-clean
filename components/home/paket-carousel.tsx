@@ -7,25 +7,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { IconBuilding, IconChevronLeft, IconChevronRight, IconHome } from "@/components/icons";
 
-export type PaketTile = {
+export type PackageTile = {
   id: number;
-  nama: string;
-  jenis: "rumah" | "kos";
-  hargaLabel: string;
-  /** true bila public/images/paket-<jenis>.webp tersedia. */
-  adaFoto: boolean;
+  name: string;
+  type: "house" | "boarding_house";
+  priceLabel: string;
+  /** true when public/images/paket-<type>.webp exists. */
+  hasPhoto: boolean;
 };
 
-/** Satu carousel berisi semua paket (rumah dan kos). Panah di kiri, `aksi` di kanan. */
-export function PaketCarousel({ items, aksi }: { items: PaketTile[]; aksi?: ReactNode }) {
+/** One carousel with all packages (house and boarding house). Arrows on the left, `action` on the right. */
+export function PackageCarousel({ items, outcome }: { items: PackageTile[]; outcome?: ReactNode }) {
   const scroller = useRef<HTMLUListElement>(null);
 
-  const [ujung, setUjung] = useState({ start: true, end: true });
+  const [edges, setEdges] = useState({ start: true, end: true });
 
-  const perbaruiUjung = useCallback(() => {
+  const updateEnd = useCallback(() => {
     const el = scroller.current;
     if (!el) return;
-    setUjung({
+    setEdges({
       start: el.scrollLeft <= 4,
       end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4,
     });
@@ -34,17 +34,17 @@ export function PaketCarousel({ items, aksi }: { items: PaketTile[]; aksi?: Reac
   useEffect(() => {
     const el = scroller.current;
     if (!el) return;
-    perbaruiUjung();
-    el.addEventListener("scroll", perbaruiUjung, { passive: true });
-    const ro = new ResizeObserver(perbaruiUjung);
+    updateEnd();
+    el.addEventListener("scroll", updateEnd, { passive: true });
+    const ro = new ResizeObserver(updateEnd);
     ro.observe(el);
     return () => {
-      el.removeEventListener("scroll", perbaruiUjung);
+      el.removeEventListener("scroll", updateEnd);
       ro.disconnect();
     };
-  }, [perbaruiUjung]);
+  }, [updateEnd]);
 
-  const bisaGeser = !(ujung.start && ujung.end);
+  const canScroll = !(edges.start && edges.end);
 
   const scroll = (dir: 1 | -1) => {
     const el = scroller.current;
@@ -55,13 +55,13 @@ export function PaketCarousel({ items, aksi }: { items: PaketTile[]; aksi?: Reac
   return (
     <div className="mt-8 md:mt-10">
       <div className="flex items-center justify-between gap-4">
-        <div className={cn("gap-2", bisaGeser ? "flex" : "invisible flex")} aria-hidden={!bisaGeser}>
+        <div className={cn("gap-2", canScroll ? "flex" : "invisible flex")} aria-hidden={!canScroll}>
           {([-1, 1] as const).map((d) => (
             <button
               key={d}
               type="button"
               onClick={() => scroll(d)}
-              disabled={d === -1 ? ujung.start : ujung.end}
+              disabled={d === -1 ? edges.start : edges.end}
               aria-label={d === -1 ? "Geser ke kiri" : "Geser ke kanan"}
               className="flex size-11 cursor-pointer items-center justify-center rounded-pill border border-border-strong transition duration-150 hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
             >
@@ -69,7 +69,7 @@ export function PaketCarousel({ items, aksi }: { items: PaketTile[]; aksi?: Reac
             </button>
           ))}
         </div>
-        {aksi}
+        {outcome}
       </div>
 
       <ul
@@ -79,19 +79,19 @@ export function PaketCarousel({ items, aksi }: { items: PaketTile[]; aksi?: Reac
         className="mt-6 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto pb-4 [scrollbar-width:none] md:gap-6 [&::-webkit-scrollbar]:hidden"
       >
         {items.map((p, i) => {
-          const Icon = p.jenis === "kos" ? IconBuilding : IconHome;
+          const Icon = p.type === "boarding_house" ? IconBuilding : IconHome;
           return (
             <li key={p.id} className="w-[72%] shrink-0 snap-start sm:w-[44%] lg:w-[30%]">
-              <Link href={`/pesan?paket=${p.id}`} className="group block rounded-lg">
+              <Link href={`/pesan?pkg=${p.id}`} className="group block rounded-lg">
                 <div
                   className={cn(
                     "relative overflow-hidden rounded-lg bg-surface-2",
                     i % 2 === 0 ? "aspect-square" : "aspect-[4/3]",
                   )}
                 >
-                  {p.adaFoto ? (
+                  {p.hasPhoto ? (
                     <Image
-                      src={`/images/paket-${p.jenis}.webp`}
+                      src={`/images/paket-${p.type}.webp`}
                       alt=""
                       fill
                       sizes="(min-width: 1024px) 30vw, 72vw"
@@ -103,8 +103,8 @@ export function PaketCarousel({ items, aksi }: { items: PaketTile[]; aksi?: Reac
                     </div>
                   )}
                 </div>
-                <h3 className="mt-3 text-xl font-medium leading-snug group-hover:text-primary-ink">{p.nama}</h3>
-                <p className="text-sm text-muted tabular-nums">mulai {p.hargaLabel}</p>
+                <h3 className="mt-3 text-xl font-medium leading-snug group-hover:text-primary-ink">{p.name}</h3>
+                <p className="text-sm text-muted tabular-nums">mulai {p.priceLabel}</p>
               </Link>
             </li>
           );

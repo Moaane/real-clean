@@ -3,7 +3,7 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-/** Muncul (fade + naik) saat masuk viewport. Tanpa JS atau dengan reduced-motion, konten tetap terlihat. */
+/** Appears (fade + rise) when entering the viewport. Without JS or with reduced motion, the content stays visible. */
 export function Reveal({
   children,
   className,
@@ -11,7 +11,7 @@ export function Reveal({
 }: {
   children: ReactNode;
   className?: string;
-  /** Jeda dalam ms untuk efek berurutan. */
+  /** Delay in ms for staggered effects. */
   delay?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);

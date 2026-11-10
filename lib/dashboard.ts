@@ -1,7 +1,7 @@
-import type { StatusBooking } from "@/generated/prisma/enums";
+import type { BookingStatus } from "@/generated/prisma/enums";
 import { prisma } from "./prisma";
 import { nowWib } from "./availability";
-import { getBookingHariIni } from "./laporan";
+import { getTodayBookings } from "./laporan";
 
 export type Range = "day" | "week" | "month" | "quarter" | "year";
 export const RANGES: Range[] = ["day", "week", "month", "quarter", "year"];
@@ -25,14 +25,14 @@ export const parseRange = (v?: string): Range => (RANGES.includes(v as Range) ? 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const WIB = 7 * HOUR;
-/** Status yang dihitung sebagai nilai terkonfirmasi (sudah dibayar dan tidak batal). */
-const TERKONFIRMASI: StatusBooking[] = [
-  "DIBAYAR",
-  "DITUGASKAN",
-  "DALAM_PERJALANAN",
-  "DIKERJAKAN",
-  "MENUNGGU_VERIFIKASI",
-  "SELESAI",
+/** Statuses counted as confirmed value (paid and not cancelled). */
+const CONFIRMED: BookingStatus[] = [
+  "PAID",
+  "ASSIGNED",
+  "ON_THE_WAY",
+  "IN_PROGRESS",
+  "AWAITING_VERIFICATION",
+  "COMPLETED",
 ];
 
 type Bucket = { label: string; start: number; end: number };
@@ -40,7 +40,7 @@ type Bucket = { label: string; start: number; end: number };
 const fmt = (ms: number, o: Intl.DateTimeFormatOptions) =>
   new Date(ms + WIB).toLocaleDateString("id-ID", { ...o, timeZone: "UTC" });
 
-/** Bucket waktu dalam WIB; `start`/`end` adalah instan UTC (ms). */
+/** Time bucket in WIB; `start`/`end` are UTC instants (ms). */
 function buildBuckets(range: Range): Bucket[] {
   const { date } = nowWib();
   const [y, m, d] = date.split("-").map(Number);
@@ -78,23 +78,23 @@ export type Dashboard = {
   range: Range;
   updatedAt: string;
   booking: { total: number; prev: number; series: Point[] };
-  nilai: { total: number; prev: number; series: Point[] };
-  /** Pendapatan bersih: pembayaran lunas dalam rentang dikurangi refund sukses (sama dengan halaman Laporan). */
-  pendapatan: number;
-  hariIni: { status: StatusBooking; count: number }[];
-  status: { status: StatusBooking; count: number }[];
-  topLayanan: { nama: string; count: number }[];
-  perluTindakan: { belumDitugaskan: number; menungguVerifikasi: number; menungguBayar: number };
-  okupansi: { terisi: number; kuota: number };
-  jadwalHariIni: {
+  value: { total: number; prev: number; series: Point[] };
+  /** Net revenue: settled payments in the range minus successful refunds (same as the Report page). */
+  revenue: number;
+  today: { status: BookingStatus; count: number }[];
+  status: { status: BookingStatus; count: number }[];
+  topServices: { name: string; count: number }[];
+  needsAction: { unassigned: number; awaitingVerification: number; awaitingPayment: number };
+  occupancy: { filled: number; quota: number };
+  todaySchedule: {
     id: number;
-    kode: string;
-    jam: string;
-    paket: string;
-    pelanggan: string;
-    status: StatusBooking;
+    code: string;
+    timeSlot: string;
+    pkg: string;
+    customer: string;
+    status: BookingStatus;
   }[];
-  ringkas: { paketAktif: number; karyawanAktif: number; pelanggan: number };
+  compact: { activePkg: number; activeStaff: number; customer: number };
 };
 
 export async function getDashboard(range: Range): Promise<Dashboard> {
@@ -102,91 +102,91 @@ export async function getDashboard(range: Range): Promise<Dashboard> {
   const start = buckets[0].start;
   const end = buckets[buckets.length - 1].end;
   const prevStart = start - (end - start);
-  const today = nowWib();
-  const todayDate = new Date(`${today.date}T00:00:00.000Z`);
+  const wibNow = nowWib();
+  const todayDate = new Date(`${wibNow.date}T00:00:00.000Z`);
 
-  const [rows, settled, refunded, hariIni, paketAktif, karyawanAktif, pelanggan, belumDitugaskan, menungguVerifikasi, menungguBayar, slotHariIni, jamAktif, jadwal] =
+  const [rows, settled, refunded, today, activePkg, activeStaff, customer, unassigned, awaitingVerification, awaitingPayment, todaySlots, activeHours, schedule] =
     await Promise.all([
       prisma.booking.findMany({
         where: { created_at: { gte: new Date(prevStart), lt: new Date(end) } },
-        select: { created_at: true, total_harga: true, status: true, layanan: { select: { nama_layanan: true } } },
+        select: { created_at: true, total_price: true, status: true, service: { select: { service_name: true } } },
       }),
-      prisma.pembayaran.aggregate({
-        _sum: { jumlah: true },
-        where: { status_bayar: { in: ["settlement", "refund"] }, waktu_bayar: { gte: new Date(start), lt: new Date(end) } },
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: { payment_status: { in: ["settlement", "refund"] }, paid_at: { gte: new Date(start), lt: new Date(end) } },
       }),
       prisma.refund.aggregate({
-        _sum: { jumlah: true },
-        where: { status_refund: "sukses", created_at: { gte: new Date(start), lt: new Date(end) } },
+        _sum: { amount: true },
+        where: { refund_status: "success", created_at: { gte: new Date(start), lt: new Date(end) } },
       }),
-      getBookingHariIni(),
-      prisma.layanan.count({ where: { status_aktif: true } }),
-      prisma.user.count({ where: { role: "karyawan", status_aktif: true } }),
-      prisma.user.count({ where: { role: "pelanggan" } }),
-      prisma.booking.count({ where: { status: "DIBAYAR" } }),
-      prisma.booking.count({ where: { status: "MENUNGGU_VERIFIKASI" } }),
-      prisma.booking.count({ where: { status: "MENUNGGU_PEMBAYARAN", batas_bayar: { gt: new Date() } } }),
-      prisma.jadwalSlot.aggregate({ _sum: { terisi: true }, where: { tanggal: todayDate } }),
-      prisma.jamOperasional.aggregate({ _sum: { kuota: true }, where: { aktif: true } }),
+      getTodayBookings(),
+      prisma.service.count({ where: { is_active: true } }),
+      prisma.user.count({ where: { role: "staff", is_active: true } }),
+      prisma.user.count({ where: { role: "customer" } }),
+      prisma.booking.count({ where: { status: "PAID" } }),
+      prisma.booking.count({ where: { status: "AWAITING_VERIFICATION" } }),
+      prisma.booking.count({ where: { status: "PENDING_PAYMENT", payment_deadline: { gt: new Date() } } }),
+      prisma.scheduleSlot.aggregate({ _sum: { filled: true }, where: { date: todayDate } }),
+      prisma.operatingHour.aggregate({ _sum: { quota: true }, where: { active: true } }),
       prisma.booking.findMany({
-        where: { slot: { tanggal: todayDate }, status: { in: TERKONFIRMASI.filter((s) => s !== "SELESAI") } },
-        orderBy: { slot: { jam_mulai: "asc" } },
+        where: { slot: { date: todayDate }, status: { in: CONFIRMED.filter((s) => s !== "COMPLETED") } },
+        orderBy: { slot: { start_time: "asc" } },
         select: {
           id_booking: true,
-          kode_booking: true,
+          booking_code: true,
           status: true,
-          layanan: { select: { nama_layanan: true } },
-          slot: { select: { jam_mulai: true, jam_selesai: true } },
-          pelanggan: { select: { nama: true } },
+          service: { select: { service_name: true } },
+          slot: { select: { start_time: true, end_time: true } },
+          customer: { select: { name: true } },
         },
       }),
     ]);
 
   const bookingSeries: Point[] = buckets.map((b) => ({ label: b.label, value: 0 }));
-  const nilaiSeries: Point[] = buckets.map((b) => ({ label: b.label, value: 0 }));
+  const valueSeries: Point[] = buckets.map((b) => ({ label: b.label, value: 0 }));
   let bookingPrev = 0;
-  let nilaiPrev = 0;
-  const statusMap = new Map<StatusBooking, number>();
-  const layananMap = new Map<string, number>();
+  let prevValue = 0;
+  const statusMap = new Map<BookingStatus, number>();
+  const serviceMap = new Map<string, number>();
 
   for (const r of rows) {
     const t = r.created_at.getTime();
-    const konfirm = TERKONFIRMASI.includes(r.status);
+    const confirmAction = CONFIRMED.includes(r.status);
     if (t < start) {
       bookingPrev++;
-      if (konfirm) nilaiPrev += r.total_harga;
+      if (confirmAction) prevValue += r.total_price;
       continue;
     }
     const i = buckets.findIndex((b) => t >= b.start && t < b.end);
     if (i < 0) continue;
     bookingSeries[i].value++;
-    if (konfirm) nilaiSeries[i].value += r.total_harga;
+    if (confirmAction) valueSeries[i].value += r.total_price;
     statusMap.set(r.status, (statusMap.get(r.status) ?? 0) + 1);
-    layananMap.set(r.layanan.nama_layanan, (layananMap.get(r.layanan.nama_layanan) ?? 0) + 1);
+    serviceMap.set(r.service.service_name, (serviceMap.get(r.service.service_name) ?? 0) + 1);
   }
 
   const sum = (s: Point[]) => s.reduce((a, p) => a + p.value, 0);
 
   return {
     range,
-    updatedAt: today.time,
+    updatedAt: wibNow.time,
     booking: { total: sum(bookingSeries), prev: bookingPrev, series: bookingSeries },
-    nilai: { total: sum(nilaiSeries), prev: nilaiPrev, series: nilaiSeries },
-    pendapatan: (settled._sum.jumlah ?? 0) - (refunded._sum.jumlah ?? 0),
-    hariIni,
+    value: { total: sum(valueSeries), prev: prevValue, series: valueSeries },
+    revenue: (settled._sum.amount ?? 0) - (refunded._sum.amount ?? 0),
+    today,
     status: [...statusMap].map(([status, count]) => ({ status, count })).sort((a, b) => b.count - a.count),
-    topLayanan: [...layananMap].map(([nama, count]) => ({ nama, count })).sort((a, b) => b.count - a.count).slice(0, 5),
-    perluTindakan: { belumDitugaskan, menungguVerifikasi, menungguBayar },
-    okupansi: { terisi: slotHariIni._sum.terisi ?? 0, kuota: jamAktif._sum.kuota ?? 0 },
-    jadwalHariIni: jadwal.map((j) => ({
+    topServices: [...serviceMap].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5),
+    needsAction: { unassigned, awaitingVerification, awaitingPayment },
+    occupancy: { filled: todaySlots._sum.filled ?? 0, quota: activeHours._sum.quota ?? 0 },
+    todaySchedule: schedule.map((j) => ({
       id: j.id_booking,
-      kode: j.kode_booking,
-      jam: `${j.slot.jam_mulai}–${j.slot.jam_selesai}`,
-      paket: j.layanan.nama_layanan,
-      pelanggan: j.pelanggan.nama,
+      code: j.booking_code,
+      timeSlot: `${j.slot.start_time}–${j.slot.end_time}`,
+      pkg: j.service.service_name,
+      customer: j.customer.name,
       status: j.status,
     })),
-    ringkas: { paketAktif, karyawanAktif, pelanggan },
+    compact: { activePkg, activeStaff, customer },
   };
 }
 
@@ -197,7 +197,7 @@ export function deltaPct(now: number, prev: number): number | null {
 }
 
 /** Rupiah ringkas untuk sumbu grafik: 1,2 jt, 350 rb. */
-export function rpRingkas(n: number): string {
+export function compactRp(n: number): string {
   if (n >= 1_000_000_000) return `${+(n / 1_000_000_000).toFixed(1)} M`;
   if (n >= 1_000_000) return `${+(n / 1_000_000).toFixed(1)} jt`;
   if (n >= 1_000) return `${+(n / 1_000).toFixed(0)} rb`;

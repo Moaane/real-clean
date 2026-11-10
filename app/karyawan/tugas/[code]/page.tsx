@@ -6,18 +6,18 @@ import { connection } from "next/server"
 import { notFound } from "next/navigation"
 import { requireRole } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { durasiLabel } from "@/lib/katalog"
-import { slotSudahMulai } from "@/lib/availability"
-import { tanggalId } from "@/lib/booking-status"
+import { durationLabel } from "@/lib/katalog"
+import { slotStarted } from "@/lib/availability"
+import { dateId } from "@/lib/booking-status"
 import { Alert, Card, Skeleton, StatusBadge } from "@/components/ui"
 import { PageHeader } from "@/components/dash/page-header"
-import { AksiStatus } from "@/components/karyawan/aksi-status"
-import { UnggahBukti } from "@/components/karyawan/unggah-bukti"
+import { StatusActions } from "@/components/karyawan/aksi-status"
+import { UploadProof } from "@/components/karyawan/unggah-bukti"
 import { IconArrowRight } from "@/components/icons"
 
 export const metadata: Metadata = { title: "Detail tugas" }
 
-function Baris({
+function Row({
   label,
   children,
 }: {
@@ -32,38 +32,38 @@ function Baris({
   )
 }
 
-async function Isi({ params }: { params: Promise<{ kode: string }> }) {
+async function Content({ params }: { params: Promise<{ code: string }> }) {
   await connection()
-  const user = await requireRole("karyawan")
-  const { kode } = await params
-  // Filtering by id_karyawan means another employee's task is simply "not found".
-  const t = await prisma.penugasan.findFirst({
+  const user = await requireRole("staff")
+  const { code } = await params
+  // Filtering by id_staff means another employee's task is simply "not found".
+  const t = await prisma.assignment.findFirst({
     where: {
-      id_karyawan: user.id_user,
-      status_tugas: { not: "dibatalkan" },
-      booking: { kode_booking: kode.toUpperCase() },
+      id_staff: user.id_user,
+      task_status: { not: "cancelled" },
+      booking: { booking_code: code.toUpperCase() },
     },
-    orderBy: { ditugaskan_at: "desc" },
+    orderBy: { assigned_at: "desc" },
     include: {
-      bukti: { orderBy: { uploaded_at: "asc" }, select: { id_bukti: true } },
+      proof: { orderBy: { uploaded_at: "asc" }, select: { id_proof: true } },
       booking: {
         include: {
-          layanan: { select: { nama_layanan: true } },
+          service: { select: { service_name: true } },
           slot: true,
-          pelanggan: { select: { nama: true, no_hp: true } },
+          customer: { select: { name: true, phone: true } },
         },
       },
     },
   })
   if (!t) notFound()
   const b = t.booking
-  const sudahMulai = slotSudahMulai(b.slot.tanggal, b.slot.jam_mulai)
+  const hasStarted = slotStarted(b.slot.date, b.slot.start_time)
 
   return (
     <>
       <div className="mb-6 flex items-center justify-between gap-3">
         <h2 className="font-mono text-[24px] font-bold leading-tight tracking-tight">
-          {b.kode_booking}
+          {b.booking_code}
         </h2>
         <StatusBadge status={b.status} />
       </div>
@@ -72,88 +72,88 @@ async function Isi({ params }: { params: Promise<{ kode: string }> }) {
         <Card>
           <h3 className="mb-4 text-lg font-semibold">Detail tugas</h3>
           <dl className="divide-y divide-border">
-            <Baris label="Paket">{b.layanan.nama_layanan}</Baris>
-            <Baris label="Jumlah kamar">{b.jumlah_kamar} kamar</Baris>
-            <Baris label="Estimasi durasi">{durasiLabel(b.durasi_menit)}</Baris>
-            <Baris label="Jadwal">
-              {tanggalId(b.slot.tanggal)}, {b.slot.jam_mulai}–
-              {b.slot.jam_selesai} WIB
-            </Baris>
-            <Baris label="Alamat">{b.alamat_layanan}</Baris>
-            <Baris label="Catatan pelanggan">{b.catatan ?? "-"}</Baris>
-            <Baris label="Pelanggan">{b.pelanggan.nama}</Baris>
-            <Baris label="Nomor HP">{b.pelanggan.no_hp}</Baris>
+            <Row label="Paket">{b.service.service_name}</Row>
+            <Row label="Jumlah kamar">{b.room_count} kamar</Row>
+            <Row label="Estimasi durasi">{durationLabel(b.duration_minutes)}</Row>
+            <Row label="Jadwal">
+              {dateId(b.slot.date)}, {b.slot.start_time}–
+              {b.slot.end_time} WIB
+            </Row>
+            <Row label="Alamat">{b.service_address}</Row>
+            <Row label="Catatan pelanggan">{b.notes ?? "-"}</Row>
+            <Row label="Pelanggan">{b.customer.name}</Row>
+            <Row label="Nomor HP">{b.customer.phone}</Row>
           </dl>
         </Card>
 
         <Card className="flex flex-col gap-4">
           <h3 className="text-lg font-semibold">Pengerjaan</h3>
-          {t.status_tugas === "revisi" && t.catatan_revisi && (
+          {t.task_status === "revision" && t.revision_notes && (
             <Alert tone="warn" title="Catatan revisi dari admin">
-              {t.catatan_revisi}
+              {t.revision_notes}
             </Alert>
           )}
-          {b.status === "DITUGASKAN" &&
-            (sudahMulai ? (
-              <AksiStatus
-                idPenugasan={t.id_penugasan}
-                ke="DALAM_PERJALANAN"
+          {b.status === "ASSIGNED" &&
+            (hasStarted ? (
+              <StatusActions
+                idAssignment={t.id_assignment}
+                toStatus="ON_THE_WAY"
                 label="Berangkat ke lokasi"
               />
             ) : (
               <Alert tone="info">
                 Belum waktunya berangkat. Tombol aktif mulai jam{" "}
-                {b.slot.jam_mulai} WIB sesuai jadwal.
+                {b.slot.start_time} WIB sesuai jadwal.
               </Alert>
             ))}
-          {b.status === "DALAM_PERJALANAN" &&
-            (sudahMulai ? (
-              <AksiStatus
-                idPenugasan={t.id_penugasan}
-                ke="DIKERJAKAN"
+          {b.status === "ON_THE_WAY" &&
+            (hasStarted ? (
+              <StatusActions
+                idAssignment={t.id_assignment}
+                toStatus="IN_PROGRESS"
                 label="Tiba dan mulai mengerjakan"
               />
             ) : (
               <Alert tone="info">
-                Pengerjaan baru bisa dimulai pada jam {b.slot.jam_mulai} WIB
+                Pengerjaan baru bisa dimulai pada jam {b.slot.start_time} WIB
                 sesuai jadwal.
               </Alert>
             ))}
-          {b.status === "DIKERJAKAN" &&
-            (sudahMulai ? (
-              <UnggahBukti idPenugasan={t.id_penugasan} />
+          {b.status === "IN_PROGRESS" &&
+            (hasStarted ? (
+              <UploadProof idAssignment={t.id_assignment} />
             ) : (
               <Alert tone="info">
                 Pekerjaan belum bisa diselesaikan sebelum jadwal dimulai (
-                {b.slot.jam_mulai} WIB).
+                {b.slot.start_time} WIB).
               </Alert>
             ))}
-          {b.status === "MENUNGGU_VERIFIKASI" && (
+          {b.status === "AWAITING_VERIFICATION" && (
             <p className="text-sm text-muted">
               Bukti sudah diunggah, menunggu verifikasi admin.
             </p>
           )}
-          {b.status === "SELESAI" && (
+          {b.status === "COMPLETED" && (
             <p className="text-sm text-muted">Tugas ini sudah selesai.</p>
           )}
-          {(b.status === "DIBATALKAN" || b.status === "DIREFUND") && (
+          {(b.status === "CANCELLED" || b.status === "REFUNDED") && (
             <p className="text-sm text-muted">Booking ini dibatalkan.</p>
           )}
 
-          {t.bukti.length > 0 && (
+          {t.proof.length > 0 && (
             <div>
               <p className="mb-2 text-sm font-medium">Foto bukti</p>
               <div className="grid grid-cols-3 gap-2">
-                {t.bukti.map((f) => (
+                {t.proof.map((f) => (
                   <a
-                    key={f.id_bukti}
-                    href={`/api/bukti/${f.id_bukti}`}
+                    key={f.id_proof}
+                    href={`/api/bukti/${f.id_proof}`}
                     target="_blank"
                     rel="noreferrer"
                     className="relative aspect-square overflow-hidden rounded-md bg-surface-2"
                   >
                     <Image
-                      src={`/api/bukti/${f.id_bukti}`}
+                      src={`/api/bukti/${f.id_proof}`}
                       alt="Foto bukti kerja"
                       fill
                       unoptimized
@@ -182,13 +182,13 @@ async function Isi({ params }: { params: Promise<{ kode: string }> }) {
 export default function Page({
   params,
 }: {
-  params: Promise<{ kode: string }>
+  params: Promise<{ code: string }>
 }) {
   return (
     <>
       <PageHeader title="Detail" accent="tugas" />
       <Suspense fallback={<Skeleton className="h-48 rounded-lg" />}>
-        <Isi params={params} />
+        <Content params={params} />
       </Suspense>
     </>
   )

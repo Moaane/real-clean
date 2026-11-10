@@ -1,6 +1,6 @@
 import { after } from "next/server";
-import { kirimEmailInvoice } from "@/lib/notifikasi";
-import { signatureValid, prosesNotifikasi, type Notifikasi } from "@/lib/webhook-midtrans";
+import { sendInvoiceEmail } from "@/lib/notifikasi";
+import { signatureValid, processNotification, type Notification } from "@/lib/webhook-midtrans";
 
 // Midtrans payment notification (HTTP notification URL). No session: authenticity
 // comes only from signature_key. Nothing changes before the signature is valid.
@@ -12,11 +12,11 @@ export async function POST(request: Request) {
     return Response.json({ message: "server error" }, { status: 500 });
   }
 
-  let body: Notifikasi;
+  let body: Notification;
   try {
     const parsed: unknown = await request.json();
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) throw new Error("bukan objek");
-    body = parsed as Notifikasi;
+    body = parsed as Notification;
   } catch {
     return Response.json({ message: "bad request" }, { status: 400 });
   }
@@ -31,15 +31,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    const hasil = await prosesNotifikasi(body);
-    if (!hasil.ok) {
-      console.error("[webhook] notifikasi valid tapi ditolak", hasil.alasan, body.order_id);
-      return Response.json({ message: hasil.alasan }, { status: hasil.alasan === "order-tidak-ditemukan" ? 404 : 400 });
+    const result = await processNotification(body);
+    if (!result.ok) {
+      console.error("[webhook] notifikasi valid tapi ditolak", result.reason, body.order_id);
+      return Response.json({ message: result.reason }, { status: result.reason === "order-tidak-ditemukan" ? 404 : 400 });
     }
-    // Only the notification that actually flipped the booking to DIBAYAR sends the
-    // invoice (duplicates report "duplikat"), and a mail failure cannot affect the reply.
-    if (hasil.aksi === "dibayar") after(() => kirimEmailInvoice(String(body.order_id)));
-    return Response.json({ message: "ok", aksi: hasil.aksi });
+    // Only the notification that actually flipped the booking to PAID sends the
+    // invoice (duplicates report "duplicate"), and a mail failure cannot affect the reply.
+    if (result.outcome === "paid") after(() => sendInvoiceEmail(String(body.order_id)));
+    return Response.json({ message: "ok", outcome: result.outcome });
   } catch (e) {
     // 500 makes Midtrans retry; the handler is idempotent so a retry is safe.
     console.error("[webhook] gagal memproses", e);

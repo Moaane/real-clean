@@ -53,12 +53,12 @@ export function RegisterForm({ next }: { next?: string }) {
       {next && <input type="hidden" name="next" value={next} />}
       {state.error && <Alert tone="danger">{state.error}</Alert>}
       <Input
-        name="nama"
+        name="name"
         label="Nama lengkap"
         required
         autoComplete="name"
-        defaultValue={state.values?.nama}
-        error={fe.nama?.[0]}
+        defaultValue={state.values?.name}
+        error={fe.name?.[0]}
       />
       <Input
         name="email"
@@ -70,15 +70,15 @@ export function RegisterForm({ next }: { next?: string }) {
         error={fe.email?.[0]}
       />
       <Input
-        name="no_hp"
+        name="phone"
         type="tel"
         inputMode="tel"
         label="Nomor WhatsApp"
         required
         autoComplete="tel"
         hint="Contoh: 08123456789"
-        defaultValue={state.values?.no_hp}
-        error={fe.no_hp?.[0]}
+        defaultValue={state.values?.phone}
+        error={fe.phone?.[0]}
       />
       <PasswordInput
         name="password"

@@ -7,27 +7,27 @@ import { Alert, Button, Card, Textarea } from "@/components/ui";
 import { IconCalendar, IconClock, IconTag } from "@/components/icons";
 
 type Props = {
-  paketId: number;
-  paketNama: string;
-  kamar: number;
-  /** Hanya tampilan: server memvalidasi jumlah kamar dan menghitung ulang durasi. */
-  rincian: string;
-  durasiLabel: string;
-  tanggal: string;
-  jamMulai: string;
-  tanggalLabel: string;
-  jamLabel: string;
-  /** Hanya tampilan. Server menghitung ulang harga dari data paket. */
+  packageId: number;
+  packageName: string;
+  room: number;
+  /** Display only: the server validates the room count and recomputes the duration. */
+  breakdown: string;
+  durationLabel: string;
+  date: string;
+  startTime: string;
+  dateLabel: string;
+  hourLabel: string;
+  /** Display only. The server recomputes the price from the package data. */
   totalLabel: string;
-  defaultAlamat?: string;
-  defaultCatatan?: string;
+  defaultAddress?: string;
+  defaultNotes?: string;
   loggedIn: boolean;
 };
 
 const initial: FormState = {};
 
-/** Langkah 3: detail lokasi + bar ringkasan sticky di mobile. */
-export function PesanForm(p: Props) {
+/** Step 3: location details + a sticky summary bar on mobile. */
+export function OrderForm(p: Props) {
   const [state, action, pending] = useActionState(submitBooking, initial);
   const fe = state.fieldErrors ?? {};
   const first = (k: string) => fe[k]?.[0];
@@ -35,34 +35,34 @@ export function PesanForm(p: Props) {
 
   return (
     <form action={action} className="flex flex-col gap-6 pb-28 md:pb-0">
-      <input type="hidden" name="layanan" value={p.paketId} />
-      <input type="hidden" name="kamar" value={p.kamar} />
-      <input type="hidden" name="tanggal" value={p.tanggal} />
-      <input type="hidden" name="jam_mulai" value={p.jamMulai} />
+      <input type="hidden" name="service" value={p.packageId} />
+      <input type="hidden" name="room" value={p.room} />
+      <input type="hidden" name="date" value={p.date} />
+      <input type="hidden" name="start_time" value={p.startTime} />
 
-      {(state.error || first("layanan") || first("kamar") || first("tanggal") || first("jam_mulai")) && (
+      {(state.error || first("service") || first("room") || first("date") || first("start_time")) && (
         <Alert tone="danger" title="Booking belum bisa dibuat">
-          {state.error ?? first("layanan") ?? first("kamar") ?? first("tanggal") ?? first("jam_mulai")}
+          {state.error ?? first("service") ?? first("room") ?? first("date") ?? first("start_time")}
         </Alert>
       )}
 
       <Card className="flex flex-col gap-5">
         <Textarea
-          name="alamat"
+          name="address"
           label="Alamat lengkap"
           required
           rows={3}
           autoComplete="street-address"
           hint="Tulis nama jalan, nomor, patokan, dan kecamatan agar petugas mudah menemukan lokasi."
-          defaultValue={v.alamat ?? p.defaultAlamat}
-          error={first("alamat")}
+          defaultValue={v.address ?? p.defaultAddress}
+          error={first("address")}
         />
         <Textarea
-          name="catatan"
+          name="notes"
           label="Catatan untuk petugas"
           hint="Opsional. Mis. bagian yang perlu diprioritaskan."
-          defaultValue={v.catatan ?? p.defaultCatatan}
-          error={first("catatan")}
+          defaultValue={v.notes ?? p.defaultNotes}
+          error={first("notes")}
           rows={3}
         />
       </Card>
@@ -74,21 +74,21 @@ export function PesanForm(p: Props) {
             <IconTag size={18} className="mt-0.5 shrink-0 text-primary" />
             <dt className="sr-only">Paket</dt>
             <dd>
-              {p.paketNama}, {p.kamar} kamar
-              <span className="block text-sm text-muted">{p.rincian}</span>
+              {p.packageName}, {p.room} kamar
+              <span className="block text-sm text-muted">{p.breakdown}</span>
             </dd>
           </div>
           <div className="flex items-start gap-2">
             <IconCalendar size={18} className="mt-0.5 shrink-0 text-primary" />
             <dt className="sr-only">Tanggal</dt>
-            <dd>{p.tanggalLabel}</dd>
+            <dd>{p.dateLabel}</dd>
           </div>
           <div className="flex items-start gap-2">
             <IconClock size={18} className="mt-0.5 shrink-0 text-primary" />
             <dt className="sr-only">Jam</dt>
             <dd>
-              {p.jamLabel}
-              <span className="block text-sm text-muted">Estimasi pengerjaan {p.durasiLabel}</span>
+              {p.hourLabel}
+              <span className="block text-sm text-muted">Estimasi pengerjaan {p.durationLabel}</span>
             </dd>
           </div>
         </dl>

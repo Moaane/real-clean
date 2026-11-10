@@ -7,8 +7,8 @@ const STEPS = [
   { icon: IconCheck, title: "Bayar dan santai", text: "Bayar online, lalu petugas kami datang tepat waktu." },
 ];
 
-/** Mockup 5 "Quick and Easy": tiga lingkaran ikon dihubungkan panah. */
-export function CaraKerja() {
+/** Mockup 5 "Quick and Easy": three icon circles connected by arrows. */
+export function HowItWorks() {
   return (
     <section id="cara-kerja" className="mx-auto max-w-6xl scroll-mt-24 px-4 pt-16 md:px-6 md:pt-24">
       <SectionHeading title="Cara kerja" accent="mudah" after="dan cepat" />

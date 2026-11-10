@@ -2,28 +2,28 @@
 
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
-import { durasiLabel, hitungPaket } from "@/lib/harga";
+import { durationLabel, computePackagePrice } from "@/lib/harga";
 import { rp } from "@/lib/booking-status";
 import { ButtonLink } from "@/components/ui";
 import { IconBuilding, IconClock, IconHome } from "@/components/icons";
 
-export type QuickPaket = {
+export type QuickPackage = {
   id: number;
-  nama: string;
-  jenis: "rumah" | "kos";
-  tingkatKey: string;
-  tingkat: string;
-  hargaDasar: number;
-  hargaPerKamar: number;
-  durasiDasar: number;
-  durasiPerKamar: number;
-  minKamar: number;
-  maxKamar: number;
+  name: string;
+  type: "house" | "boarding_house";
+  levelKey: string;
+  level: string;
+  basePrice: number;
+  pricePerRoom: number;
+  baseDuration: number;
+  durationPerRoom: number;
+  minRooms: number;
+  maxRooms: number;
 };
 
-const JENIS = [
-  { key: "rumah", label: "Rumah", icon: IconHome },
-  { key: "kos", label: "Kos-kosan", icon: IconBuilding },
+const PROPERTY_TYPE_OPTIONS = [
+  { key: "house", label: "Rumah", icon: IconHome },
+  { key: "boarding_house", label: "Kos-kosan", icon: IconBuilding },
 ] as const;
 
 function Seg<T extends string>({
@@ -66,37 +66,37 @@ function Seg<T extends string>({
 }
 
 /**
- * Konfigurator cepat: jenis, tingkat, jumlah kamar, lalu harga langsung.
- * Harga dan durasi di sini hanya tampilan; server menghitung ulang saat booking.
+ * Quick configurator: type, level, room count, then the price right away.
+ * Price and duration here are display only; the server recomputes them when the booking is created.
  */
-export function QuickBook({ paket }: { paket: QuickPaket[] }) {
-  const jenisAda = JENIS.filter((j) => paket.some((p) => p.jenis === j.key));
-  const [jenis, setJenis] = useState<"rumah" | "kos">(jenisAda[0]?.key ?? "rumah");
+export function QuickBook({ pkg }: { pkg: QuickPackage[] }) {
+  const availableTypes = PROPERTY_TYPE_OPTIONS.filter((j) => pkg.some((p) => p.type === j.key));
+  const [type, setType] = useState<"house" | "boarding_house">(availableTypes[0]?.key ?? "house");
 
-  const tingkatOpsi = useMemo(() => {
+  const levelOptions = useMemo(() => {
     const seen = new Map<string, string>();
-    paket.filter((p) => p.jenis === jenis).forEach((p) => seen.set(p.tingkatKey, p.tingkat));
-    const urut = ["reguler", "detail", "deep"];
-    return [...seen].map(([key, label]) => ({ key, label })).sort((a, b) => urut.indexOf(a.key) - urut.indexOf(b.key));
-  }, [paket, jenis]);
-  const [tingkatPilih, setTingkat] = useState<string>("");
-  const tingkat = tingkatOpsi.some((t) => t.key === tingkatPilih) ? tingkatPilih : (tingkatOpsi[0]?.key ?? "");
+    pkg.filter((p) => p.type === type).forEach((p) => seen.set(p.levelKey, p.level));
+    const sorted = ["regular", "detailed", "deep"];
+    return [...seen].map(([key, label]) => ({ key, label })).sort((a, b) => sorted.indexOf(a.key) - sorted.indexOf(b.key));
+  }, [pkg, type]);
+  const [selectedLevel, setLevel] = useState<string>("");
+  const level = levelOptions.some((t) => t.key === selectedLevel) ? selectedLevel : (levelOptions[0]?.key ?? "");
 
-  // Satu paket per (jenis, tingkat); jumlah kamar dipilih bebas dalam min..max paket itu.
-  const aktif = paket.find((p) => p.jenis === jenis && p.tingkatKey === tingkat);
-  const [kamarPilih, setKamar] = useState(0);
-  const kamar = aktif ? Math.min(aktif.maxKamar, Math.max(aktif.minKamar, kamarPilih || aktif.minKamar)) : 0;
-  const hasil = aktif
-    ? hitungPaket(
+  // One package per (type, level); the room count is chosen freely within that package's min..max.
+  const active = pkg.find((p) => p.type === type && p.levelKey === level);
+  const [selectedRooms, setRooms] = useState(0);
+  const room = active ? Math.min(active.maxRooms, Math.max(active.minRooms, selectedRooms || active.minRooms)) : 0;
+  const result = active
+    ? computePackagePrice(
         {
-          harga_dasar: aktif.hargaDasar,
-          harga_per_kamar: aktif.hargaPerKamar,
-          durasi_dasar_menit: aktif.durasiDasar,
-          durasi_per_kamar_menit: aktif.durasiPerKamar,
-          min_kamar: aktif.minKamar,
-          max_kamar: aktif.maxKamar,
+          base_price: active.basePrice,
+          price_per_room: active.pricePerRoom,
+          base_duration_minutes: active.baseDuration,
+          duration_per_room_minutes: active.durationPerRoom,
+          min_rooms: active.minRooms,
+          max_rooms: active.maxRooms,
         },
-        kamar,
+        room,
       )
     : null;
 
@@ -104,62 +104,62 @@ export function QuickBook({ paket }: { paket: QuickPaket[] }) {
     <div className="flex flex-col gap-5 rounded-xl border border-border bg-background p-5 md:p-7">
       <Seg
         label="Jenis properti"
-        value={jenis}
-        options={jenisAda.map((j) => ({ key: j.key, label: j.label, icon: j.icon }))}
+        value={type}
+        options={availableTypes.map((j) => ({ key: j.key, label: j.label, icon: j.icon }))}
         onChange={(v) => {
-          setJenis(v);
-          setKamar(0);
+          setType(v);
+          setRooms(0);
         }}
       />
       <Seg
         label="Tingkat kebersihan"
-        value={tingkat}
-        options={tingkatOpsi}
+        value={level}
+        options={levelOptions}
         onChange={(v) => {
-          setTingkat(v);
-          setKamar(0);
+          setLevel(v);
+          setRooms(0);
         }}
       />
 
-      {/* Selalu dirender dengan tinggi tetap agar tata letak tidak bergeser saat pilihan berganti. */}
+      {/* Always rendered with a fixed height so the layout does not shift when the selection changes. */}
       <div className="min-h-[104px]">
         <label htmlFor="qb-kamar" className="mb-2 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted">
           Jumlah kamar
           <span className="text-base font-bold normal-case tracking-normal text-foreground tabular-nums">
-            {aktif ? `${kamar} kamar` : "-"}
+            {active ? `${room} kamar` : "-"}
           </span>
         </label>
         <input
           id="qb-kamar"
           type="range"
-          min={aktif?.minKamar ?? 0}
-          max={aktif?.maxKamar ?? 1}
+          min={active?.minRooms ?? 0}
+          max={active?.maxRooms ?? 1}
           step={1}
-          disabled={!aktif || aktif.minKamar === aktif.maxKamar}
-          value={kamar}
-          onChange={(e) => setKamar(Number(e.target.value))}
+          disabled={!active || active.minRooms === active.maxRooms}
+          value={room}
+          onChange={(e) => setRooms(Number(e.target.value))}
           className="h-11 w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-50"
         />
         <div className="flex h-5 justify-between text-xs text-muted tabular-nums" aria-hidden="true">
-          <span>{aktif?.minKamar}</span>
-          <span>{aktif?.maxKamar}</span>
+          <span>{active?.minRooms}</span>
+          <span>{active?.maxRooms}</span>
         </div>
       </div>
 
-      {aktif && hasil ? (
+      {active && result ? (
         <div className="flex min-h-[176px] flex-col rounded-lg bg-primary-soft p-4 md:p-5">
-          <p key={aktif.id} className="anim-rise line-clamp-1 min-h-5 text-sm font-semibold text-on-primary-soft">
-            {aktif.nama}
+          <p key={active.id} className="anim-rise line-clamp-1 min-h-5 text-sm font-semibold text-on-primary-soft">
+            {active.name}
           </p>
           <div className="mt-1 flex flex-wrap items-end justify-between gap-3">
-            <p key={hasil.total} className="anim-rise text-[32px] font-bold leading-none tracking-tight tabular-nums md:text-4xl">
-              {rp(hasil.total)}
+            <p key={result.total} className="anim-rise text-[32px] font-bold leading-none tracking-tight tabular-nums md:text-4xl">
+              {rp(result.total)}
             </p>
             <span className="flex items-center gap-1.5 text-sm text-on-primary-soft">
-              <IconClock size={14} /> {durasiLabel(hasil.durasi)}
+              <IconClock size={14} /> {durationLabel(result.duration)}
             </span>
           </div>
-          <ButtonLink href={`/pesan?paket=${aktif.id}&kamar=${kamar}`} size="lg" arrow className="mt-auto w-full">
+          <ButtonLink href={`/pesan?pkg=${active.id}&room=${room}`} size="lg" arrow className="mt-auto w-full">
             Pesan paket ini
           </ButtonLink>
         </div>

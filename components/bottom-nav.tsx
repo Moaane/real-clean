@@ -15,24 +15,24 @@ import {
 } from "@/components/icons";
 
 type Item = { href: string; label: string; icon: ComponentType<IconProps>; match: (p: string) => boolean };
-export type BottomNavRole = "admin" | "karyawan" | "pelanggan" | null;
+export type BottomNavRole = "admin" | "staff" | "customer" | null;
 
-const beranda: Item = { href: "/", label: "Beranda", icon: IconHome, match: (p) => p === "/" };
-const layanan: Item = { href: "/layanan", label: "Layanan", icon: IconSparkle, match: (p) => p.startsWith("/layanan") };
-const pesan: Item = { href: "/pesan", label: "Pesan", icon: IconCalendar, match: (p) => p.startsWith("/pesan") };
+const home: Item = { href: "/", label: "Beranda", icon: IconHome, match: (p) => p === "/" };
+const service: Item = { href: "/layanan", label: "Layanan", icon: IconSparkle, match: (p) => p.startsWith("/layanan") };
+const message: Item = { href: "/pesan", label: "Pesan", icon: IconCalendar, match: (p) => p.startsWith("/pesan") };
 
 function itemsFor(role: BottomNavRole): Item[] {
-  if (role === "pelanggan")
-    return [beranda, layanan, pesan, { href: "/akun", label: "Booking", icon: IconReceipt, match: (p) => p.startsWith("/akun") }];
+  if (role === "customer")
+    return [home, service, message, { href: "/akun", label: "Booking", icon: IconReceipt, match: (p) => p.startsWith("/akun") }];
   if (role === "admin")
-    return [beranda, layanan, { href: "/admin", label: "Dashboard", icon: IconGrid, match: (p) => p.startsWith("/admin") }];
-  if (role === "karyawan")
-    return [beranda, layanan, { href: "/karyawan", label: "Tugas", icon: IconReceipt, match: (p) => p.startsWith("/karyawan") }];
-  // Tamu: tanpa Booking/Akun, diganti Masuk.
-  return [beranda, layanan, pesan, { href: "/login", label: "Masuk", icon: IconUser, match: (p) => p === "/login" || p === "/daftar" }];
+    return [home, service, { href: "/admin", label: "Dashboard", icon: IconGrid, match: (p) => p.startsWith("/admin") }];
+  if (role === "staff")
+    return [home, service, { href: "/karyawan", label: "Tugas", icon: IconReceipt, match: (p) => p.startsWith("/karyawan") }];
+  // Guest: no Booking/Account, replaced by Login.
+  return [home, service, message, { href: "/login", label: "Masuk", icon: IconUser, match: (p) => p === "/login" || p === "/daftar" }];
 }
 
-/** Bottom nav (mobile). Disembunyikan di alur pesan dan halaman auth. */
+/** Bottom nav (mobile). Hidden in the order flow and on auth pages. */
 export function BottomNav({ role }: { role: BottomNavRole }) {
   const pathname = usePathname();
   if (pathname.startsWith("/pesan") || pathname === "/login" || pathname === "/daftar") return null;

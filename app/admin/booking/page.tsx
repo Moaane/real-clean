@@ -2,31 +2,31 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { dynamic, Dyn, th } from "@/components/admin/ui";
 import { prisma } from "@/lib/prisma";
-import { kedaluwarsakanLewatBatas } from "@/lib/kedaluwarsa";
+import { expireOverdue } from "@/lib/kedaluwarsa";
 import { parseDate } from "@/lib/availability";
-import { rp, STATUS_LABEL, tanggalId } from "@/lib/booking-status";
+import { rp, STATUS_LABEL, dateId } from "@/lib/booking-status";
 import { Button, EmptyState, Input, Select, StatusBadge } from "@/components/ui";
 import { buttonClass } from "@/components/ui/button";
 import { PageHeader } from "@/components/dash/page-header";
 import { IconReceipt } from "@/components/icons";
-import type { StatusBooking } from "@/generated/prisma/enums";
+import type { BookingStatus } from "@/generated/prisma/enums";
 
 export const metadata: Metadata = { title: "Booking" };
 
-type Params = Promise<{ status?: string; tanggal?: string }>;
-const STATUSES = Object.keys(STATUS_LABEL) as StatusBooking[];
+type Params = Promise<{ status?: string; date?: string }>;
+const STATUSES = Object.keys(STATUS_LABEL) as BookingStatus[];
 
-async function Daftar({ searchParams }: { searchParams: Params }) {
+async function List({ searchParams }: { searchParams: Params }) {
   await dynamic();
-  await kedaluwarsakanLewatBatas();
+  await expireOverdue();
   const sp = await searchParams;
   const status = STATUSES.find((s) => s === sp.status);
-  const tanggal = parseDate(sp.tanggal);
+  const date = parseDate(sp.date);
 
   const rows = await prisma.booking.findMany({
-    where: { ...(status && { status }), ...(tanggal && { slot: { tanggal } }) },
-    include: { layanan: true, slot: true, pelanggan: { select: { nama: true } } },
-    orderBy: [{ slot: { tanggal: "desc" } }, { slot: { jam_mulai: "asc" } }, { id_booking: "desc" }],
+    where: { ...(status && { status }), ...(date && { slot: { date } }) },
+    include: { service: true, slot: true, customer: { select: { name: true } } },
+    orderBy: [{ slot: { date: "desc" } }, { slot: { start_time: "asc" } }, { id_booking: "desc" }],
     take: 200,
   });
 
@@ -44,11 +44,11 @@ async function Daftar({ searchParams }: { searchParams: Params }) {
           </Select>
         </div>
         <div className="sm:w-52">
-          <Input name="tanggal" type="date" label="Tanggal jadwal" defaultValue={tanggal ? sp.tanggal : ""} />
+          <Input name="date" type="date" label="Tanggal jadwal" defaultValue={date ? sp.date : ""} />
         </div>
         <div className="flex gap-2">
           <Button type="submit">Terapkan</Button>
-          {(status || tanggal) && (
+          {(status || date) && (
             <Link href="/admin/booking" className={buttonClass("outline")}>
               Reset
             </Link>
@@ -75,22 +75,22 @@ async function Daftar({ searchParams }: { searchParams: Params }) {
             <tbody className="divide-y divide-border">
               {rows.map((b) => (
                 <tr key={b.id_booking} className="transition duration-150 hover:bg-surface-2/60">
-                  <td className="py-3 pr-4 font-semibold tabular-nums">{b.kode_booking}</td>
-                  <td className="py-3 pr-4">{b.pelanggan.nama}</td>
-                  <td className="py-3 pr-4">{b.layanan.nama_layanan}</td>
+                  <td className="py-3 pr-4 font-semibold tabular-nums">{b.booking_code}</td>
+                  <td className="py-3 pr-4">{b.customer.name}</td>
+                  <td className="py-3 pr-4">{b.service.service_name}</td>
                   <td className="whitespace-nowrap py-3 pr-4">
-                    {tanggalId(b.slot.tanggal)}, {b.slot.jam_mulai}–{b.slot.jam_selesai}
+                    {dateId(b.slot.date)}, {b.slot.start_time}–{b.slot.end_time}
                   </td>
-                  <td className="py-3 pr-4 tabular-nums">{rp(b.total_harga)}</td>
+                  <td className="py-3 pr-4 tabular-nums">{rp(b.total_price)}</td>
                   <td className="py-3 pr-4">
                     <StatusBadge status={b.status} />
-                    {b.batal_diajukan_at && !b.batal_ditolak && (b.status === "DIBAYAR" || b.status === "DITUGASKAN") && (
+                    {b.cancel_requested_at && !b.cancel_rejected && (b.status === "PAID" || b.status === "ASSIGNED") && (
                       <p className="mt-1 text-xs font-semibold text-warn">Minta batal</p>
                     )}
                   </td>
                   <td className="py-3 text-right">
-                    <Link href={`/admin/booking/${b.kode_booking}`} className={buttonClass(b.status === "DIBAYAR" ? "primary" : "outline", "sm")}>
-                      {b.status === "DIBAYAR" ? "Tugaskan" : "Detail"}
+                    <Link href={`/admin/booking/${b.booking_code}`} className={buttonClass(b.status === "PAID" ? "primary" : "outline", "sm")}>
+                      {b.status === "PAID" ? "Tugaskan" : "Detail"}
                     </Link>
                   </td>
                 </tr>
@@ -108,7 +108,7 @@ export default function Page({ searchParams }: { searchParams: Params }) {
     <>
       <PageHeader title="Kelola" accent="booking" description="Semua booking pelanggan. Booking yang sudah dibayar siap ditugaskan ke karyawan." />
       <Dyn>
-        <Daftar searchParams={searchParams} />
+        <List searchParams={searchParams} />
       </Dyn>
     </>
   );

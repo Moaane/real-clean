@@ -14,18 +14,18 @@ export function AddLink({ href, children }: { href: string; children: ReactNode 
   );
 }
 
-export function ActiveDot({ aktif }: { aktif: boolean }) {
+export function ActiveDot({ active }: { active: boolean }) {
   return (
-    <span className={"inline-flex h-6 items-center gap-1.5 rounded-pill px-2.5 text-[11px] font-bold uppercase tracking-wider " + (aktif ? "bg-ok-soft text-ok" : "bg-neutral-soft text-neutral")}>
-      <span className={"size-1.5 rounded-pill " + (aktif ? "bg-ok" : "bg-neutral")} />
-      {aktif ? "Aktif" : "Nonaktif"}
+    <span className={"inline-flex h-6 items-center gap-1.5 rounded-pill px-2.5 text-[11px] font-bold uppercase tracking-wider " + (active ? "bg-ok-soft text-ok" : "bg-neutral-soft text-neutral")}>
+      <span className={"size-1.5 rounded-pill " + (active ? "bg-ok" : "bg-neutral")} />
+      {active ? "Aktif" : "Nonaktif"}
     </span>
   );
 }
 
 export const th = "pb-3 pr-4 text-[11px] font-semibold uppercase tracking-wider text-muted";
 
-/** Membungkus konten dinamis (DB) agar kerangka halaman tetap bisa diprerender. */
+/** Wraps dynamic (DB) content so the page shell can still be prerendered. */
 export function Dyn({ children }: { children: ReactNode }) {
   return (
     <Suspense
