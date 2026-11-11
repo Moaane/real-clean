@@ -14,6 +14,7 @@ export default defineConfig({
     seed: "node prisma/seed.ts",
   },
   datasource: {
-    url: process.env.DATABASE_URL,
+    // CLI (migrate) needs a direct connection; Neon's pooled URL (pgbouncer) breaks migrations.
+    url: process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL,
   },
 });

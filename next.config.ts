@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
   },
-  allowedDevOrigins: ["https://linux-places-attributes-tuner.trycloudflare.com"],
+  allowedDevOrigins: ["https://partners-hobbies-page-latina.trycloudflare.com"],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

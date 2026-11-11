@@ -11,14 +11,6 @@ function serverKey() {
     throw new Error(
       "MIDTRANS_SERVER_KEY bukan kunci sandbox (harus diawali SB-)",
     )
-  console.log(
-    "[midtrans] key:",
-    key.slice(0, 18),
-    "len:",
-    key.length,
-    "akhir:",
-    JSON.stringify(key.slice(-3)),
-  )
   return key
 }
 
@@ -32,7 +24,12 @@ export function clientKey() {
   return key
 }
 
-export type SnapItem = { id: string; name: string; price: number; quantity: number }
+export type SnapItem = {
+  id: string
+  name: string
+  price: number
+  quantity: number
+}
 
 export type SnapInput = {
   orderId: string
@@ -56,9 +53,10 @@ function startTime(d: Date) {
 export async function createSnapToken(input: SnapInput): Promise<string> {
   const sum = input.items.reduce((n, i) => n + i.price * i.quantity, 0)
   if (sum !== input.grossAmount) {
-    throw new Error(`item_details (${sum}) tidak sama dengan gross_amount (${input.grossAmount})`)
+    throw new Error(
+      `item_details (${sum}) tidak sama dengan gross_amount (${input.grossAmount})`,
+    )
   }
-  console.log(serverKey())
   const snap = new midtransClient.Snap({
     isProduction: false,
     serverKey: serverKey(),
@@ -69,7 +67,10 @@ export async function createSnapToken(input: SnapInput): Promise<string> {
         order_id: input.orderId,
         gross_amount: input.grossAmount,
       },
-      item_details: input.items.map((i) => ({ ...i, name: i.name.slice(0, 50) })),
+      item_details: input.items.map((i) => ({
+        ...i,
+        name: i.name.slice(0, 50),
+      })),
       customer_details: {
         first_name: input.customer.name,
         email: input.customer.email,
@@ -102,19 +103,47 @@ export type GatewayRefundResult = { ok: true } | { ok: false; message: string }
  * rejection (e.g. a payment method that cannot be refunded via API) is returned
  * so the caller can record it (SPEC 7).
  */
-export async function refundTransaction(input: { orderId: string; refundKey: string; amount: number; reason: string }): Promise<GatewayRefundResult> {
+export async function refundTransaction(input: {
+  orderId: string
+  refundKey: string
+  amount: number
+  reason: string
+}): Promise<GatewayRefundResult> {
   try {
-    const core = new midtransClient.CoreApi({ isProduction: false, serverKey: serverKey() })
+    const core = new midtransClient.CoreApi({
+      isProduction: false,
+      serverKey: serverKey(),
+    })
     const res = await core.transaction.refund(input.orderId, {
       refund_key: input.refundKey,
       amount: input.amount,
       reason: input.reason.slice(0, 180),
     })
     if (res.status_code === "200") return { ok: true }
-    return { ok: false, message: res.status_message ?? `Midtrans menolak refund (kode ${res.status_code})` }
+    return {
+      ok: false,
+      message:
+        res.status_message ??
+        `Midtrans menolak refund (kode ${res.status_code})`,
+    }
   } catch (e) {
-    const err = e as { httpStatusCode?: number | string; ApiResponse?: { status_message?: string }; message?: string }
-    console.error("[midtrans] refund gagal", input.orderId, err.httpStatusCode, err.ApiResponse)
-    return { ok: false, message: err.ApiResponse?.status_message ?? err.message ?? "Gagal menghubungi Midtrans" }
+    const err = e as {
+      httpStatusCode?: number | string
+      ApiResponse?: { status_message?: string }
+      message?: string
+    }
+    console.error(
+      "[midtrans] refund gagal",
+      input.orderId,
+      err.httpStatusCode,
+      err.ApiResponse,
+    )
+    return {
+      ok: false,
+      message:
+        err.ApiResponse?.status_message ??
+        err.message ??
+        "Gagal menghubungi Midtrans",
+    }
   }
 }
