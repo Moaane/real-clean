@@ -1,6 +1,7 @@
 import midtransClient from "midtrans-client"
 
 // Midtrans Snap via the official midtrans-client SDK. SANDBOX ONLY:
+// testing
 // isProduction is hardcoded to false and keys without the "SB-" prefix are refused.
 export const SNAP_JS_URL = "https://app.sandbox.midtrans.com/snap/snap.js"
 
