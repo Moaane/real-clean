@@ -16,6 +16,7 @@ export function ProfileMenu({
   logoutAction,
   align = "right",
   dropUp = false,
+  hideArrowOnDesktop = false,
 }: {
   name: string;
   email: string;
@@ -24,6 +25,8 @@ export function ProfileMenu({
   logoutAction: () => void | Promise<void>;
   align?: "left" | "right";
   dropUp?: boolean;
+  /** Dashboard rail: the avatar alone is enough on desktop. */
+  hideArrowOnDesktop?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -66,7 +69,7 @@ export function ProfileMenu({
         </span>
         <IconChevronDown
           size={16}
-          className={cn("text-muted transition duration-200", open && "rotate-180")}
+          className={cn("text-muted transition duration-200", open && "rotate-180", hideArrowOnDesktop && "md:hidden")}
         />
       </button>
 

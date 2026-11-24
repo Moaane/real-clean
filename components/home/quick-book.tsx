@@ -3,23 +3,12 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/cn";
 import { durationLabel, computePackagePrice } from "@/lib/harga";
+import type { PackageDTO } from "@/lib/paket-dto";
 import { rp } from "@/lib/booking-status";
 import { ButtonLink } from "@/components/ui";
 import { IconBuilding, IconClock, IconHome } from "@/components/icons";
 
-export type QuickPackage = {
-  id: number;
-  name: string;
-  type: "house" | "boarding_house";
-  levelKey: string;
-  level: string;
-  basePrice: number;
-  pricePerRoom: number;
-  baseDuration: number;
-  durationPerRoom: number;
-  minRooms: number;
-  maxRooms: number;
-};
+export type QuickPackage = PackageDTO;
 
 const PROPERTY_TYPE_OPTIONS = [
   { key: "house", label: "Rumah", icon: IconHome },
@@ -52,7 +41,7 @@ function Seg<T extends string>({
               onClick={() => onChange(o.key)}
               className={cn(
                 "inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-pill px-3 text-sm font-semibold transition duration-200 active:scale-95",
-                on ? "bg-surface text-foreground shadow-sm" : "text-muted hover:text-foreground",
+                on ? "bg-primary text-on-primary shadow-sm" : "text-muted hover:text-foreground",
               )}
             >
               {o.icon && <o.icon size={16} />}

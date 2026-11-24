@@ -1,29 +1,11 @@
-import { connection } from "next/server";
-import { getActivePackages, DETAIL_LEVELS } from "@/lib/katalog";
 import { ButtonLink } from "@/components/ui";
 import { IconCheck } from "@/components/icons";
-import { QuickBook, type QuickPackage } from "./quick-book";
+import { QuickBookLoader } from "./paket-list";
 
 const POINTS = ["Petugas membawa alat dan cairan sendiri", "Harga jelas sebelum bayar, tanpa biaya tersembunyi", "Pilih jadwal sesuai slot yang tersedia"];
 
 /** Closing CTA: pastel panel in the style of mockup 6 + live package configurator. */
-export async function Closing() {
-  await connection();
-  const pkg = await getActivePackages();
-  const items: QuickPackage[] = pkg.map((p) => ({
-    id: p.id_service,
-    name: p.service_name,
-    type: p.property_type,
-    levelKey: p.detail_level,
-    level: DETAIL_LEVELS[p.detail_level],
-    basePrice: p.base_price,
-    pricePerRoom: p.price_per_room,
-    baseDuration: p.base_duration_minutes,
-    durationPerRoom: p.duration_per_room_minutes,
-    minRooms: p.min_rooms,
-    maxRooms: p.max_rooms,
-  }));
-
+export function Closing() {
   return (
     <section className="mx-auto max-w-6xl px-4 pt-16 md:px-6 md:pt-24">
       <div className="grid gap-8 rounded-xl border border-border bg-surface p-5 md:p-12 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-14">
@@ -52,11 +34,7 @@ export async function Closing() {
           </ButtonLink>
         </div>
 
-        {items.length > 0 ? (
-          <QuickBook pkg={items} />
-        ) : (
-          <div className="rounded-xl bg-surface p-6 text-center text-muted">Paket belum tersedia. Silakan kembali lagi nanti.</div>
-        )}
+        <QuickBookLoader />
       </div>
     </section>
   );

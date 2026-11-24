@@ -21,6 +21,7 @@ async function Gate({ role, items, children }: { role: Role; items: RailItem[]; 
       logoutAction={logout}
       dropUp={dropUp}
       align={align}
+      hideArrowOnDesktop
     />
   );
 

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { IconCheck } from "@/components/icons";
 
-export type Step = { label: string; href?: string };
+/** `onSelect` makes a finished step a button (client-side navigation) instead of a link. */
+export type Step = { label: string; href?: string; onSelect?: () => void };
 
 export const BOOKING_STEPS: Step[] = [
   { label: "Layanan" },
@@ -67,7 +68,12 @@ export function Stepper({
               aria-current={isActive ? "step" : undefined}
               className={cn("flex items-start", i < steps.length - 1 && "flex-1")}
             >
-              {done && step.href ? (
+              {done && step.onSelect ? (
+                <button type="button" onClick={step.onSelect} className="flex cursor-pointer flex-col items-center rounded-sm">
+                  {inner}
+                  <span className="sr-only"> (selesai)</span>
+                </button>
+              ) : done && step.href ? (
                 <Link href={step.href} className="flex flex-col items-center rounded-sm">
                   {inner}
                   <span className="sr-only"> (selesai)</span>

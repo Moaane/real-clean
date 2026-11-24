@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { createBooking } from "@/lib/booking";
+import { rememberAddress } from "@/lib/alamat";
 import { formValues, type FormState } from "@/lib/form-state";
 
 const schema = z.object({
@@ -66,5 +67,6 @@ export async function submitBooking(
       ? { fieldErrors: { [key]: [result.error] }, values }
       : { error: result.error, values };
   }
+  await rememberAddress(user.id_user, d.address);
   redirect(`/akun/booking/${result.code}`);
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
-import { IconBuilding, IconChevronLeft, IconChevronRight, IconHome } from "@/components/icons";
+import { IconChevronLeft, IconChevronRight } from "@/components/icons";
 
 export type PackageTile = {
   id: number;
@@ -79,7 +79,6 @@ export function PackageCarousel({ items, outcome }: { items: PackageTile[]; outc
         className="mt-6 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto pb-4 [scrollbar-width:none] md:gap-6 [&::-webkit-scrollbar]:hidden"
       >
         {items.map((p, i) => {
-          const Icon = p.type === "boarding_house" ? IconBuilding : IconHome;
           return (
             <li key={p.id} className="w-[72%] shrink-0 snap-start sm:w-[44%] lg:w-[30%]">
               <Link href={`/pesan?pkg=${p.id}`} className="group block rounded-lg">
@@ -98,9 +97,14 @@ export function PackageCarousel({ items, outcome }: { items: PackageTile[]; outc
                       className="object-cover transition duration-200 group-hover:scale-[1.03]"
                     />
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-primary-bright/60">
-                      <Icon size={56} strokeWidth={1.25} />
-                    </div>
+                    <Image
+                      src="/images/placeholder.svg"
+                      alt=""
+                      fill
+                      unoptimized
+                      sizes="(min-width: 1024px) 30vw, 72vw"
+                      className="object-cover transition duration-200 group-hover:scale-[1.03]"
+                    />
                   )}
                 </div>
                 <h3 className="mt-3 text-xl font-medium leading-snug group-hover:text-primary-ink">{p.name}</h3>

@@ -72,11 +72,26 @@ model User {
   created_at DateTime @default(now())
 
   booking           Booking[]
+  saved_addresses   SavedAddress[]
   staff_assignments Assignment[] @relation("AssignmentStaff")
   admin_assignments Assignment[] @relation("AssignmentAdmin")
   refund            Refund[]
 
   @@map("users")
+}
+
+// A customer can keep several addresses; they are saved after a booking is created.
+model SavedAddress {
+  id_address Int      @id @default(autoincrement())
+  id_user    Int
+  address    String
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [id_user], references: [id_user], onDelete: Cascade)
+
+  @@unique([id_user, address])
+  @@index([id_user])
+  @@map("saved_address")
 }
 
 model Service {

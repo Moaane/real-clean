@@ -19,7 +19,10 @@ export function Photo({
   priority,
   icon: Icon = IconSparkle,
   imageClassName,
+  placeholderImage,
 }: {
+  /** Tampilkan gambar placeholder (bukan ikon) bila berkas belum ada. */
+  placeholderImage?: boolean;
   imageClassName?: string;
   name: string;
   alt?: string;
@@ -34,6 +37,8 @@ export function Photo({
     <div className={cn("relative overflow-hidden bg-surface-2", className)}>
       {exists ? (
         <Image src={`/images/${name}.webp`} alt={alt} fill sizes={sizes} priority={priority} className={cn("object-contain", imageClassName)} />
+      ) : placeholderImage ? (
+        <Image src="/images/placeholder.svg" alt={alt} fill unoptimized sizes={sizes} className="object-cover" />
       ) : (
         <div
           role={alt ? "img" : undefined}
